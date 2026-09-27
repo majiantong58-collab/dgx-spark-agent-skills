@@ -26,6 +26,7 @@
 from __future__ import annotations
 
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -56,19 +57,25 @@ SITE_PARAMS = PpeParams(helmet_ranges=BLUE_COVERALL_RANGES, vest_ranges=BLUE_COV
 VLM_PROMPT = "画面里有几个人？他们是否都佩戴了防护帽、穿着防护服？逐个说明。"
 
 _vlm_cache: dict[str, Any] = {}
+# `if "model" not in _vlm_cache` 是典型的 check-then-set：两个线程同时通过检查
+# 会各自加载一份权重（显存翻倍、且后写者覆盖前者）。调用方当前是单线程
+# （ui/server.py 用 HTTPServer 而非 ThreadingHTTPServer），此处加锁只是双保险。
+_vlm_lock = threading.Lock()
 
 
 def _load_vlm() -> tuple[Any, Any]:
     """加载本地 VLM，进程内只做一次。"""
     if "model" not in _vlm_cache:
-        import torch
-        from transformers import AutoModelForImageTextToText, AutoProcessor
+        with _vlm_lock:
+            if "model" not in _vlm_cache:  # 双重检查：锁内再确认一次
+                import torch
+                from transformers import AutoModelForImageTextToText, AutoProcessor
 
-        proc = AutoProcessor.from_pretrained(str(VLM_DIR))
-        model = AutoModelForImageTextToText.from_pretrained(
-            str(VLM_DIR), dtype=torch.bfloat16, device_map="cuda:0"
-        )
-        _vlm_cache.update(model=model, processor=proc, load_s=time.perf_counter())
+                proc = AutoProcessor.from_pretrained(str(VLM_DIR))
+                model = AutoModelForImageTextToText.from_pretrained(
+                    str(VLM_DIR), dtype=torch.bfloat16, device_map="cuda:0"
+                )
+                _vlm_cache.update(model=model, processor=proc, load_s=time.perf_counter())
     return _vlm_cache["model"], _vlm_cache["processor"]
 
 
@@ -212,8 +219,12 @@ def run_frame(
         vlm_answer, gen_s = _ask_vlm(image_path)
         timings["tier1_s"] = gen_s
         calls["tier1"] = 1
+        # cv2.imwrite 对**不存在的目录**会静默失败（返回 False，不抛异常），
+        # 标注图会凭空消失且没有任何报错。先建目录，目录已存在时行为不变。
+        ann_dir = Path(image_path).parent / "annotated"
+        ann_dir.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(
-            str(Path(image_path).parent / "annotated" / (Path(image_path).stem + "_tier05.jpg")),
+            str(ann_dir / (Path(image_path).stem + "_tier05.jpg")),
             visualize(img, ppe, boxes),
         )
 

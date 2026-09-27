@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地三层视觉推理流水线 · 演示</title>
+<style>
+  :root{
+    --bg:#0B0F14; --fg:#E6EDF3; --accent:#39D0D8; --uncertain:#8A94A6;
+    --panel:#121821; --panel2:#0E141C; --line:#232C38;
+    --mono: ui-monospace,"Cascadia Mono",Consolas,"DejaVu Sans Mono",monospace;
+    --sans: "Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+    --fs-body:32px; --fs-title:56px; --fs-num:48px; --fs-fine:24px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+            font-size:var(--fs-body);line-height:1.4}
+  .fine{font-size:var(--fs-fine);color:var(--uncertain);line-height:1.35}
+
+  /* ---- 常驻免责声明条 ---- */
+  #disclaimer{border-bottom:3px solid #2A3644;background:#151C26;padding:14px 28px;
+              font-size:var(--fs-fine);color:#B9C4D2;display:flex;gap:18px;align-items:baseline}
+  #disclaimer .tag{color:#F0B429;font-weight:700;white-space:nowrap}
+  #disclaimer .txt{flex:1}
+
+  header{display:grid;grid-template-columns:1fr auto;gap:10px 34px;align-items:end;
+         padding:18px 28px 12px}
+  h1{font-size:var(--fs-title);margin:0;letter-spacing:-1px;font-weight:800}
+  h1 small{display:block;font-size:var(--fs-fine);font-weight:400;color:var(--uncertain);
+           letter-spacing:0;margin-top:6px}
+  .wall{text-align:right}
+  .wall .num{font-family:var(--mono);font-size:64px;color:var(--accent);font-weight:700}
+  .wall .unit{font-size:var(--fs-body);color:var(--accent);margin-left:6px}
+  .wall .lbl{display:block;font-size:var(--fs-fine);color:var(--uncertain)}
+  #cmp,#gallery{grid-column:1/-1}
+  #cmp{background:var(--panel2);border-left:6px solid var(--accent);
+       padding:10px 18px;font-size:var(--fs-fine);color:#C6D0DC}
+  #cmp div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #cmp .k{color:var(--uncertain);display:inline-block;min-width:5em}
+  #cmp .n{font-family:var(--mono);color:var(--fg)}
+
+  main{display:grid;grid-template-columns:400px 1fr;gap:24px;padding:8px 28px 0;align-items:start}
+
+  /* ---- 左：上传 / 预览 ---- */
+  #dropzone{border:5px dashed #33404F;border-radius:16px;min-height:330px;display:flex;
+            flex-direction:column;align-items:center;justify-content:center;gap:14px;
+            text-align:center;padding:24px;color:var(--uncertain);cursor:pointer}
+  #dropzone.hot{border-color:var(--accent);color:var(--accent)}
+  #dropzone .big{font-size:40px;color:var(--fg)}
+  #stage{position:relative;border-radius:16px;overflow:hidden;border:3px solid var(--line);
+         background:#000;min-height:330px;display:none}
+  #stage img{width:100%;display:block;filter:none;transition:filter .2s}
+  #stage.busy img{filter:brightness(.34) saturate(.6)}
+  #scan{position:absolute;inset:0;display:none;pointer-events:none}
+  #stage.busy #scan{display:block}
+  #scan i{position:absolute;left:0;right:0;height:5px;background:var(--accent);
+          box-shadow:0 0 26px 10px rgba(57,208,216,.55);animation:scan 1.5s linear infinite}
+  @keyframes scan{from{top:-2%}to{top:102%}}
+  #stage .st{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;
+             background:rgba(11,15,20,.86);font-size:var(--fs-fine);font-family:var(--mono)}
+  #gallery{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  #gallery .lb{font-size:var(--fs-fine);color:var(--uncertain)}
+  #gallery button{font-family:var(--sans);font-size:var(--fs-fine);background:var(--panel);
+                  color:var(--fg);border:2px solid var(--line);border-radius:10px;
+                  padding:6px 12px;cursor:pointer}
+  #gallery button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+
+  /* ---- 中：四张卡片横向 ---- */
+  #pipeline{display:flex;align-items:stretch;gap:0}
+  .card{flex:1 1 0;min-width:0;background:var(--panel);border:4px solid var(--line);
+        border-radius:14px;padding:16px 14px;position:relative;display:flex;
+        flex-direction:column;gap:8px;transition:opacity .2s}
+  .card .hd{display:flex;align-items:center;gap:10px}
+  .card .dot{width:16px;height:16px;border-radius:50%;background:#2C3644;flex:none}
+  .card .lbl{font-size:var(--fs-fine);color:var(--uncertain);font-family:var(--mono)}
+  .card .nm{font-size:var(--fs-body);font-weight:700}
+  .card .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
+  .card .ms{font-family:var(--mono);font-size:var(--fs-num);color:var(--accent);
+            font-weight:700;line-height:1.1}
+  .card .note{font-size:var(--fs-fine);color:var(--uncertain);line-height:1.3}
+
+  .card.fired{border-color:var(--accent);background:#0F1F25}
+  .card.fired .dot{background:var(--accent);box-shadow:0 0 14px 3px rgba(57,208,216,.7)}
+  .card.fired.pulse{animation:pulse .15s ease-out}
+  @keyframes pulse{from{filter:brightness(1.9)}to{filter:brightness(1)}}
+
+  .card.skipped{opacity:.3;animation:collapse .2s ease-out;
+    background-image:repeating-linear-gradient(45deg,#1A222D 0 12px,#141B24 12px 24px)}
+  @keyframes collapse{from{transform:scaleY(.55);opacity:.85}to{transform:scaleY(1);opacity:.3}}
+  .card.skipped .skip{font-size:46px;font-weight:800;color:#C3CCD8;text-align:center}
+  .card.skipped .why{font-size:var(--fs-fine);color:#A9B4C2;text-align:center;line-height:1.3}
+
+  .card.running{border-color:#3B5566}
+  .card.running .dot{background:#3B5566;animation:blink .7s steps(2,end) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .card.running .ms{color:var(--uncertain);font-size:40px}
+  .card.waiting .dot{background:#33404F}
+
+  .card.locked{opacity:.45;border-style:dashed;border-color:#41505F}
+  .card.locked .lock{font-size:40px;font-weight:700;color:#A9B4C2;text-align:center}
+
+  .link{flex:0 0 34px;display:flex;align-items:center;justify-content:center;position:relative}
+  .link .bar{height:6px;width:100%;background:var(--accent);border-radius:3px}
+  .link.cut .bar{background:none;border-top:6px dashed #55606E}
+  .link .x{position:absolute;font-size:34px;color:#77828F;font-weight:700;background:var(--bg);
+           padding:0 4px}
+
+  /* ---- 时间轴 ---- */
+  #tlwrap{margin:16px 28px 0;background:var(--panel2);border:2px solid var(--line);
+          border-radius:14px;padding:14px 18px}
+  #tlhead{display:flex;justify-content:space-between;align-items:baseline;gap:20px;
+          font-size:var(--fs-fine);color:var(--uncertain)}
+  #tlhead b{color:var(--fg);font-size:28px}
+  #tl{position:relative;height:158px;margin-top:22px}
+  #tl .seg{position:absolute;top:30px;height:44px;border-radius:4px;min-width:2px}
+  #tl .in{position:absolute;top:0;font-family:var(--mono);font-size:var(--fs-fine);
+          white-space:nowrap;color:var(--fg)}
+  #tl .in.low{top:118px}
+  #tl .hair{position:absolute;top:24px;width:3px;height:56px;background:var(--accent)}
+  #tl .ruler{position:absolute;left:0;right:0;top:74px;height:1px;background:#2A3644}
+  #tl .tick{position:absolute;top:74px;height:9px;width:1px;background:#2A3644}
+  #tl .tick span{position:absolute;top:12px;left:0;font-family:var(--mono);
+                 font-size:20px;color:#5D6875;white-space:nowrap}
+  #tl .empty{position:absolute;top:30px;height:44px;border-radius:4px;
+             background:repeating-linear-gradient(45deg,#1D2733 0 10px,#141C26 10px 20px)}
+  #tlmsg{margin-top:8px;font-size:var(--fs-fine);color:var(--uncertain)}
+
+  /* ---- 结果 ---- */
+  #res{margin:16px 28px 40px;display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
+  .box{background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:14px 18px}
+  .box h2{font-size:30px;margin:0 0 10px;font-weight:700}
+  ul.findings{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;
+              max-height:44vh;overflow:auto}
+  li.f{border-left:6px solid var(--uncertain);background:#151C26;padding:10px 14px;border-radius:8px}
+  li.f.unc .sev{background:var(--uncertain);color:#0B0F14;border-radius:6px;padding:1px 10px;
+                font-weight:800;font-style:italic;font-family:var(--mono);font-size:28px}
+  li.f.warning{border-left-color:#F0B429} li.f.critical{border-left-color:#F85149}
+  li.f .q{font-family:var(--mono);font-size:36px;color:var(--uncertain);font-weight:800;
+          font-style:italic;margin-right:4px}
+  li.f .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  li.f .mono{font-family:var(--mono);font-size:28px}
+  blockquote.vlm{margin:0;background:#101821;border-left:6px solid var(--accent);
+                 padding:12px 16px;max-height:36vh;overflow:auto}
+  blockquote.vlm p{margin:0;font-size:28px;line-height:1.5;white-space:pre-wrap;
+                   font-family:var(--sans)}
+  .verdict{font-size:30px;margin-bottom:8px}
+  .verdict b{font-family:var(--mono);color:var(--fg)}
+  #err{display:none;margin:0 28px 20px;border-left:6px solid #F85149;background:#1F1416;
+       padding:12px 18px;font-size:26px;color:#FFB4AE}
+  img.ann{width:100%;border-radius:10px;border:2px solid var(--line);margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="disclaimer">
+  <span class="tag" id="dTag">—</span>
+  <span class="txt" id="dTxt">等待首帧结果……</span>
+</div>
+
+<header>
+  <h1>本地三层视觉推理流水线
+    <small>边缘端分层巡检 · Tier 0 / 0.5 / 1 全部在本机 GPU 上完成 · 数据不出机</small>
+  </h1>
+  <div class="wall">
+    <span class="num" id="wallNum">—</span><span class="unit">秒</span>
+    <span class="lbl">端到端墙钟（wall clock）</span>
+  </div>
+  <div id="cmp"><div><span class="k">上一张</span></div></div>
+  <div id="gallery"></div>
+</header>
+
+<main>
+  <section>
+    <div id="dropzone">
+      <div class="big">拖入现场照片</div>
+      <div>或点击选择文件</div>
+      <div style="font-size:22px">jpg / png，短边不小于 64 像素</div>
+    </div>
+    <div id="stage"><img id="shot" alt="现场照片"><div id="scan"><i></i></div>
+      <div class="st" id="stageNote"></div></div>
+  </section>
+
+  <section>
+    <div id="pipeline"></div>
+  </section>
+</main>
+
+<div id="tlwrap">
+  <div id="tlhead">
+    <div>分层耗时 · <b id="tlMode">等待首帧</b></div>
+    <div id="tlScale">线性刻度，同一全长对比，未取对数</div>
+  </div>
+  <div id="tl"></div>
+  <div id="tlmsg" class="fine"></div>
+</div>
+
+<div id="err"></div>
+
+<div id="res">
+  <div class="box">
+    <h2>判定明细</h2>
+    <div id="tally" class="fine" style="margin-bottom:10px"></div>
+    <ul class="findings" id="list"></ul>
+    <div id="annBox" style="display:none">
+      <div class="fine" style="margin-top:12px">Tier 0.5 标注图（Tier 1 触发时写出，中文标签一律在 HTML 里，不烙在图里）</div>
+      <img class="ann" id="annImg" alt="Tier 0.5 标注图">
+    </div>
+  </div>
+  <div class="box">
+    <h2>Tier 1 本地模型自述</h2>
+    <div id="quoteWrap"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const CARDS = [
+  {key:"tier0",   lbl:"Tier 0",   nm:"人员检测",  desc:"YOLO11n · COCO"},
+  {key:"tier0_5", lbl:"Tier 0.5", nm:"颜色判读",  desc:"色块覆盖率启发式"},
+  {key:"tier1",   lbl:"Tier 1",   nm:"本地模型",  desc:"Qwen3-VL-2B · bf16"},
+  {key:"tier2",   lbl:"Tier 2",   nm:"云端",      desc:"需要显式授权"},
+];
+const MIN_SCALE_MS = 26000;   // 固定全长，让「几乎看不见」可见
+let scaleMs = MIN_SCALE_MS;
+let busy = false, first = true;
+
+/* ---------- 卡片骨架 ---------- */
+function buildCards(){
+  const p = $("pipeline"); p.textContent = "";
+  CARDS.forEach((c, i) => {
+    if (i > 0){
+      const l = document.createElement("div");
+      l.className = "link"; l.id = "link" + i;
+      l.innerHTML = '<div class="bar"></div>';
+      p.appendChild(l);
+    }
+    const d = document.createElement("div");
+    d.className = "card"; d.id = "card" + i;
+    d.innerHTML =
+      '<div class="hd"><span class="dot"></span><span class="lbl">' + c.lbl + '</span></div>' +
+      '<div class="nm">' + c.nm + '</div>' +
+      '<div class="fine">' + c.desc + '</div>' +
+      '<div class="body"></div>';
+    p.appendChild(d);
+  });
+  setCard(3, "locked", {main:'🔒 未授权', note:'cloud_authorized=False<br>实测调用 0 次，从不上色'});
+}
+function setCard(i, kind, opt){
+  const d = $("card" + i), b = d.querySelector(".body");
+  d.className = "card " + (kind === "skip" ? "skipped" : kind);
+  b.textContent = "";
+  const o = opt || {};
+  if (kind === "fired"){
+    if (o.ms != null){
+      const e = document.createElement("div"); e.className = "ms";
+      e.textContent = fmtMsFull(o.ms); b.appendChild(e);
+    }
+    if (o.note){
+      const e = document.createElement("div"); e.className = "note";
+      e.textContent = o.note; b.appendChild(e);
+    }
+    d.classList.add("pulse");
+    setTimeout(() => d.classList.remove("pulse"), 160);
+  } else if (kind === "skip"){
+    const a = document.createElement("div"); a.className = "skip"; a.textContent = "跳过";
+    const c = document.createElement("div"); c.className = "why";
+    c.innerHTML = o.note || ""; b.append(a, c);
+  } else if (kind === "locked" || kind === "running" || kind === "waiting"){
+    const a = document.createElement("div");
+    a.className = kind === "locked" ? "lock" : "ms";
+    a.textContent = o.main || ""; b.appendChild(a);
+    if (o.note){
+      const c = document.createElement("div"); c.className = "note";
+      c.innerHTML = o.note; b.appendChild(c);
+    }
+  } else { d.className = "card"; }
+}
+function setLink(i, cut){
+  const l = $("link" + i); if (!l) return;
+  l.className = "link" + (cut ? " cut" : "");
+  l.innerHTML = '<div class="bar"></div>' + (cut ? '<span class="x">╳</span>' : '');
+}
+
+/* ---------- 格式化 ---------- */
+const fmtMsFull = ms => ms >= 1000 ? (ms/1000).toFixed(2) + " s" : Math.round(ms) + " ms";
+const fmtMsShort = ms => ms >= 1000 ? (ms/1000).toFixed(2) + "s" : Math.round(ms) + "ms";
+const fmtS = s => (s == null ? "—" : Number(s).toFixed(2));
+
+/* ---------- 时间轴：1:1 真实比例，不取对数 ---------- */
+// 每段的毫秒数只从**实测字段**取；tier2 的耗时字段不存在（它就没人调用过）。
+// timings.total_ms 只累加 *_ms 键、不含 tier1_s，所以这里逐层单独取，绝不求和。
+function timelineRows(T, C){
+  T = T || {}; C = C || {};
+  return [
+    {name:"Tier 0 人员检测",   color:"#39D0D8", ms: C.tier0   > 0 ? (T.tier0_ms   || 0) : 0},
+    {name:"Tier 0.5 颜色判读", color:"#2FA9B4", ms: C.tier0_5 > 0 ? (T.tier0_5_ms || 0) : 0},
+    {name:"Tier 1 本地模型",   color:"#7BE3E8", ms: C.tier1   > 0 ? ((T.tier1_s || 0) * 1000) : 0},
+    {name:"Tier 2 云端",       color:"#55606E", ms: 0},
+  ];
+}
+function renderTimeline(timings, calls, wallS){
+  const tl = $("tl"); tl.textContent = "";
+  const wallMs = wallS * 1000;
+  scaleMs = Math.max(MIN_SCALE_MS, Math.ceil(wallMs / 1000) * 1000);
+  const rows = timelineRows(timings, calls);
+  const accounted = rows.reduce((a, r) => a + r.ms, 0);
+  const rest = Math.max(0, wallMs - accounted);
+
+  $("tlScale").textContent = "线性刻度（1:1，未取对数）：全长 " + (scaleMs/1000).toFixed(1) +
+                             " 秒，与所有帧同一刻度";
+
+  // 标尺
+  const ruler = document.createElement("div"); ruler.className = "ruler"; tl.appendChild(ruler);
+  for (let s = 0; s <= scaleMs/1000; s += 5){
+    const tk = document.createElement("div"); tk.className = "tick";
+    tk.style.left = (s*1000/scaleMs*100) + "%";
+    tk.innerHTML = '<span>' + s + 's</span>';
+    tl.appendChild(tk);
+  }
+  // 段。标签分上下两行做首次适配：窄段（如 119ms 占全长 0.46%）的标签会落在
+  // 相邻宽段的标签位置上，不避让就会叠成一团乱码。
+  const tlW = tl.clientWidth || 1400;
+  const labelPx = s => [...s].reduce((a, ch) =>
+      a + (/[　-鿿＀-￯]/.test(ch) ? 26 : 13), 0) + 24;
+  // 标签位置 = max(该段起点, 本行已占用的末端)。窄段（如 158ms 只占全长 0.6%）
+  // 的标签起点会和邻段标签起点几乎重合，光分两行仍会叠字，必须往后推。
+  // 标签用段自身的颜色，读者靠颜色把被推开的标签认回它那一段。
+  const cursor = [0, 0];
+  let x = 0;
+  rows.forEach(r => {
+    if (r.ms <= 0) return;
+    const left = x / scaleMs * 100, w = r.ms / scaleMs * 100;
+    const text = r.name + " " + fmtMsShort(r.ms);
+    const lane = cursor[0] <= cursor[1] ? 0 : 1;
+    const lx = Math.max(left / 100 * tlW, cursor[lane]);
+    cursor[lane] = lx + labelPx(text);
+    if (w < 0.25){   // 太窄画不出段：改画一根发丝，标签仍然照打
+      const h = document.createElement("div"); h.className = "hair";
+      h.style.left = left + "%"; tl.appendChild(h);
+    } else {
+      const s = document.createElement("div"); s.className = "seg";
+      s.style.left = left + "%"; s.style.width = w + "%";
+      s.style.background = r.color;
+      tl.appendChild(s);
+    }
+    const lab = document.createElement("div");
+    lab.className = "in" + (lane ? " low" : "");
+    lab.textContent = text;
+    lab.style.left = lx + "px";
+    lab.style.color = r.color;
+    tl.appendChild(lab);
+    x += r.ms;
+  });
+  if (rest > 0){
+    const e = document.createElement("div"); e.className = "empty";
+    e.style.left = (x/scaleMs*100) + "%"; e.style.width = (rest/scaleMs*100) + "%";
+    e.title = "未纳入 timings 的墙钟时间";
+    tl.appendChild(e);
+  }
+  const parts = rows.filter(r => r.ms > 0).map(r => r.name + " " + fmtMsShort(r.ms)).join(" ＋ ");
+  $("tlmsg").innerHTML =
+    "端到端墙钟 <b style='color:#E6EDF3'>" + fmtS(wallS) + " 秒</b>；" +
+    "其中 timings 记账 " + fmtMsShort(accounted) + "（" + (parts || "无") + "）；" +
+    "未纳入 timings 的墙钟 " + fmtMsShort(rest) + "（斜纹区，框架/解码/写盘开销）。<br>" +
+    "⚠ 各层耗时<b style='color:#E6EDF3'>不能相加</b>：<code>timings.total_ms</code> 只累加 <code>*_ms</code> 结尾的键，" +
+    "本帧它等于 " + fmtMsShort((timings.tier0_ms||0) + (timings.tier0_5_ms||0)) +
+    "（<b style='color:#E6EDF3'>不含 Tier 1</b> 的 " + fmtMsShort(timings.tier1_s ? timings.tier1_s*1000 : 0) +
+    "）。求和会与上面的对外数字矛盾，故一律以墙钟为准。";
+}
+
+/* ---------- 结果 ---------- */
+function renderResult(r, wallS, wallSrc){
+  const CALLS = r.tier_calls || {}, T = r.timings || {}, F = r.findings || [];
+
+  // 顶部免责声明：逐字渲染 r.disclaimers，不改写
+  const ds = r.disclaimers || [];
+  $("dTag").textContent = "免责声明 · 原文照录";
+  $("dTxt").textContent = ds.join(" ") +
+    (r.partial ? " ｜ partial=true：本帧存在显式标注 uncertain 的条目（route.assemble_result 的定义）。"
+               : " ｜ partial=false：本帧无显式标注 uncertain 的条目。");
+
+  $("wallNum").textContent = fmtS(wallS);
+
+  // 卡片 0/1/2：按 tier_calls 与 timings 的实测值决定触发/跳过
+  const shortCircuit = T.short_circuit;
+  const c0 = CALLS.tier0 > 0;
+  setCard(0, c0 ? "fired" : "waiting",
+    {ms: c0 ? T.tier0_ms : null,
+     note: c0 ? "人员区域 " + F.length + " 处（非精确人数）" : "未调用"});
+
+  const c1 = CALLS.tier0_5 > 0;
+  setCard(1, c1 ? "fired" : "skip",
+    {ms: c1 ? T.tier0_5_ms : null,
+     note: c1 ? "weakest_conf=" + (T.weakest_conf != null ? T.weakest_conf : "—") +
+                " · next_tier=" + (T.next_tier != null ? T.next_tier : "—")
+              : (shortCircuit ? "上游未检测到人员区域<br>本层未执行" : "未调用")});
+  setLink(1, !c1);
+
+  const c2 = CALLS.tier1 > 0;
+  setCard(2, c2 ? "fired" : "skip",
+    {ms: c2 ? T.tier1_s * 1000 : null,
+     note: c2 ? "帧级复核一次 · 非逐人" + (T.tier1_s ? "（" + fmtMsShort(T.tier1_s*1000) + "）" : "")
+              : (shortCircuit ? "未检测到人员区域<br>无可升级结论" : "判据未升级")});
+  setLink(2, !c2);
+  setLink(3, true);
+  setCard(3, "locked", {main:"🔒 未授权", note:"cloud_authorized=False<br>实测调用 " +
+        (CALLS.tier2 || 0) + " 次，从不上色"});
+
+  // 明细
+  $("tally").textContent = F.length
+    ? ("检出人员区域 " + F.length + " 处（非精确人数；findings[].tier 实测值全部为 " +
+       [...new Set(F.map(f => f.tier))].join("/") + "）")
+    : "本帧未检出人员区域，findings 为空数组。";
+  const ul = $("list"); ul.textContent = "";
+  F.forEach(f => {
+    const li = document.createElement("li");
+    li.className = "f " + (f.severity === "uncertain" ? "unc" :
+                           f.severity === "critical" ? "critical" :
+                           f.severity === "warning" ? "warning" : "");
+    const row = document.createElement("div"); row.className = "row";
+    if (f.severity === "uncertain"){
+      const q = document.createElement("span"); q.className = "q"; q.textContent = "?";
+      row.appendChild(q);
+    }
+    const sev = document.createElement("span"); sev.className = "sev mono";
+    sev.textContent = f.severity;                       // 逐字渲染，不重新推导
+    const who = document.createElement("span"); who.className = "mono";
+    who.textContent = "人员区域 #" + f.person_index;
+    row.append(sev, who);
+    li.appendChild(row);
+    const b = document.createElement("div"); b.className = "fine";
+    b.textContent = "判据原文：" + (f.severity_basis || "—");
+    const rl = document.createElement("div"); rl.className = "fine";
+    rl.textContent = "规则原文：" + (f.severity_rule || "—");
+    const fl = document.createElement("div"); fl.className = "fine mono";
+    fl.textContent = "cap_found=" + f.cap_found + " · coverall_found=" + f.coverall_found +
+                     " · confidence=" + f.confidence + " · tier=" + f.tier +
+                     " · box=" + JSON.stringify(f.box);
+    li.append(b, rl, fl);
+    ul.appendChild(li);
+  });
+
+  // 标注图
+  if (window.__annUrl){
+    $("annBox").style.display = "block"; $("annImg").src = window.__annUrl;
+  } else {
+    $("annBox").style.display = "none";
+  }
+
+  // Tier 1 原文：引文块，标注「未经核验」
+  const qw = $("quoteWrap"); qw.textContent = "";
+  if (r.tier1_answer){
+    const tag = document.createElement("div"); tag.className = "fine";
+    tag.style.marginBottom = "8px";
+    tag.textContent = "以下为本地 VLM 原文，未经核验；其中的计数为模型自述，不构成本系统的人员计数结论。";
+    const bq = document.createElement("blockquote"); bq.className = "vlm";
+    const p = document.createElement("p"); p.textContent = r.tier1_answer;  // 纯文本，杜绝注入
+    bq.appendChild(p);
+    qw.append(tag, bq);
+    const m = document.createElement("div"); m.className = "fine"; m.style.marginTop = "8px";
+    m.textContent = "提示词：" + "画面里有几个人？他们是否都佩戴了防护帽、穿着防护服？逐个说明。";
+    qw.appendChild(m);
+  } else {
+    const d = document.createElement("div"); d.className = "verdict";
+    d.innerHTML = "本帧<b>未调用 Tier 1</b>，因此没有模型自述。";
+    const w = document.createElement("div"); w.className = "fine";
+    w.textContent = shortCircuit ? "原因（timings.short_circuit 原文）：" + shortCircuit
+                                 : "原因：无 findings 需要复核。";
+    qw.append(d, w);
+  }
+  $("res").style.display = "grid";
+
+  // 对比：绝对量，不写倍率
+  const nm = window.__lastPhoto || "(未命名)";
+  const line = (k, n, hasPerson, wall, t1) =>
+    '<div><span class="k">' + k + '</span>' + n + "：<b>" + (hasPerson ? "有人" : "无人") +
+    "</b> → 端到端 <span class='n'>" + fmtS(wall) + " 秒</span>，Tier 1 调用 <span class='n'>" +
+    t1 + " 次</span></div>";
+  const cur = line("本　次", nm, F.length > 0, wallS, CALLS.tier1 || 0);
+  $("cmp").innerHTML = (first ? '<div><span class="k">上一张</span>—</div>' : window.__prevLine) + cur;
+  window.__prevLine = cur; first = false;
+}
+
+/* ---------- 上传与运行 ---------- */
+function showError(msg){
+  $("err").style.display = "block";
+  $("err").textContent = "错误：" + msg;
+}
+function setStage(name, busyFlag, note){
+  $("dropzone").style.display = "none";
+  $("stage").style.display = "block";
+  $("stage").className = busyFlag ? "busy" : "";
+  $("stageNote").textContent = note || "";
+  if (name) window.__lastPhoto = name;
+}
+async function runPhoto(name, b64, objectUrl){
+  if (busy) return;
+  busy = true;
+  $("err").style.display = "none";
+  setStage(name, true, "处理中 · 单线程服务，本帧期间页面会等待（Tier 1 单帧 10–14 秒）");
+  $("shot").src = objectUrl;
+  $("wallNum").textContent = "…";
+  $("tlMode").textContent = "处理中";
+  // 处理中：卡片从左到右逐个点亮，但不显示任何耗时数字（数字只能来自实测）
+  setCard(0, "running", {main:"运行中…", note:"Tier 0 人员检测"});
+  setCard(1, "waiting", {main:"等待上游", note:"Tier 0.5 颜色判读"});
+  setCard(2, "waiting", {main:"等待上游", note:"Tier 1 本地模型"});
+  setCard(3, "locked", {main:"🔒 未授权", note:"Tier 2 云端"});
+  [1,2,3].forEach(i => setLink(i, false));
+  const timers = [setTimeout(() => setCard(1,"running",{main:"运行中…",note:"Tier 0.5 颜色判读"}), 900),
+                  setTimeout(() => setCard(2,"running",{main:"运行中…",note:"Tier 1 本地模型"}), 2200)];
+  document.querySelectorAll("button").forEach(b => b.disabled = true);
+
+  try{
+    const resp = await fetch("/run", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({name: name, data_b64: b64})
+    });
+    const j = await resp.json();
+    timers.forEach(clearTimeout);
+    if (!j.ok){ showError(j.error || ("HTTP " + resp.status)); setCard(0,"idle",{}); return; }
+    window.__annUrl = j.annotated_url;
+    setStage(name, false, "已完成 · " + j.upload_name);
+    renderResult(j.result, j.wall_clock_s, j.wall_clock_source);
+    renderTimeline(j.result.timings, j.result.tier_calls, j.wall_clock_s);
+    $("tlMode").textContent = "实测";
+  } catch(e){
+    timers.forEach(clearTimeout);
+    showError(String(e));
+  } finally {
+    busy = false;
+    document.querySelectorAll("button").forEach(b => b.disabled = false);
+  }
+}
+function fileToB64(file){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => { const s = String(fr.result);
+      res({b64: s.slice(s.indexOf(",") + 1), url: URL.createObjectURL(file)}); };
+    fr.onerror = () => rej(fr.error);
+    fr.readAsDataURL(file);
+  });
+}
+async function handleFile(file){
+  if (!file) return;
+  const {b64, url} = await fileToB64(file);
+  await runPhoto(file.name, b64, url);
+}
+function initDrop(){
+  const dz = $("dropzone");
+  dz.onclick = () => { const i = document.createElement("input");
+    i.type = "file"; i.accept = "image/*"; i.onchange = () => handleFile(i.files[0]); i.click(); };
+  ["dragenter","dragover"].forEach(ev => document.addEventListener(ev, e => {
+    e.preventDefault(); dz.classList.add("hot"); }));
+  ["dragleave","drop"].forEach(ev => document.addEventListener(ev, e => {
+    e.preventDefault(); dz.classList.remove("hot"); }));
+  document.addEventListener("drop", e => {
+    if (e.dataTransfer && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+}
+async function loadGallery(){
+  try{
+    const j = await (await fetch("/photos")).json();
+    const g = $("gallery"); g.textContent = "";
+    const lb = document.createElement("span");
+    lb.className = "lb";
+    lb.textContent = "内置实拍照片（点击直跑，免拖拽）：";
+    g.appendChild(lb);
+    (j.photos || []).forEach(p => {
+      const b = document.createElement("button");
+      b.textContent = p.name.slice(0, 8) + "…";
+      b.onclick = () => runBuiltin(p);
+      g.appendChild(b);
+    });
+    // ?auto=<文件名前缀> 直接跑内置照片：录屏彩排用，免去每次拖拽
+    const want = new URLSearchParams(location.search).get("auto");
+    if (want){
+      const hit = (j.photos || []).find(p => p.name.startsWith(want));
+      if (hit) runBuiltin(hit); else showError("?auto= 没匹配到内置照片：" + want);
+    }
+  } catch(e){ /* 内置照片列表不可用不影响拖拽上传 */ }
+}
+const runBuiltin = p => fetch(p.url).then(r => r.blob()).then(bl => fileToB64(bl))
+                             .then(o => runPhoto(p.name, o.b64, p.url));
+buildCards(); initDrop(); loadGallery();
+</script>
+</body>
+</html>
