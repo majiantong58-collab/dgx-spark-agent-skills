@@ -1,0 +1,175 @@
+{
+  "$comment": "对照评测指标定义。执行规格见 comparison-design.md，A5 负责填数。",
+  "version": "0.1",
+  "case_count": 40,
+  "case_breakdown": { "positive": 21, "negative": 16, "positive_empty": 3 },
+  "min_runs_per_case": 3,
+  "arms": [
+    {
+      "id": "A",
+      "label": "基线",
+      "loads_skill_md": false,
+      "loads_not_for": false,
+      "loads_body": false,
+      "answers": "裸模型下界"
+    },
+    {
+      "id": "B",
+      "label": "全量",
+      "loads_skill_md": true,
+      "loads_not_for": true,
+      "loads_body": true,
+      "answers": "本项目实际交付形态（主实验组）"
+    },
+    {
+      "id": "C",
+      "label": "消融-去负向条件",
+      "loads_skill_md": true,
+      "loads_not_for": false,
+      "loads_body": true,
+      "answers": "隔离 Not for 段对误触发率的净贡献，即 Δ2 = FTR(C) - FTR(B)（正值 = 净收益）"
+    },
+    {
+      "id": "D",
+      "label": "仅描述",
+      "loads_skill_md": true,
+      "loads_not_for": true,
+      "loads_body": false,
+      "answers": "分离路由能力与知识能力的贡献（可选臂）"
+    }
+  ],
+  "metrics": [
+    {
+      "id": 1,
+      "key": "false_trigger_rate",
+      "name": "负向误触发率 FTR",
+      "unit": "ratio",
+      "definition": "负向用例中「该用例 skill 字段所指技能」被错误调用的占比；采用本技能口径而非任意技能口径——交叉路由负例（如 orch-neg-001 正确去向为 gauge-reading）在任意技能口径下会把正确路由计为误触发",
+      "direction": "lower_is_better",
+      "primary": true
+    },
+    {
+      "id": 2,
+      "key": "negative_reject_rate",
+      "name": "负向正确拒绝率",
+      "unit": "ratio",
+      "definition": "1 - FTR",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": 3,
+      "key": "trigger_accuracy",
+      "name": "触发准确率",
+      "unit": "ratio",
+      "definition": "expect_trigger 判定正确的用例占比",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": 4,
+      "key": "route_sequence_accuracy",
+      "name": "路由序列精确匹配率",
+      "unit": "ratio",
+      "definition": "编排层用例中 expect_route 与实际路由序列完全一致的占比",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": 5,
+      "key": "conclusion_accuracy",
+      "name": "结论正确率",
+      "unit": "ratio",
+      "definition": "hazard_code 集合与 expect_codes 的精确匹配率",
+      "direction": "higher_is_better"
+    },
+    {
+      "id": 6,
+      "key": "reading_mae_fs",
+      "name": "读数 MAE",
+      "unit": "ratio_of_full_scale",
+      "definition": "指针表读数按满量程归一后的平均绝对误差",
+      "direction": "lower_is_better"
+    },
+    {
+      "id": 7,
+      "key": "fabricated_range_count",
+      "name": "编造量程数",
+      "unit": "count",
+      "definition": "量程未知时仍给出数值的次数",
+      "direction": "lower_is_better",
+      "hard_gate": 0,
+      "category": "safety_boundary"
+    },
+    {
+      "id": 8,
+      "key": "hallucinated_items",
+      "name": "幻觉项数",
+      "unit": "count",
+      "definition": "报告中无法回溯到输入的条目数",
+      "direction": "lower_is_better",
+      "hard_gate": 0,
+      "category": "safety_boundary"
+    },
+    {
+      "id": 9,
+      "key": "boundary_compliance_rate",
+      "name": "边界合规率",
+      "unit": "ratio",
+      "definition": "免责声明 / requires_human_review / uncertain 保留 / 无身份信息 的综合达标率",
+      "direction": "higher_is_better",
+      "hard_gate": 1.0,
+      "category": "safety_boundary"
+    },
+    {
+      "id": 10,
+      "key": "local_fallback_rate",
+      "name": "本地兜底率",
+      "unit": "ratio",
+      "definition": "Tier 0+1 占全部推理调用的比例，目标 > 0.90",
+      "direction": "higher_is_better",
+      "target": 0.9
+    },
+    {
+      "id": 11,
+      "key": "tier2_calls_per_task",
+      "name": "Tier 2 调用次数/任务",
+      "unit": "count",
+      "definition": "云端 StepFun 调用频次，成本代理指标",
+      "direction": "lower_is_better"
+    },
+    {
+      "id": 12,
+      "key": "p95_latency_ms",
+      "name": "P95 端到端延迟",
+      "unit": "ms",
+      "definition": "单任务 P95 墙钟时间",
+      "direction": "lower_is_better"
+    },
+    {
+      "id": 13,
+      "key": "trigger_stability",
+      "name": "触发稳定性",
+      "unit": "ratio",
+      "definition": "同一用例 >=3 次运行结果的一致率，对应官方承认的触发稳定性痛点",
+      "direction": "higher_is_better"
+    }
+  ],
+  "derived": [
+    {
+      "key": "delta_skill_gain",
+      "name": "Δ1 = B - A",
+      "definition": "加载 skill 带来的总收益"
+    },
+    {
+      "key": "delta_not_for_gain",
+      "name": "Δ2 = FTR(C) - FTR(B)",
+      "definition": "负向条件（Not for 段）的净收益 —— 本评测的核心结论。FTR 越低越好，故正值 = Not-for 段带来的净收益"
+    }
+  ],
+  "failure_modes": [
+    "false_trigger",
+    "missed_trigger",
+    "wrong_conclusion",
+    "boundary_breach",
+    "silent_degradation",
+    "hallucination"
+  ]
+}

@@ -1,0 +1,552 @@
+# 交付说明文档 — 巡检 Agent Skills 套件
+
+> 第三届 NVIDIA DGX Spark 黑客松 · Agent Skills 开发挑战赛
+> 状态：§1–§4、§6、§8 已完成；§7 待实验结果回填
+> 场景：**电子厂洁净车间 · 着装合规**（v2）
+
+**标注约定**
+`[已实测]` = 本文档作者在本机实际执行并观察到结果；`[来源: 文件:行号]` = 从仓库读到、未实际执行；
+`[落盘]` = 数字取自仓库内的指标文件；`[未验证]` = 既未实测也无仓库依据。
+
+> **逐层性能数字的唯一真值来源**：`docs/local_tier_benchmark.json` / `.md`。
+> 其他文档一律**引用**该文件，不得各写各的。（早期 `[未落盘]` 标记已**全部清除**。）
+
+---
+
+## §1 项目简介
+
+官方 Agent Skills 规范要求 skill 的 `description` 写明「不适用于什么」，但**从未公开量化它对运行时误触发率的边际收益**。本项目用**四臂消融**补上这个空白：同一套 skill、四组 description 变体，测出负向条件带来的净收益 Δ2。
+
+**电子厂洁净车间的着装合规检查**是**场景载体**，让方法不抽象、可演示；**量化方法本身才是本项目的贡献主体**。本项目**不主张**行业 know-how 优势，**不承诺**真实产线落地效果。
+
+---
+
+## §2 技术栈说明
+
+### 2.1 本地推理栈（三层，全部在本机跑通）
+
+| 项 | 形态 | 作用 | 依据 |
+|---|---|---|---|
+| **YOLO11n** | 本地 `.pt`，`models/yolo11n.pt` | **Tier 0**：人形定位与计数 | `[已实测]` 权重文件存在 |
+| **颜色-几何启发式** | 纯代码，零模型依赖 | **Tier 0.5**：着装颜色初筛 | `[来源: local-tier-limitations.md:6]` |
+| **Qwen3-VL-2B** | 本地 `models/Qwen3-VL-2B-Instruct/` | **Tier 1**：本地视觉判读 | `[已实测]` 权重文件存在 |
+
+> **Tier 0 不认识任何 PPE 类别。** COCO 版 yolo11n 没有「防尘帽 / 防静电服」类别
+> （也没有「安全帽 / 反光衣」）。它的职责**仅为**人形定位与计数，**不作为 PPE 判定依据**。
+> `[来源: local-tier-limitations.md:60-63]`
+
+### 2.2 云端与工具链
+
+| 项 | 版本 / 形态 | 作用 | 依据 |
+|---|---|---|---|
+| **StepFun `step-5-preview`** | 云端 API | **Tier 2**：多目标冲突 / 成文报告（**本次未调用**，见 §3.3） | `[来源: .env:STEPFUN_MODEL]`、D-010 |
+| **Python** | **3.12.10** | 运行时。本机默认 Python 为 3.14，故显式用 `py -3.12` | `[已实测]` `py -3.12 -V` |
+| **`.venv`** | 项目虚拟环境 | 内含官方校验器 CLI `agentskills.exe`；含 `torch 2.11.0+cu128` / `torchvision 0.26.0+cu128` / `transformers 5.17.0` / `ultralytics 8.4.159` | `[已实测]` `ls .venv/Lib/site-packages/` |
+| **Agent Skills 规范** | `SKILL.md` + `scripts/` + `references/` + `evals/` | skill 的四件套结构 | `[来源: skills/README.md:55-63]` |
+| **NVIDIA `skills-ref`** | PyPI 包 | frontmatter 合规校验（交付门禁） | `[来源: skills/evals/check-compliance.md:3-19]` |
+| **NVIDIA `SkillEvaluator`** | **v0.3.0** | 静态质检（**零 API 成本**）；Tier 3 live 评测已裁决不做 | D-016 |
+
+> ✅ **`requirements.txt` 已补齐**：`transformers` / `ultralytics` 已列入；
+> `torch` / `torchvision` 因需 **cu128 专用索引**，改为**两步安装**，见 §5.2。
+> 此前「照清单从零安装无法复现本地流水线」的缺口**已修复**。
+> `[已实测]` 索引 `https://download.pytorch.org/whl/cu128` 返回 **HTTP 200**；`.venv` 实装 `torch 2.11.0+cu128`。
+
+### 2.3 交付的 4 个 skill（1 编排 + 3 窄触发）
+
+| skill | 职责（一句话） |
+|---|---|
+| `inspection-orchestrator` | **编排**：决定调谁、定层级 |
+| `safety-hazard-detection` | **窄触发**：图像 → 隐患标签 |
+| `gauge-reading` | **窄触发**：表盘 → 一个数 |
+| `inspection-report` | **窄触发**：结论 → 报告 |
+
+---
+
+## §3 本地三层流水线
+
+### 3.1 架构与各层职责
+
+请求自下而上逐层升级，**每层都可以短路**——便宜层能定案，就不进贵层。
+
+| 层 | 载体 | 职责 | 结论权限 |
+|---|---|---|---|
+| **Tier 0** | YOLO11n（本地） | 人形定位与计数；**无人的帧直接短路** | 不下结论 |
+| **Tier 0.5** | 颜色-几何启发式 | 着装颜色初筛，给「有正面证据 / 无证据」 | 仅在**有正面证据**时下 `info` |
+| **Tier 1** | Qwen3-VL-2B（本地） | 视觉判读，确认或推翻 Tier 0.5 | 可下结论 |
+| **Tier 2** | StepFun `step-5-preview`（云端） | 多目标冲突 / 成文措辞 | 可下结论 |
+
+### 3.2 实测数据
+
+**逐层调用次数**（**确定性指标**，取自 `docs/local_tier_metrics.json`，三张实拍照片）：
+
+| 照片 | Tier 0 | Tier 0.5 | Tier 1 | Tier 2 | findings | 短路 |
+|---|---|---|---|---|---|---|
+| photo1 | 1 | 1 | 1 | 0 | 6 | — |
+| photo2 | 1 | 1 | 1 | 0 | 1 | — |
+| photo3 | 1 | **0** | **0** | 0 | 0 | **`no_person`：未进入 Tier 0.5，未调用 Tier 1** |
+| **合计** | **3** | **2** | **2** | **0** | 7 | — |
+
+`[落盘] docs/local_tier_metrics.json`
+
+**分层收益的机制**：photo3 在 **Tier 0 即判定无人 → 直接短路**，既没有进 Tier 0.5，**也没有调用 Tier 1 的视觉模型**。这就是分层省下的成本——**不是把模型跑得更快，而是根本不跑**。
+
+**墙钟时间（记录值，3 张照片）**：**0.14 – 28.34 s**（中位 9.30 s；合计 37.78 s）。
+> ⚠️ **墙钟时间会波动，不作为对外指标引用**；**对外请引用上表的 `tier_calls`**（确定性）。
+> `[落盘] docs/local_tier_metrics.json`
+
+### 3.2.1 逐层基准（**唯一真值来源**）
+
+> 本节数字**一律取自** `docs/local_tier_benchmark.json` / `.md`（2026-09-27 重跑版）。
+> **其他文档一律引用此处，不得各写各的。**
+> **`meta.same_machine_same_round = true`**——同一台机、同一轮完成，**可直接引用**。
+> **两个时间口径不可混成一个数**：冷启动几秒、稳态几十毫秒，**差好几个数量级**。
+> 全部为 **`[min, max]` 区间**，不给单点。
+
+| 层 | 组件 | `cold_start_s` | `steady_state_ms` | `runs` / 样本 |
+|---|---|---|---|---|
+| **tier0** | YOLO11n（COCO person 检测, GPU） | **[3.976, 4.147]** | **[14.29, 51.42]** | 3 / 15 |
+| **tier0_5** | 颜色/几何启发式（CPU，无模型） | **[1.862, 1.894]** | **[16.12, 18.58]** | 3 / 15 |
+| **tier1** | Qwen3-VL-2B-Instruct bf16（GPU） | **[19.362, 20.638]** | **[9046.6, 10603.29]**（≈ **9.05–10.60 s**） | 3 / 15 |
+
+**显存（MiB）**：
+
+| 层 | `after_load` | `peak` | `after` |
+|---|---|---|---|
+| **tier0** | 42.1 | **59.8** | 42.1 |
+| **tier0_5** | `null` | `null` | `null`（纯 CPU，**不估算、不填 0**） |
+| **tier1** | 4059.0 | **4546.9** | **4096.3** |
+
+**口径定义**：`cold_start_s` = 从**进程启动**到首次出结果（含解释器启动、import、**CUDA 初始化**、
+模型加载、首次推理）；`steady_state_ms` = **模型已加载后**单次调用墙钟。三层**各自独立进程**。
+
+> ✅ **Tier 0 稳态区间是双峰的，且原因已查清——不是随机离群，是系统性现象**：
+> **每个进程内稳态第 1 次调用恒为 ~43–51 ms，第 2 次起落到 ~14–16 ms**；
+> 三个进程**各自复现**（首值 44.08 / 42.78 / 51.42 ms）。
+> 这是**进程内首次调用仍受 CUDA 分配器 / 图预热影响**。
+> **口径二选一，两个都给**：
+> - **含预热 `[14.29, 51.42]`** —— 保守，**对外推荐用这个**（区间已含该效应，未剔除）
+> - 完全预热后 **`[14.29, 17.41]`**
+> `[落盘] docs/local_tier_benchmark.md` §「波动说明」
+
+> 💡 **`vram_after_mb` 是「能否长跑」的证据**：
+> tier0 推理后**完全回落到加载后水平**（42.1），**无累积**；
+> **tier1 推理后 4096.3，比加载后的 4059.0 高 37.3 MiB，未完全回落**
+> （PyTorch 分配器缓存所致，**非必然泄漏**）→ **长跑前建议加显存监控**。
+
+**tier0_5 极稳**：15 样本全落在 `[16.12, 18.58]`，**无预热效应**——验证了「纯 CPU 无状态」的预期。
+**tier1 波动**：稳态极差 **1556.69 ms**，相对约 **17%**；**生成长度固定 180 tokens**
+（`max_new_tokens=200`），故波动**来自推理本身而非输出长度差异**。
+
+**模型体积**：`yolo11n.pt` **5,613,764 B**；Tier 1 模型目录 **4,266,649,720 B**（13 文件）。
+**本次环境**：RTX 5060 Laptop / **sm_120 (12,0)** / 显存总量 **8150.6 MiB** / 驱动 **591.91** /
+`torch 2.11.0+cu128` / Python 3.12.10 / Windows 11。
+
+### 3.3 Tier 2 本次未调用——**原因需要说清**
+
+`tier2_used: false`，全轮 **Tier 2 调用 0 次**。
+
+但**原因不是「路由器判断不需要」**，而是：**本次运行 Tier 2 未获授权**（`cloud_authorized=False`），
+`route.enforce_safety_boundary` 会将其**压回本地**。
+
+`[落盘] docs/local_tier_metrics.json` 的 `note` 字段原话：
+> 「Tier 2 未授权（cloud_authorized=False），route.enforce_safety_boundary 会将其压回本地；实测 tier2 调用为 0。」
+
+`[来源: skills/inspection-orchestrator/scripts/route.py:73,217；tier_budget.py:99-105]`
+（`cloud_authorized` 默认 `False`；未授权一律不放行，policy §3 硬约束。）
+
+> **因此不能表述为「云端按需触发、本次无需」。** 本次是**授权关闭下的纯本地运行**。
+> 这恰好也验证了安全边界生效——但它**没有**验证 Tier 2 的路由触发逻辑。
+>
+> **本次运行未启用云端授权，Tier 2 通路未被触发、也未被验证。因此本次数据不能用于说明「云端按需触发」的效率。**
+
+### 3.4 关于「适配 DGX Spark」
+
+本流水线跑在**笔记本（RTX 5060 Laptop 8 GB / Windows）**上，是**同架构的受限版**。
+
+我们**未申请到 DGX Spark 云节点**，因此按**可伸缩架构**设计：三层分级、每层可独立替换载体。
+**同一套代码在 DGX Spark 上换用更大的本地模型即可放大**——但**本版本未在 DGX Spark 上实测**，
+文档统一表述为「边缘优先，架构可平移」。
+
+---
+
+## §4 安全设计原则
+
+> ### 核心原则：**便宜层不下最终结论。**
+
+三层流水线每往上一层都更贵。便宜的层当然想早点给答案——但在安全场景里，**早给答案比不给答案更危险**。
+
+两类错误，方向相反：
+
+| 错误 | 表现 | 后果 |
+|---|---|---|
+| **假指控** | **没看到 ≠ 没有** | 冤枉一个穿戴合规的人，**摧毁对系统的信任** |
+| **假安心** | **看到了但拿不准 ≠ 没问题** | 放走一个真违规的人 |
+
+**在安全场景里，假指控比漏检更危险。** 漏检只损失一次检查机会；假指控会让系统整体失去可信度。
+
+### 落地规则
+
+**只有置信度 ≥ 0.75 才能下结论** —— 且这个 **0.75 与升级阈值是同一个常量**（`ACCEPT_CONFIDENCE`），
+不另立一套规则。
+
+`[来源: skills/safety-hazard-detection/scripts/local_tier_pipeline.py:137,157]`
+```python
+severity = "info" if conf >= tier_budget.ACCEPT_CONFIDENCE else "uncertain"
+```
+> 源码注释原话：「severity 与升级判据**共用同一个阈值**。为什么必须统一：若 severity 另立一套规则
+> （例如『找到就给 info』），就会出现**同一帧在两个环节得到相反结论**。」
+
+**Tier 0.5 只要没有正面证据，`severity` 一律 `uncertain`，绝不允许输出 `warning` / `critical`** —— 除非 Tier 1 确认。
+`[来源: local-tier-limitations.md:17-18]`
+
+### 这不是性能问题，是能力边界
+
+启发式**看不到蓝色，只能说明它没看见蓝色——它本来就看不见白色着装**。
+实测白色掩膜覆盖率 **11.7%**、**17 个噪声连通块**（墙面、机柜、反光全在其中），
+对白色人员的**召回为 0**。
+
+**因此「没找到」不构成该人员未佩戴 PPE 的证据。** 这是设计约束，不是调参能解决的。
+
+### 实测佐证（修复前 → 修复后）
+
+| | 修复前 | 修复后 |
+|---|---|---|
+| photo1 的 3 人 | 被误标 `warning` | 全部 `uncertain` |
+| 整轮 7 条 findings | — | 见下方**实际计数** |
+
+**整轮 severity 实际计数**（全量 7 条记录，非抽样）：
+
+| severity | 计数 |
+|---|---|
+| `uncertain` | **7** |
+| `info` | **0** |
+| `warning` | **0** |
+| `critical` | **0** |
+
+**7 条**全是 `uncertain`——即**这一轮没有下任何最终结论**。置信度区间 **0.000 – 0.463**，**全部低于 0.75 阈值**。
+
+`[落盘] models/pipeline_results.json`　`[已实测]` 统计方式：`json.load` → 递归收集所有含 `severity` 的记录 → `collections.Counter`。
+
+**召回率必须随结论一起给**：photo1 上启发式对 6 人中 **3 人有正面证据，召回 3/6**。
+
+> ⚠️ **「有正面证据」不等于「下结论」**：photo1 的 `person_index 1` 虽然
+> `cap_found=True` 且 `coverall_found=True`，但 `confidence=0.4632 < 0.75`，因此**仍判为 `uncertain`**。
+> 这正是 §4 那条规则在起作用——**看到了但拿不准 ≠ 没问题**。
+`[来源: local-tier-limitations.md:19-22；models/pipeline_results.json]`
+
+---
+
+## §5 部署说明
+
+### 5.1 环境要求
+
+- **Windows**（本项目在 Windows 11 上开发与验证）
+- **Python 3.12**（实测 3.12.10）。注意：本机默认 `python` 为 3.14，请显式用 `py -3.12`
+- **NVIDIA GPU（必需）**：本地三层流水线需要 CUDA，实测显存峰值 **4546.9 MiB**（≈4.44 GiB）。
+  本项目实测环境 **RTX 5060 Laptop 8 GB**（sm_120 / 驱动 591.91 / `torch 2.11.0+cu128`）。`[已实测]`
+- **磁盘**：克隆后需**再预留约 5 GB**（模型权重约 4.3 GB + CUDA 版 torch 约 2.5 GB）。`[已实测]`
+- **联网**：**首次部署必需**（下载权重 + 安装依赖）。**权重就位后，本地三层可完全离线运行**。
+
+**GPU 自检**（装完依赖后跑一次）：
+
+```bash
+./.venv/Scripts/python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+```
+预期输出 `2.11.0+cu128 True`。若为 `False`，多半是装成了 CPU 版 torch——见 §5.2。
+
+#### 🔴 模型权重：**不在仓库内分发，必须自行下载**
+
+**`models/` 已被 `.gitignore` 排除**（`.gitignore:24`）——**克隆仓库后没有任何权重文件**。
+因体积原因不随仓库分发。`[已实测]` `git check-ignore` 确认。
+
+**需要下载的内容与目标路径**：
+
+| 文件 | 目标路径 | 体积 |
+|---|---|---|
+| YOLO11n 权重 | `models/yolo11n.pt` | **5,613,764 B（约 5.4 MB）** |
+| Qwen3-VL-2B-Instruct | `models/Qwen3-VL-2B-Instruct/`（13 个文件） | **4,266,649,720 B（约 4.0 GiB）** |
+| **合计** | | **约 4.3 GB** |
+
+**下载源实测对比**（同机、同时段实测）：
+
+| 源 | 实测速度 | 结论 |
+|---|---|---|
+| `hf-mirror.com`（HuggingFace 镜像） | **约 10 KB/s** | ❌ **实际不可用**（4 GB 需数天） |
+| **ModelScope 魔搭** `modelscope.cn` | **约 30 MB/s** | ✅ **推荐**（4 GB 约 2–3 分钟） |
+
+> 💡 **这条经验在国内网络环境下应普遍适用：优先用 ModelScope。**
+
+**ModelScope 下载地址的形式**（逐文件下载，取自现有脚本）：
+
+```
+https://www.modelscope.cn/api/v1/models/Qwen/Qwen3-VL-2B-Instruct/repo?Revision=master&FilePath=<文件名>
+```
+（需逐一下载 `config.json` / `model.safetensors` / `tokenizer.json` 等 13 个文件；
+其中 `model.safetensors` 约 4.26 GB，是体积主体。）
+
+> 📌 **下载脚本待补**：`fetch*.sh` 正在从 `models/`（被 gitignore）移入仓库正式路径，
+> **路径确定后在此处补齐命令**。
+> ⚠️ 现有脚本**含本机绝对路径**（`cd /c/Users/26270/Desktop/invda`），**不可直接复用**；
+> 移入仓库时须改为相对路径。
+
+### 5.2 依赖安装
+
+**必须分两步。** 只跑 `pip install -r requirements.txt` 会装到 PyPI 的 **CPU 版 torch**，
+本地三层流水线**用不上 GPU**。
+
+**步骤 1 · CUDA 版 torch（必须指定 cu128 专用索引）**
+
+```bash
+./.venv/Scripts/pip install torch torchvision \
+    --index-url https://download.pytorch.org/whl/cu128
+```
+
+**步骤 2 · 其余依赖**
+
+```bash
+./.venv/Scripts/pip install -r requirements.txt
+```
+
+> ⚠️ 步骤 2 之后请确认 `torch.__version__` 仍带 **`+cu128`** 后缀。
+> 若后缀消失，说明被 PyPI 的 CPU 版覆盖，**重跑步骤 1** 即可。
+
+**依据**：`[已实测]` 索引 URL 返回 **HTTP 200**；`.venv` 实装
+`torch 2.11.0+cu128` / `torchvision 0.26.0+cu128`，与上述索引一致。
+`[未验证]`：上面两条命令**本人未从零重跑**（虚拟环境已存在）；
+`py -3.12 -m venv .venv` 建环境命令同样 `[未验证]`。
+`requirements.txt` 顶部已写明同一套两步流程。
+
+**依赖源提示（`[已实测]`）**：本项目开发机上配置的 **阿里云 PyPI 镜像已损坏**——
+`pip install` 稳定报 `IncompleteRead`（两次失败落在**同一字节偏移**，非偶发），换官方源即恢复。
+若你也遇到类似报错，改用官方源：
+
+```bash
+./.venv/Scripts/pip install -r requirements.txt --index-url https://pypi.org/simple/
+```
+
+> 说明：本次验证中，8 个固定版本对官方 PyPI **全部解析成功、无冲突**；对阿里云镜像**确定性失败**。
+> **这是环境问题，与本仓库无关**，但值得写出来以免评委卡在同一处。
+
+### 5.3 `.env` 配置
+
+在项目根目录创建 `.env`，需要**三个变量**（**本文档不写入任何真实凭据**）：
+
+| 变量名 | 用途 |
+|---|---|
+| `STEPFUN_API_KEY` | StepFun API 凭据 |
+| `STEPFUN_BASE_URL` | API 端点。**国内站为 `https://api.stepfun.com/v1`**；国际站为 `https://api.stepfun.ai/v1` |
+| `STEPFUN_MODEL` | 主力模型名（`step-5-preview`） |
+
+`[来源: .env 中变量名与注释]`。**注意**：该 Key **无 `sk-` 前缀**，不要用前缀做校验；端点必须与 Key 所属站点匹配，否则返回 401。`[来源: D-010]`
+
+> **不配 `.env` 也能跑本地三层流水线**——本次三张照片的实测即为 `cloud_authorized=False` 的纯本地运行（见 §3.3）。
+> Tier 2 相关命令才需要 Key。
+
+### 5.4 如何运行
+
+**① 本地三层流水线 — `[未验证]`**
+
+入口脚本：`skills/safety-hazard-detection/scripts/local_tier_pipeline.py`
+`[来源: local-tier-limitations.md:4；local_tier_metrics.json 的 source 字段]`
+
+> ⚠️ **具体命令行参数本文档未核实**，故不给出示例命令以免误导。请以脚本内的 `argparse` 为准。
+> 📌 **复现脚本正在移入仓库，路径待定**——落地后在此处补齐。
+
+**①-b 逐层基准测试 — `[来源: docs/local_tier_benchmark.md:76-84]`**
+
+```bash
+for L in tier0 tier0_5 tier1; do
+  for I in 1 2 3; do
+    .venv/Scripts/python.exe models/bench_layers.py --layer $L > models/bench_runs/$L-$I.json
+  done
+done
+```
+
+（**每层独立进程、重复 3 次**；`steady_state_samples` 共 15 个/层。）
+
+> **每层独立进程**——同进程会让三层共占显存并互相污染加载耗时。
+> 结果落盘于 `docs/local_tier_benchmark.json`（§3.2.1 的唯一真值来源）。
+
+> 🔴 **注意**：`models/` 已被 `.gitignore` 排除，**克隆仓库后 `models/bench_layers.py` 并不存在**。
+> 该脚本与 `fetch*.sh` 正在移入仓库正式路径；**路径确定后本节会更新**。目前请先按 §5.1 下载权重。
+
+**② 合规校验（交付门禁）— `[已实测]`**
+
+```bash
+./.venv/Scripts/agentskills.exe validate skills/gauge-reading
+```
+
+批量跑：
+
+```bash
+for d in inspection-orchestrator safety-hazard-detection gauge-reading inspection-report; do
+  ./.venv/Scripts/agentskills.exe validate "skills/$d" || echo "FAILED: $d"
+done
+```
+
+`[来源: skills/evals/check-compliance.md:11-19]`。
+**实测结果**：4 个 skill 全部输出 `Valid skill: skills\<name>`，**退出码 0**。运行后 `skills/*/SKILL.md` 的 md5 未变（该校验为只读）。
+
+**③ 端到端最小通路 — `[未实测]`**
+
+```bash
+py -3.12 skills/evals/run_e2e.py            # 真实调用 StepFun
+py -3.12 skills/evals/run_e2e.py --offline  # 不调 API，只跑结构自检
+```
+
+`[来源: skills/README.md:21；run_e2e.py:190-191]`
+
+> ⚠️ **警告**：该脚本会写入 `skills/evals/results/`，**曾覆盖过 `a4-baseline.json`**（见决策日志 D-012）。运行前请先备份该目录。
+
+**④ 对照评测（四臂消融）— `[未实测]`**
+
+```bash
+py -3.12 skills/evals/run_comparison.py --arm B --runs 3 --out skills/evals/results/out-b.json
+```
+
+可用参数：`--arm {A,B,C,D}` · `--cases` · `--runs`（默认 3）· `--limit N`（冒烟）· `--out` · `--report` · `--concurrency` · `--force`（允许覆盖产物）
+`[来源: run_comparison.py:1051-1068]`
+
+> 🔴 **`--concurrency` 必须 ≤ 5**。脚本默认值为 8，但**本账户实测并发上限为 5**，超出会大量触发 429（实测 A 臂失败率 40%）。要一次跑干净请显式传 `--concurrency 5`。
+> `[来源: run_comparison.py:39-41]`、D-017
+
+### 5.5 常见坑
+
+| 现象 | 原因 | 解决 |
+|---|---|---|
+| 打印报告时抛 `UnicodeEncodeError` | 报告含 `−`(U+2212) 与 `⚠`，**Windows GBK 控制台**无法编码 | 加 `--out <file>` **写入文件**（走 UTF-8，不受影响） |
+| HTTP 401 | `STEPFUN_BASE_URL` 与 Key 所属站点不匹配 | 国内站用 `.com`，国际站用 `.ai` |
+| 返回空 `content` | `step-5-preview` 是推理模型，思维链与答案**共享 `max_tokens`** | 提高 `max_tokens`；且提示词避免让模型复述题面 |
+| 大量 429 | 并发超过账户上限 5 | 显式 `--concurrency 5`；**注意这是账户级限制，你的 Key 上限可能不同** |
+| `pip install` 报 `IncompleteRead` | **本机配置的阿里云 PyPI 镜像已损坏**（非偶发） | 换官方源：`--index-url https://pypi.org/simple/`（见 §5.2） |
+| `agentskills` 命令找不到 | 未安装 `skills-ref` | 已列入 `requirements.txt`（`skills-ref==0.1.1`）；重跑 §5.2 步骤 2 |
+| 克隆后 `models/` 是空的 | **`models/` 被 `.gitignore` 排除，权重不随仓库分发** | 按 §5.1 自行下载（约 4.3 GB） |
+
+`[来源: D-010、D-012、D-017；本轮实测]`
+
+### 5.6 「评委视角」自查：从零克隆会踩到的隐含假设
+
+**假设从零克隆仓库、逐条走 §5 每一步**，以下是查出的「在本机成立、在别人机器上不一定」之处及处置：
+
+| # | 隐含假设 | 后果 | 处置 |
+|---|---|---|---|
+| 1 | 「权重已预置在 `models/`」 | 🔴 **本机成立，克隆后为空**——`models/` 被 gitignore | ✅ §5.1 已改为**下载说明**（含体积、目标路径、双源实测） |
+| 2 | 「`agentskills` 命令可用」 | 🔴 **全新环境不存在**——`skills-ref` 未在依赖清单 | ✅ **已加入 `requirements.txt`** |
+| 3 | 「pip 能正常装」 | 🟠 本机镜像损坏会卡住 | ✅ §5.2 加官方源回退 + §5.5 加行 |
+| 4 | 「`models/bench_layers.py` 存在」 | 🟠 克隆后不存在（同被 gitignore） | ⏳ §5.4 已加警告，**待脚本迁移** |
+| 5 | 「`./.venv/Scripts/` 路径」 | 🟡 Windows 布局；macOS/Linux 为 `.venv/bin/` | 已声明「本项目在 Windows 上验证」 |
+| 6 | 「`py -3.12` 可用」 | 🟡 Windows 专用启动器 | 已声明平台；非 Windows 用 `python3.12` |
+| 7 | 「并发上限 = 5」 | 🟡 **账户级**限制，随 Key 而异 | ✅ §5.5 已注明「你的 Key 上限可能不同」 |
+| 8 | 「磁盘够用」 | 🟡 实际 `models/` 占 **8.9 GB**（含两份 Qwen3-VL-2B：`-Instruct` 与 `-ModelScope`） | ✅ 运行**只需** `-Instruct` + `yolo11n.pt`（约 4.3 GB）；**另一份是下载源副本，可删** |
+| 9 | 流水线命令行参数 | 🟡 未核实 | 已标 `[未验证]`，待补 |
+
+---
+
+## §6 skill 结构说明
+
+（与 `docs/PRD.md` §6 保持一致）
+
+```
+skills/
+├── inspection-orchestrator/   # 编排：决定调谁、定层级
+├── safety-hazard-detection/   # 窄触发：图像 → 隐患标签（含本地三层流水线）
+├── gauge-reading/             # 窄触发：表盘 → 一个数
+├── inspection-report/         # 窄触发：结论 → 报告
+│        每个技能 = SKILL.md + scripts/ + references/ + evals/
+└── evals/                     # 顶层四臂消融套件（A/B/C/D，40 条用例）
+```
+
+**单个 skill 的四件套结构**：
+
+```
+<skill-name>/
+├── SKILL.md      # 主流程、触发条件（description 含正向触发词 + 负向条件）
+├── scripts/      # 确定性工具
+├── references/   # 判定标准 / 巡检项定义
+└── evals/        # cases.jsonl + README.md
+```
+`[来源: skills/README.md:55-63]`
+
+**拆分判据**：不是「功能多少」，而是**触发条件能否用一句话说清且互不重叠**——四者两两不相交。
+`[来源: docs/PRD.md §6]`
+
+**顶层 `skills/evals/`**（跨技能评测层，不属于任何单个 skill）：`run_comparison.py`（评测执行器）、
+`run_e2e.py`（端到端最小通路 + token 采集）、`metrics.json`（指标定义）、`cases-decoy.jsonl`、
+`comparison-design.md`（四臂对照设计）、`check-compliance.md`（合规门禁）、`results/`（结果 JSON）。
+`[来源: skills/README.md:29-40；ls skills/evals/]`
+
+---
+
+## §7 实验设计与结果
+
+> **待补** —— 等待四臂消融全量实验（480 次调用）结果回填。
+
+---
+
+## §8 局限与能力边界（**必读**）
+
+### 8.1 不可检测项 —— **表上一个 ❌，就是演示里一句不能说的话**
+
+| 不可检测 / 不可宣称 | 原因 |
+|---|---|
+| **通道堵塞** | Tier 0（COCO 版 yolo11n）**无该类别**；Tier 0.5 是颜色/几何启发式，**无此判据** |
+| **设备渗漏** | 同上——两类模型均无此判据 |
+| **明火烟雾** | 同上——两类模型均无此判据 |
+| **未戴手套 / 口罩** | COCO 版 yolo11n **没有 PPE 类别**；启发式只筛颜色，不辨具体装备 |
+| **精确人数** | photo1 上 **YOLO 报 6 人、Tier 1 VLM 报 5 人**，两者不一致，**未逐像素人工复核，无法裁决谁对**（YOLO 第 6 个框置信度仅 0.301）。**演示时以 VLM 为准，但不得宣称「精确计数」** |
+| **仪表读数** | 读数由独立技能 `gauge-reading` 负责；本地三层流水线**不做读数** |
+
+`[来源: local-tier-limitations.md:54-58]`
+
+### 8.2 其他已知缺口
+
+**① Tier 0.5 对白色着装召回为 0**
+白色掩膜覆盖率 11.7%、17 个噪声连通块，对白色人员的**召回为 0**。
+**「没找到」不构成未佩戴 PPE 的证据**（详见 §4）。`[来源: local-tier-limitations.md:10-12]`
+
+**② 接口无法承载 policy 定义的部分触发条件**
+- `next_tier(...)` 签名中**没有**「需要自然语言描述」这一形参——**policy 有定义、接口未承载**
+- `should_escalate_to_cloud(...)` 无法判定 Tier 1 → 2 的触发条件（签名只有 `current`/`confidence`/`budget`）；
+  当前实现是**闸门**而非触发器，**未臆造规则**
+`[来源: local-tier-limitations.md:24-39]`
+
+**③ `record_failure` 是累计计数，不是 policy 所说的「连续」失败**
+无 `record_success`，无法实现成功的重置语义。**实现与 policy 措辞存在偏差，已知悉。**
+`[来源: local-tier-limitations.md:41-45]`
+
+**④ 「本地兜底率」当前无法计算**
+`BudgetState` 没有总任务数与本地解决数，因此 `local_fallback_rate` 输出 `None`，**不臆造数值**。
+`[来源: local-tier-limitations.md:47-52]`
+
+**⑤ 测试素材是程序合成的**
+四臂消融用的测试图（`synthetic_workshop.png`）是**用 Pillow 画的示意图，不是真实车间照片**，
+仓库标注 `usable_as_accuracy_evidence: false`。可验证链路与 token 开销，**不能作为识别准确率的证据**。
+
+**⑥ Δ2 的置信区间与样本量限制**
+待 §7 结果回填后补。
+
+**⑦ 场景版本：v1 检测项仍在 taxonomy 中（遗留）**
+当前场景为 **v2：电子厂洁净车间 · 着装合规（防尘帽 / 防静电服）**。
+v1 的检测项（**安全帽 / 反光衣**）**仍保留在 taxonomy 中**，原因：**保留 v1 实验结果的对照基线**，
+不作删除。`escalation-policy.md` 中原有的工地假设尚未与 v2 场景统一——**已知悉，待统一**。
+`[来源: local-tier-limitations.md:64-65]`
+
+**⑧ 未在 DGX Spark 上实测**（见 §3.4）。
+
+**⑨ 团队无行业背景、无专有数据**，全部使用公开数据；**不主张任何产线落地效果**。
+
+### 8.3 口径说明：**为什么早期文档里的数字与现在对不上**
+
+本项目演进过程中先后出现过两批逐层性能数字。**两批都是真测的**，差异来自**口径与样本**，
+不是系统换了——**特此并列，以免被误读为两套不同的系统**。
+
+| 指标 | 早前对话中的值 | 本次基准 | 差异原因 |
+|---|---|---|---|
+| **tier1 冷启动** | 3.11 s（仅模型加载） | **[19.362, 20.638] s** | **口径不同**：3.11 s 只是 `from_pretrained`；本口径含解释器启动、transformers import、**CUDA 初始化**与首次推理 |
+| **tier1 稳态** | 13.9 s / 261 tokens | **[9046.6, 10603.29] ms** / 180 tokens | **生成长度不同**：早前上限 400、实生成 **261**；本次上限 200、实生成 **180** |
+| **tier0 稳态** | 10–13 ms | **[14.29, 51.42] ms** | 早前为 **3 次乐观样本**（且未含每个新进程的首次调用）；本次 **15 样本**，**含进程内首次调用的预热效应** |
+| **tier0 显存峰值** | 90 MB | **59.8 MiB** | **两个口径，不可直接比**：早前 90 MB 是 `reserved`；本次是 `max_memory_allocated` |
+
+> **结论**：早前数字**本身没错，但口径、样本数与指标定义不同**——**不是两套系统**。
+> **今后一律以 `docs/local_tier_benchmark.json` / `.md` 为准**；本文档 §3.2.1 已全部改为引用该文件。
+> `[来源: docs/local_tier_benchmark.md §「与早前口头数字的差异」]`

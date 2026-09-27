@@ -1,0 +1,52 @@
+{
+  "env": {
+    "machine": "AMD64 / Windows 11",
+    "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "compute_capability": [
+      12,
+      0
+    ],
+    "vram_total_mb": 8150.6,
+    "torch": "2.11.0+cu128",
+    "cuda_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "result": {
+    "layer": "tier1",
+    "component": "Qwen3-VL-2B-Instruct bf16 (本地 VLM, GPU)",
+    "cold_start_s": 20.002,
+    "steady_state_ms": [
+      9419.97,
+      9221.35,
+      9285.93,
+      9738.89,
+      9277.37
+    ],
+    "vram_after_load_mb": 4059.0,
+    "vram_peak_mb": 4546.9,
+    "vram_after_mb": 4096.3,
+    "model_dir_bytes": 4266649720,
+    "sanity": {
+      "input_tokens": 1227,
+      "new_tokens_per_run": [
+        180,
+        180,
+        180,
+        180,
+        180
+      ],
+      "max_new_tokens": 200
+    }
+  },
+  "warm_n_per_process": 5,
+  "cold_start_definition": "进程启动(模块 import 时刻) → 该层首次产出结果",
+  "vram_unit": "MiB (1024^2 bytes)"
+}

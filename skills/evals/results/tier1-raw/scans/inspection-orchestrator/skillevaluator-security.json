@@ -1,0 +1,51 @@
+{
+  "overall_passed": false,
+  "overall_status": "incomplete",
+  "incomplete_scans": [
+    "skillspector"
+  ],
+  "total_validators": 1,
+  "total_advisory_skipped": 0,
+  "total_errors": 0,
+  "total_warnings": 1,
+  "severity_counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "skills": [],
+  "contributors": [],
+  "results": [
+    {
+      "validator": "Security Scan",
+      "description": "Detect security vulnerabilities and PII/secrets",
+      "passed": false,
+      "status": "incomplete",
+      "incomplete_scans": [
+        "skillspector"
+      ],
+      "summary": {
+        "files_scanned": 0,
+        "checks_performed": 0,
+        "errors": 0,
+        "warnings": 1,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [],
+      "legacy": {
+        "errors": [],
+        "warnings": [
+          "skillspector not installed - skipping security scan. Install with: uv tool install git+https://github.com/NVIDIA/SkillSpector.git"
+        ],
+        "messages": []
+      }
+    }
+  ],
+  "evaluated_source": null,
+  "generated_at": "2026-09-26T18:39:18.593991+00:00"
+}

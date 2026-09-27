@@ -1,0 +1,2216 @@
+{
+  "arm": "C",
+  "n_cases": 40,
+  "runs": 3,
+  "concurrency": 4,
+  "skill_payload_chars": 3048,
+  "total_tokens": 329702,
+  "n_errors": 0,
+  "results": [
+    {
+      "case_id": "gauge-pos-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1777,
+        "completion_tokens": 1133,
+        "total_tokens": 2910,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 14686,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1777,
+        "completion_tokens": 1046,
+        "total_tokens": 2823,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 11906,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"input_validated\",\"confidence\":1.0,\"evidence\":\"单块压力表特写，量程0-1.6MPa，单位MPa，指针清晰无遮挡，满足读数前置条件\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1777,
+        "completion_tokens": 1355,
+        "total_tokens": 3132,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 17186,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-002",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1776,
+        "completion_tokens": 877,
+        "total_tokens": 2653,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 15421,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"current_gauge_reading\",\"confidence\":1.0,\"evidence\":\"配电柜照片含3块数字电流表，编号A/B/C，需抄录读数\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1776,
+        "completion_tokens": 1028,
+        "total_tokens": 2804,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12671,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"gauge-reading\",\"confidence\":1.0,\"evidence\":\"素材为配电柜照片，包含3块数字电流表且已提供表位编号A/B/C，任务要求抄读电流表示数，属于仪表读数识别范畴\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1776,
+        "completion_tokens": 1083,
+        "total_tokens": 2859,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12188,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"gauge-reading\",\"confidence\":1.0,\"evidence\":\"配电柜照片含3块数字电流表，编号A/B/C，任务为抄读电流表示数\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-003",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1765,
+        "completion_tokens": 704,
+        "total_tokens": 2469,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8546,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-003",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1765,
+        "completion_tokens": 914,
+        "total_tokens": 2679,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 11797,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"missing_range\",\"confidence\":0,\"evidence\":\"glass tube level gauge with clear scale, but measurement range and unit are not provided\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-003",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1765,
+        "completion_tokens": 952,
+        "total_tokens": 2717,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12203,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"readable\",\"confidence\":0.95,\"evidence\":\"玻璃管液位计，刻度清晰，可读取液位\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-004",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1763,
+        "completion_tokens": 1414,
+        "total_tokens": 3177,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 18406,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"missing_range_and_unit\",\"confidence\":0,\"evidence\":\"未提供温度表量程与单位，无法给出确定读数\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-004",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1763,
+        "completion_tokens": 929,
+        "total_tokens": 2692,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 10639,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-004",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1763,
+        "completion_tokens": 1128,
+        "total_tokens": 2891,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 13656,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"gauge_reading_task\",\"confidence\":1.0,\"evidence\":\"指针式温度表读数请求，刻度完整；量程与单位未提供，需补充\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-005",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1770,
+        "completion_tokens": 696,
+        "total_tokens": 2466,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8219,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"valve_opening_reading\",\"confidence\":0.9,\"evidence\":\"同一阀门连续5帧素材，满足多帧一致性校验条件；表型为valve，单位%，量程0-100，可执行读数并取中位数输出\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-005",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1770,
+        "completion_tokens": 904,
+        "total_tokens": 2674,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12500,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"valve_opening\",\"confidence\":0.95,\"evidence\":\"同一阀门连续5帧，可执行多帧一致性校验并输出阀门开度读数\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-pos-005",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1770,
+        "completion_tokens": 1929,
+        "total_tokens": 3699,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 27203,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"missing_range_unit\",\"confidence\":1.0,\"evidence\":\"阀门开度读数需已知量程与单位；素材未提供表盘量程、单位及实际图像数据，无法给出确定数值\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-001",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1771,
+        "completion_tokens": 219,
+        "total_tokens": 1990,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2843,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-001",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1771,
+        "completion_tokens": 385,
+        "total_tokens": 2156,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8014,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-001",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1771,
+        "completion_tokens": 238,
+        "total_tokens": 2009,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2938,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1775,
+        "completion_tokens": 279,
+        "total_tokens": 2054,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3421,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1775,
+        "completion_tokens": 292,
+        "total_tokens": 2067,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4093,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1775,
+        "completion_tokens": 272,
+        "total_tokens": 2047,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3421,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-003",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1762,
+        "completion_tokens": 213,
+        "total_tokens": 1975,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3156,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-003",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1762,
+        "completion_tokens": 214,
+        "total_tokens": 1976,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3108,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-003",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1762,
+        "completion_tokens": 213,
+        "total_tokens": 1975,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3250,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1767,
+        "completion_tokens": 166,
+        "total_tokens": 1933,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2546,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1767,
+        "completion_tokens": 222,
+        "total_tokens": 1989,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3671,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-neg-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1767,
+        "completion_tokens": 172,
+        "total_tokens": 1939,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2421,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-empty-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1777,
+        "completion_tokens": 795,
+        "total_tokens": 2572,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8265,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"range_unknown\",\"confidence\":0,\"evidence\":\"量程标识被强反光完全遮住，无法确定压力表量程，依据规则禁止凭指针角度反推，读数uncertain\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-empty-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1777,
+        "completion_tokens": 776,
+        "total_tokens": 2553,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 10297,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"\",\"confidence\":0,\"evidence\":\"量程标识被强反光完全遮住，无法确定读数，需人工复核\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-empty-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1777,
+        "completion_tokens": 970,
+        "total_tokens": 2747,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 15141,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[{\"code\":\"RANGE_UNKNOWN\",\"confidence\":0,\"evidence\":\"量程标识被强反光完全遮住，无法确定量程；依据规则禁止凭指针角度反推，不出数\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-orchestrator"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2186,
+        "completion_tokens": 2165,
+        "total_tokens": 4351,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 28031,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-orchestrator\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-001",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2186,
+        "completion_tokens": 4096,
+        "total_tokens": 6282,
+        "finish_reason": "length"
+      },
+      "latency_ms": 48438,
+      "raw_response": "用户要求我判断一个任务是否应当调用 Skill，并只输出一行 JSON。\n\n任务：对 20 帧车间监控帧做一次安全巡检。\n素材说明：20 帧车间监控帧。\n\n根据 skill 定义：\n- 这是工业安全巡检的总入口场景。\n- 用户给出了巡检图像/视频帧（20 帧车间监控帧），但未指明具体识别类型。\n- 需要分派到隐患识别、仪表读数、报告生成三个子技能，并决定本地/云端推理层级。\n\n但是，用户要求只输出一行 JSON，格式为：\n{\"call_skill\":true,\"skills\":[\"<skill-name>\"],\"findings\":[{\"code\":\"\",\"confidence\":0,\"evidence\":\"\"}]}\n或不调用：\n{\"call_skill\":false,\"skills\":[],\"findings\":[]}\n\n我需要判断是否调用 skill。根据描述，这明显是工业安全巡检场景，有图像输入，未指明具体识别类型，应该调用 inspection-orchestrator。\n\n但是 skills 数组里应该放什么？根据 routing-table.md，多目标混合时：\nsafety-hazard-detection -> inspection-report\ngauge-reading -> inspection-report\n\n用户说\"做一次安全巡检\"，没有明确说只看隐患或只看仪表。根据路由表：\n- 人员 / PPE / 通道 / 渗漏 / 明火 / 闯入 -> safety-hazard-detection\n- 表盘 / 指针 / 读数 / 压力 / 温度 / 液位 / 抄表 -> gauge-reading\n- 已有结论 + 要求成文 / 导出 / 汇总 -> inspection-report\n\n用户要求\"做一次安全巡检\"，通常意味着隐患识别。但素材是\"车间监控帧\"，可能包含仪表。不过用户没有明确要求读仪表或生成报告。\n\n根据 negative boundaries：\n- 用户已指明\"读这个表 / 查这个隐患\" -> 直接进对应子技能，不要过编排层。\n- 这里用户没有指明具体类型，说的是\"安全巡检\"，应该走编排层。\n\n编排层会路由到子技能。根据主流程：\n3. 按路由表选技能\n   - 人员违规 / 通道堵塞 / 设备渗漏 -> safety-hazard-detection\n   - 表盘数值 / 抄表 -> gauge-reading\n   - 已有结论要成文 -> inspection-report\n   - 多目标混合 -> 先 hazard、再 gauge、最后 report\n\n由于用户只说\"安全巡检\"，最直接相关的是 safety-hazard-detection。但 inspection-orchestrator 是总入口，应该调用它。\n\n等等，用户问的是\"判断上述任务是否应当调用 Skill。应当调用则给出需要的 Skill 名（按执行顺序）\"。\n\n这里 Skill 名应该是指子技能还是 orchestrator？从上下文看，orchestrator 是总入口，但用户可能期望列出实际执行的子技能。\n\n再看输出格式：skills 数组。根据 routing-table，多目标混合时顺序是 safety-hazard-detection, gauge-reading, inspection-report。但用户没有明确要求读表和报告。\n\n然而，\"做一次安全巡检\"通常意味着隐患识别。但 orchestrator 会根据输入决定。由于我无法看到实际图像内容，只能根据任务描述判断。\n\n任务描述是\"这批车间图你看一下，做一次安全巡检\"。这明确是安全巡检，应该调用 inspection-orchestrator，然后它会路由到 safety-hazard-detection（可能还有 gauge-reading 如果检测到仪表，以及最后的 report）。\n\n但用户要求只输出一行 JSON，且 skills 数组。我应该列出 orchestrator 还是子技能？\n\n看 prompt 开头：\"[skill: inspection-orchestrator]\"，这是系统提示中定义的技能。用户现在问是否调用 Skill。\n\n我认为应该调用 inspection-orchestrator。但 skills 数组里可能应该放实际子技能？或者放 inspection-orchestrator？\n\n再看用户指令：\"应当调用则给出需要的 Skill 名（按执行顺序）\"。\n\n根据 skill 描述，inspection-orchestrator 是总入口，负责分派。所以应该调用 inspection-orchestrator。但 orchestrator 会调用子技能。\n\n然而，在 JSON 输出中，skills 数组应该包含按执行顺序的技能。根据 routing-table，如果是多目标混合，顺序是 safety-hazard-detection, gauge-reading, inspection-report。但用户没有明确说多目标。\n\n由于任务是\"安全巡检\"，且素材是\"车间监控帧\"，最可能只需要 safety-hazard-detection。但 orchestrator 可能会根据内容路由。\n\n等等，我需要更仔细地理解。用户可能是在测试我是否会正确使用这个 skill 系统。系统提示定义了 inspection-orchestrator 及其子技能引用。\n\n任务：20 帧车间监控帧，做一次安全巡检。\n这明显触发 inspection-orchestrator。\n\n但是输出 JSON 的 skills 字段应该放什么？如果放 inspection-orchestrator，那 findings 为空，因为 orchestrator 不做识别。如果放子技能，那应该放哪些？\n\n根据 orchestrator 的主流程，它会调用子技能。对于\"安全巡检\"且未指明类型，它会按路由表判定。由于输入是车间监控帧，可能包含多种目标。\n\n但用户要求\"只输出一行 JSON\"，并且\"禁止解释过程\"。这意味着我必须做出确定性的判断。\n\n让我重新审视路由表：\n- 输入信号：人员 / PPE / 通道 / 渗漏 / 明火 / 闯入 -> safety-hazard-detection\n- 表盘 / 指针 / 读数 / 压力 / 温度 / 液位 / 抄表 -> gauge-reading\n- 已有结论 + 要求成文 -> inspection-report\n\n用户任务：\"做一次安全巡检\" - 这主要对应 safety-hazard-detection。没有提到仪表或报告。\n\n但是 inspection-orchestrator 的描述说：\"当用户给出巡检图像/视频帧或巡检任务、但未指明具体识别类型时触发\"。所以应该触发 inspection-orchestrator。\n\n然而，在 skills 数组中，我应该列出 inspection-orchestrator 还是子技能？从字面看，\"给出需要的 Skill 名\"，inspection-orchestrator 是一个 skill。但它的职责是编排。\n\n也许用户期望的是：call_skill: true, skills: [\"inspection-orchestrator\"]，然后 findings 为空，因为还没有实际识别结果。\n\n但等等，用户说\"应当调用则给出需要的 Skill 名（按执行顺序）与可下的结论\"。这意味着 skills 应该包含实际执行的技能，并且 findings 包含可下的结论。\n\n由于我现在无法访问实际的 20 帧图像，我无法给出具体的 findings。但用户要求输出 findings 数组。如果没有实际识别，findings 应该为空？\n\n或者，用户只是要我判断是否调用 skill，并给出预期的技能列表，而不是实际结果？\n\n再看输出格式示例：\n{\"call_skill\":true,\"skills\":[\"<skill-name>\"],\"findings\":[{\"code\":\"\",\"confidence\":0,\"evidence\":\"\"}]}\n\n这看起来像是要我直接给出结论。但我没有图像数据，无法给出真实结论。\n\n等等，这个 prompt 可能是一个分类/路由任务，而不是要我实际处理图像。用户可能是在模拟一个场景，看我是否会调用正确的 skill。\n\n根据\"只输出一行 JSON\"和\"禁止解释过程\"，这像是一个结构化输出任务。\n\n我认为最合理的解释是：用户要我判断这个任务是否触发 skill 调用。由于这是工业巡检且未指明具体类型，应调用 inspection-orchestrator。skills 应包含 orchestrator 或子技能。\n\n但是，inspection-orchestrator 本身不做识别，它路由到子技能。如果 skills 只放 inspection-orchestrator，那 findings 必须为空，因为 orchestrator 不产生 findings。\n\n如果 skills 放子技能，对于\"安全巡检\"，至少应该有 safety-hazard-detection。如果有仪表，还有 gauge-reading。如果要报告，还有 inspection-report。\n\n由于用户没有提供具体图像内容，我无法确定是否有仪表。但\"安全巡检\"通常聚焦于安全隐患。\n\n根据 negative boundary：\"只有一句'帮我看下这张图'且图非工业场景 → 先问场景，不要盲跑。\" 但这里明确是车间场景，所以不是这个。\n\n另一个 negative boundary：\"纯文字问答、写代码、写文档 → 不调用\"。这也不是。\n\n所以应该调用。\n\n现在关键是 skills 数组内容。根据 orchestrator 描述，它负责分派到三个子技能。但任务本身没有明确要求读表或报告。然而 orchestrator 会根据路由表决定。\n\n由于我无法看到图像， safest 的做法是调用 inspection-orchestrator，由它来路由。但用户要求\"按执行顺序\"给出 skill 名。\n\n也许用户期望的 skills 是 [\"inspection-orchestrator\"]，因为这是直接匹配的 skill。然后 findings 为空，因为没有实际数据。\n\n但 prompt 说\"与可下的结论\"，这意味着如果有结论就给出。我没有结论，所以空数组。\n\n或者，用户可能认为\"安全巡检\"直接对应 safety-hazard-detection，所以 skills: [\"safety-hazard-detection\"]。\n\n让我再看系统提示。系统提示以 [skill: inspection-orchestrator] 开头，说明这个会话的上下文是 inspection-orchestrator。用户现在给了一个任务，问我是否调用 skill。\n\n在类似的多 skill 系统中，通常顶层 skill 是 orchestrator，用户任务应该路由到它。然后 orchestrator 再调用子 skill。\n\n但用户明确要求输出 skills 数组。如果我只放 inspection-orchestrator，这似乎太简单了。而且 findings 为空可能不符合\"可下的结论\"的期望。\n\n等等，也许这个任务是一个\"判断\"任务，类似于 skill 路由决策。用户可能已经知道会调用哪些 skill，想看我是否能正确识别。\n\n根据任务\"做一次安全巡检\"和素材\"20 帧车间监控帧\"：\n- 这是工业场景\n- 有图像输入\n- 未指明具体识别类型\n- 应触发 inspection-orchestrator\n\ninspection-orchestrator 会：\n1. 规范化输入\n2. 安全边界检查\n3. 按路由表选技能\n4. 定层级\n5. 调用子技能\n6. 汇总返回\n\n对于\"安全巡检\"，路由表中最相关的是 safety-hazard-detection。如果图中有仪表，也会走 gauge-reading。最后如果要报告，走 inspection-report。\n\n但用户没有明确要求报告。然而\"做一次安全巡检\"通常意味着要产出巡检结果，可能需要报告。\n\n根据 routing-table：\"已有结论 + 要求成文 / 导出 / 汇总 -> inspection-report\"。用户没有明确要求成文。\n\n所以最可能只需要 safety-hazard-detection。但 orchestrator 可能会检测到仪表。\n\n由于我无法访问图像，我应该只列出确定需要的 skill。inspection-orchestrator 是确定需要的。safety-hazard-detection 也是确定需要的（因为是安全巡检）。gauge-reading 不确定。inspection-report 不确定。\n\n但用户要求\"按执行顺序\"。如果调用 orchestrator，执行顺序是 orchestrator -> safety-hazard-detection -> (maybe gauge-reading) -> (maybe inspection-report)。\n\n然而，输出格式中的 skills 数组可能只是直接子技能，不包括 orchestrator？或者包括？\n\n看 prompt 顶部的 skill 块，它叫 [skill: inspection-orchestrator]。所以 skill 名就是 inspection-orchestrator。\n\n我决定：call_skill: true, skills: [\"inspection-orchestrator\"]，findings: []。\n\n但这似乎没有利用到子技能信息。而且用户可能期望看到子技能。\n\n另一种可能：用户把 inspection-orchestrator 当作系统能力，而 skills 数组应该填实际业务 skill。即 safety-hazard-detection 等。\n\n再看用户问题：\"判断上述任务是否应当调用 Skill。应当调用则给出需要的 Skill 名（按执行顺序）\"。\n\n\"上述任务\"是\"做一次安全巡检\"。\"调用 Skill\"可能指调用任何 skill，包括 orchestrator 和子 skill。\n\n如果我调用 inspection-orchestrator，它会进一步调用子 skill。所以\"需要的 Skill\"可能包括所有。\n\n但最准确的说法是：这个任务应该由 inspection-orchestrator 处理，然后它会调用 safety-hazard-detection（可能还有 gauge-reading 和 inspection-report）。\n\n由于 JSON 需要确定，且我不能解释，我必须选择。\n\n考虑到\"安全巡检\"的核心是隐患识别，且没有明确提到仪表和报告，但 orchestrator 存在就是为了处理这种未指明的情况。所以我应该调用 inspection-orchestrator。\n\n但是，如果 skills 只放 inspection-orchestrator，findings 为空，这看起来像是没有处理。而用户可能期望我以 orchestrator 的身份直接给出路由结果。\n\n等等，用户说\"只输出一行 JSON\"，并且\"禁止解释过程\"。这强烈暗示这是一个自动评估或解析任务，我的输出会被机器读取。\n\n在这种格式下，skills 数组很可能应该包含实际会被调用的技能链。根据 routing-table，对于车间监控帧的安全巡检，典型的技能链是：\n1. safety-hazard-detection（查隐患）\n2. gauge-reading（如果如图中有仪表，但不确定）\n3. inspection-report（生成报告）\n\n但用户没有要求报告。然而\"做一次安全巡检\"可能隐含需要结果输出。\n\n让我再看 escalation-policy 和 routing-table。routing-table 说：\n- 多目标混合 -> 先 hazard、再 gauge、最后 report\n\n车间监控帧很可能同时包含人员和设备（可能有仪表）。所以多目标混合是可能的。\n\n但用户没有明确说\"多目标\"。不过\"安全巡检\"通常意味着全面检查。\n\n我决定采用最保守且完整的路由：由于这是 orchestrator 的典型场景，我会调用 inspection-orchestrator，然后在 skills 中列出 orchestrator 路由后的子技能。但 orchestrator 本身也是一个 skill。\n\n或者，也许用户期望 skills: [\"safety-hazard-detection\"]，因为\"安全巡检\"直接对应这个。\n\n让我重新阅读系统提示的第一句：\"工业安全巡检的总入口与窄路由层。当用户给出巡检图像/视频帧或巡检任务、但未指明具体识别类型时触发\"。\n\n所以这个 skill（inspection-orchestrator）就是为这种任务设计的。因此 call_skill 应该为 true，skills 应该包含 inspection-orchestrator。\n\n但是，inspection-orchestrator 的输出契约是返回 {task_id, inputs, routes, findings, partial, disclaimers}。它本身不产生 findings，而是收集子技能的 findings。\n\n所以如果 skills 是 [\"inspection-orchestrator\"]，findings 应该是 []，因为还没有实际识别。\n\n然而，用户要求\"可下的结论\"。在无法访问图像的情况下，我不能下任何结论。所以 findings 为空是合理的。\n\n但等等，用户可能并不是要我实际处理图像，而是要我以 skill 路由的形式回答。也就是说，这个 JSON 是\"调用计划\"而不是\"调用结果\"。\n\n\"给出需要的 Skill 名（按执行顺序）与可下的结论\" — 这里的\"可下的结论\"可能指基于任务描述可以立即下的结论（例如：这是工业场景，需要巡检），而不是识别结论。但 findings 的格式是 {\"code\":\"\",\"confidence\":0,\"evidence\":\"\"}，这明显是识别结论的格式。\n\n由于我没有图像，无法提供真实的 findings。所以我应该返回空 findings。\n\n最终决策：\n- call_skill: true\n- skills: [\"inspection-orchestrator\"] 或者包含子技能？\n\n考虑到 inspection-orchestrator 是\"总入口\"，并且任务完全匹配其触发条件，我会把 inspection-orchestrator 作为要调用的 skill。但是，用户可能希望看到子技能。\n\n让我看看如果 skills 放子技能，顺序是什么。根据 routing-table，多目标混合时：\nsafety-hazard-detection -> gauge-reading -> inspection-report\n\n但对于单纯\"安全巡检\"，可能只有 safety-hazard-detection。\n\n由于无法确定图中是否有仪表，且用户没有要求报告，我倾向于只放 safety-hazard-detection。但这样就绕过了 orchestrator，而 orchestrator 的描述说\"当用户给出巡检图像/视频帧或巡检任务、但未指明具体识别类型时触发\"。这里确实未指明具体识别类型（是隐患？仪表？），所以应该触发 orchestrator。\n\n我认为最符合系统设计的是：调用 inspection-orchestrator。然后在 skills 中，由于 orchestrator 会路由，我可以列出预期路由。但 JSON 的 skills 数组通常放直接调用的 skill。\n\n我决定：skills: [\"inspection-orchestrator\"]，findings: []。\n\n但这似乎让子技能 reference 没用了。而且用户明确说\"按执行顺序\"，暗示可能有多个。\n\n另一种解读：用户已经知道有这三个子技能，想让我判断对于这个任务应该按什么顺序调用哪些。那么 skills 就是子技能列表。\n\n对于\"20 帧车间监控帧\"和\"安全巡检\"：\n- 一定需要 safety-hazard-detection\n- 可能需要 gauge-reading（车间常有仪表）\n- 做一次巡检通常需要产出，所以可能需要 inspection-report\n\n但 routing-table 说 inspection-report 是\"已有结论 + 要求成文\"才路由。用户没有明确要求成文。\n\n然而，\"做一次安全巡检\"作为一个完整任务，通常包括生成巡检报告。在 orchestrator 的主流程中，第 7 步说\"本技能不生成报告 — 报告一律交给 inspection-report\"。这意味着如果任务需要报告，就会调用。\n\n由于用户说\"做一次安全巡检\"，这可以理解为完整任务，包括报告。但不确定。\n\n为了安全起见，并且因为这是 orchestrator 的职责，我应该调用 inspection-orchestrator，让它来决定。所以 skills: [\"inspection-orchestrator\"]。\n\n但是，如果评估系统期望的是子技能名称呢？比如 skills: [\"safety-hazard-detection\", \"gauge-reading\", \"inspection-report\"]？\n\n让我再看任务描述：\"这批车间图你看一下，做一次安全巡检\"。这非常像 orchestrator 的触发条件。所以 orchestrator 是必须的。\n\n我最终选择：call_skill: true, skills: [\"inspection-orchestrator\"], findings: []。\n\n等等，我突然想到，用户可能在测试我是否能正确识别出这需要调用 orchestrator 而不是直接调用子技能。系统提示花了很大篇幅定义 orchestrator，所以重点应该是它。\n\n另外，findings 为空是合理的，因为 orchestrator 还没有实际处理图像，无法给出结论。用户要求\"可下的结论\"，在没有图像内容的情况下，无法下结论，所以空数组。\n\n但是，如果用户期望我以 orchestrator 的身份直接输出路由计划，那么 skills 可以是路由后的子技能。然而 orchestrator 的输出契约里 routes 是 [{skill, reason, tier}]，不是简单的字符串数组。\n\n考虑到用户指定的 JSON 格式非常简单，我认为 skills 数组就是直接调用的 skill 名称列表。对于这个任务，直接调用的就是 inspection-orchestrator。\n\n不，等等。如果 call_skill 为 true，意味着\"这个任务应该被 skill 系统处理\"。skills 是\"需要的 Skill 名\"。inspection-orchestrator 是 skill，safety-hazard-detection 也是 skill。\n\n我注意到在 routing-table 中，子技能名称是 `safety-hazard-detection`, `gauge-reading`, `inspection-report`。orchestrator 是 `inspection-orchestrator`。\n\n如果任务只是\"看下图，做安全巡检\"，",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2186,
+        "completion_tokens": 2926,
+        "total_tokens": 5112,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 36436,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-002",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading",
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2192,
+        "completion_tokens": 770,
+        "total_tokens": 2962,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9500,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\",\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading",
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2192,
+        "completion_tokens": 783,
+        "total_tokens": 2975,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9828,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\",\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading",
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2192,
+        "completion_tokens": 1150,
+        "total_tokens": 3342,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 14796,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\",\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-003",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2183,
+        "completion_tokens": 1175,
+        "total_tokens": 3358,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 14375,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-003",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-orchestrator"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2183,
+        "completion_tokens": 2137,
+        "total_tokens": 4320,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 26688,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-orchestrator\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-003",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-orchestrator"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2183,
+        "completion_tokens": 2038,
+        "total_tokens": 4221,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 24438,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-orchestrator\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2183,
+        "completion_tokens": 736,
+        "total_tokens": 2919,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9313,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2183,
+        "completion_tokens": 1271,
+        "total_tokens": 3454,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 16139,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2183,
+        "completion_tokens": 742,
+        "total_tokens": 2925,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9000,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-005",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-orchestrator",
+        "safety-hazard-detection",
+        "gauge-reading",
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2193,
+        "completion_tokens": 1583,
+        "total_tokens": 3776,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 18578,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-orchestrator\",\"safety-hazard-detection\",\"gauge-reading\",\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-005",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading",
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2193,
+        "completion_tokens": 2165,
+        "total_tokens": 4358,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 26860,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\",\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-pos-005",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-orchestrator",
+        "safety-hazard-detection",
+        "gauge-reading",
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2193,
+        "completion_tokens": 1597,
+        "total_tokens": 3790,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 19843,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-orchestrator\",\"safety-hazard-detection\",\"gauge-reading\",\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 492,
+        "total_tokens": 2672,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6843,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 492,
+        "total_tokens": 2672,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6187,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 492,
+        "total_tokens": 2672,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6750,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2179,
+        "completion_tokens": 236,
+        "total_tokens": 2415,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3312,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2179,
+        "completion_tokens": 236,
+        "total_tokens": 2415,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3422,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2179,
+        "completion_tokens": 236,
+        "total_tokens": 2415,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3078,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-003",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2177,
+        "completion_tokens": 175,
+        "total_tokens": 2352,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3031,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-003",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2177,
+        "completion_tokens": 175,
+        "total_tokens": 2352,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2858,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-003",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2177,
+        "completion_tokens": 175,
+        "total_tokens": 2352,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2828,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 234,
+        "total_tokens": 2414,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3156,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 206,
+        "total_tokens": 2386,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3281,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-neg-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 320,
+        "total_tokens": 2500,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3766,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-empty-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2184,
+        "completion_tokens": 830,
+        "total_tokens": 3014,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9203,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-empty-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2184,
+        "completion_tokens": 1758,
+        "total_tokens": 3942,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 21985,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-empty-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2184,
+        "completion_tokens": 1779,
+        "total_tokens": 3963,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 20125,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2185,
+        "completion_tokens": 1166,
+        "total_tokens": 3351,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 13546,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2185,
+        "completion_tokens": 471,
+        "total_tokens": 2656,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5686,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2185,
+        "completion_tokens": 380,
+        "total_tokens": 2565,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4514,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-002",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2192,
+        "completion_tokens": 348,
+        "total_tokens": 2540,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4389,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2192,
+        "completion_tokens": 342,
+        "total_tokens": 2534,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5546,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2192,
+        "completion_tokens": 493,
+        "total_tokens": 2685,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6858,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-003",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2199,
+        "completion_tokens": 1336,
+        "total_tokens": 3535,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 17265,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-003",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2199,
+        "completion_tokens": 853,
+        "total_tokens": 3052,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9406,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[{\"code\":\"HOUSEKEEPING\",\"confidence\":1.0,\"evidence\":\"3 号通道堆料\"},{\"code\":\"EQUIP-LEAK\",\"confidence\":1.0,\"evidence\":\"2 号泵渗油\"},{\"code\":\"ELEC-EXPOSED\",\"confidence\":1.0,\"evidence\":\"配电房箱门敞开\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-003",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2199,
+        "completion_tokens": 1123,
+        "total_tokens": 3322,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12061,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[{\"code\":\"HOUSEKEEPING\",\"confidence\":1.0,\"evidence\":\"用户口述：3 号通道堆料\"},{\"code\":\"EQUIP-LEAK\",\"confidence\":1.0,\"evidence\":\"用户口述：2 号泵渗油\"},{\"code\":\"ELEC-EXPOSED\",\"confidence\":1.0,\"evidence\":\"用户口述：配电房箱门敞开\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-004",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2178,
+        "completion_tokens": 314,
+        "total_tokens": 2492,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3860,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-004",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2178,
+        "completion_tokens": 314,
+        "total_tokens": 2492,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3828,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-004",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2178,
+        "completion_tokens": 314,
+        "total_tokens": 2492,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4014,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-005",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2176,
+        "completion_tokens": 252,
+        "total_tokens": 2428,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3578,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-005",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2176,
+        "completion_tokens": 260,
+        "total_tokens": 2436,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3500,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-pos-005",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2176,
+        "completion_tokens": 255,
+        "total_tokens": 2431,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3406,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2174,
+        "completion_tokens": 1466,
+        "total_tokens": 3640,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 21047,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-001",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2174,
+        "completion_tokens": 1365,
+        "total_tokens": 3539,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 14327,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-001",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2174,
+        "completion_tokens": 317,
+        "total_tokens": 2491,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6062,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2173,
+        "completion_tokens": 323,
+        "total_tokens": 2496,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5156,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2173,
+        "completion_tokens": 716,
+        "total_tokens": 2889,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8531,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2173,
+        "completion_tokens": 727,
+        "total_tokens": 2900,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8578,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-003",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2173,
+        "completion_tokens": 179,
+        "total_tokens": 2352,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2750,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-003",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2173,
+        "completion_tokens": 240,
+        "total_tokens": 2413,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3421,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-003",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2173,
+        "completion_tokens": 240,
+        "total_tokens": 2413,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3078,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2182,
+        "completion_tokens": 216,
+        "total_tokens": 2398,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3312,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2182,
+        "completion_tokens": 208,
+        "total_tokens": 2390,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2671,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-neg-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2182,
+        "completion_tokens": 214,
+        "total_tokens": 2396,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3281,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-empty-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2182,
+        "completion_tokens": 433,
+        "total_tokens": 2615,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5171,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-empty-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2182,
+        "completion_tokens": 573,
+        "total_tokens": 2755,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7968,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-empty-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2182,
+        "completion_tokens": 1195,
+        "total_tokens": 3377,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 14453,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1987,
+        "completion_tokens": 655,
+        "total_tokens": 2642,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7483,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-HELMET\",\"confidence\":1.0,\"evidence\":\"车间帧中3人作业，其中1人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1987,
+        "completion_tokens": 881,
+        "total_tokens": 2868,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 10625,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-HELMET\",\"confidence\":0.95,\"evidence\":\"车间帧中1人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1987,
+        "completion_tokens": 361,
+        "total_tokens": 2348,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4328,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-HELMET\",\"confidence\":0.95,\"evidence\":\"车间帧中3人作业，其中1人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-002",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1982,
+        "completion_tokens": 790,
+        "total_tokens": 2772,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9078,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-HARNESS\",\"confidence\":0.95,\"evidence\":\"高处作业人员未系安全带\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1982,
+        "completion_tokens": 618,
+        "total_tokens": 2600,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6890,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-HARNESS\",\"confidence\":0.95,\"evidence\":\"高处作业人员未系安全带\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1982,
+        "completion_tokens": 417,
+        "total_tokens": 2399,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4858,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-HARNESS\",\"confidence\":0.95,\"evidence\":\"高处作业人员未系安全带\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-003",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1976,
+        "completion_tokens": 641,
+        "total_tokens": 2617,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7514,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"ACCESS-BLOCKED\",\"confidence\":0.9,\"evidence\":\"纸箱堆满通道\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-003",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1976,
+        "completion_tokens": 502,
+        "total_tokens": 2478,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5875,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"ACCESS-BLOCKED\",\"confidence\":0.95,\"evidence\":\"纸箱堆满疏散通道\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-003",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1976,
+        "completion_tokens": 674,
+        "total_tokens": 2650,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7796,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"ACCESS-BLOCKED\",\"confidence\":0.92,\"evidence\":\"疏散通道被纸箱堆满占压，导致通道堵塞\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-004",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1976,
+        "completion_tokens": 393,
+        "total_tokens": 2369,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4203,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"EQUIP-LEAK\",\"confidence\":0.95,\"evidence\":\"地面有明显油渍积液\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-004",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1976,
+        "completion_tokens": 514,
+        "total_tokens": 2490,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5828,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"EQUIP-LEAK\",\"confidence\":0.9,\"evidence\":\"地面有明显油渍积液\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-004",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1976,
+        "completion_tokens": 510,
+        "total_tokens": 2486,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5796,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"EQUIP-LEAK\",\"confidence\":0.9,\"evidence\":\"地面有明显油渍积液\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-005",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1988,
+        "completion_tokens": 594,
+        "total_tokens": 2582,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7313,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-VEST\",\"confidence\":0.9,\"evidence\":\"叉车区人员未穿反光衣，多帧重复命中\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-005",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1988,
+        "completion_tokens": 526,
+        "total_tokens": 2514,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5984,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-VEST\",\"confidence\":0.95,\"evidence\":\"叉车区人员未穿反光衣，多帧重复命中\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-pos-005",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1988,
+        "completion_tokens": 921,
+        "total_tokens": 2909,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 10468,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE-NO-VEST\",\"confidence\":0.95,\"evidence\":\"叉车区人员未穿反光衣，多帧重复命中\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-001",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1981,
+        "completion_tokens": 217,
+        "total_tokens": 2198,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3469,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-001",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1981,
+        "completion_tokens": 217,
+        "total_tokens": 2198,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3000,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-001",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1981,
+        "completion_tokens": 223,
+        "total_tokens": 2204,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3561,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1973,
+        "completion_tokens": 211,
+        "total_tokens": 2184,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3422,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1973,
+        "completion_tokens": 293,
+        "total_tokens": 2266,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4139,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1973,
+        "completion_tokens": 283,
+        "total_tokens": 2256,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3843,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-003",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1979,
+        "completion_tokens": 510,
+        "total_tokens": 2489,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7000,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-003",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1979,
+        "completion_tokens": 207,
+        "total_tokens": 2186,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3046,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-003",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1979,
+        "completion_tokens": 1472,
+        "total_tokens": 3451,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 16593,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1972,
+        "completion_tokens": 194,
+        "total_tokens": 2166,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3469,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1972,
+        "completion_tokens": 198,
+        "total_tokens": 2170,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3250,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-neg-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1972,
+        "completion_tokens": 205,
+        "total_tokens": 2177,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3453,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-empty-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1977,
+        "completion_tokens": 563,
+        "total_tokens": 2540,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6750,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-empty-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1977,
+        "completion_tokens": 504,
+        "total_tokens": 2481,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6280,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-empty-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1977,
+        "completion_tokens": 652,
+        "total_tokens": 2629,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7436,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    }
+  ]
+}

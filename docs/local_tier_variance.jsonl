@@ -1,0 +1,5 @@
+{"tag": "v2a", "run": 1, "severity_mode": "v2", "wall_clock_total_s": 33.68, "tier_calls_total": {"tier0": 3, "tier0_5": 2, "tier1": 2, "tier2": 0}, "per_photo_wall_s": [25.2, 8.32, 0.16], "per_photo_findings": [6, 1, 0]}
+{"tag": "v2a", "run": 2, "severity_mode": "v2", "wall_clock_total_s": 23.67, "tier_calls_total": {"tier0": 3, "tier0_5": 2, "tier1": 2, "tier2": 0}, "per_photo_wall_s": [14.97, 8.59, 0.11], "per_photo_findings": [6, 1, 0]}
+{"tag": "v2a", "run": 3, "severity_mode": "v2", "wall_clock_total_s": 23.11, "tier_calls_total": {"tier0": 3, "tier0_5": 2, "tier1": 2, "tier2": 0}, "per_photo_wall_s": [14.35, 8.64, 0.12], "per_photo_findings": [6, 1, 0]}
+{"tag": "legacydemo", "run": 1, "severity_mode": "legacy-demo", "wall_clock_total_s": 35.71, "tier_calls_total": {"tier0": 3, "tier0_5": 2, "tier1": 2, "tier2": 0}, "per_photo_wall_s": [25.73, 9.83, 0.15], "per_photo_findings": [6, 1, 0]}
+{"tag": "pathcheck", "run": 1, "severity_mode": "v2", "wall_clock_total_s": 33.42, "tier_calls_total": {"tier0": 3, "tier0_5": 2, "tier1": 2, "tier2": 0}, "per_photo_wall_s": [24.81, 8.46, 0.15], "per_photo_findings": [6, 1, 0]}

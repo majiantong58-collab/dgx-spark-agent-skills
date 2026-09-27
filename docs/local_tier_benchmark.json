@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "benchmark_date": "2026-09-27",
+    "same_machine_same_round": true,
+    "machine": "AMD64 / Windows 11",
+    "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "compute_capability": [
+      12,
+      0
+    ],
+    "vram_total_mb": 8150.6,
+    "driver": "591.91",
+    "torch": "2.11.0+cu128",
+    "cuda_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "python": "3.12.10",
+    "vram_unit": "MiB (1024^2 bytes)",
+    "cold_start_definition": "进程启动(模块 import 时刻) → 该层首次产出结果；含解释器启动、import、CUDA 初始化、模型加载、首次推理",
+    "steady_state_definition": "模型已加载后单次调用的墙钟",
+    "note": "本次基准为同一台机、同一轮完成；三层各自独立进程运行，互不干扰显存与加载耗时。"
+  },
+  "layers": {
+    "tier0": {
+      "component": "YOLO11n (COCO person 检测, GPU)",
+      "cold_start_s": [
+        3.976,
+        4.147
+      ],
+      "steady_state_ms": [
+        14.29,
+        51.42
+      ],
+      "runs": 3,
+      "steady_state_samples": 15,
+      "vram_after_load_mb": 42.1,
+      "vram_peak_mb": 59.8,
+      "vram_after_mb": 42.1,
+      "notes": "每进程内稳态第 1 次调用恒为 ~43-51ms，第 2 次起落到 ~14-16ms——这是进程内首次稳态调用仍受 CUDA 分配器/图预热影响，属系统性现象，非随机离群。区间 [min,max] 已包含该效应，未剔除。"
+    },
+    "tier0_5": {
+      "component": "颜色/几何启发式 (CPU, OpenCV+numpy, 无模型)",
+      "cold_start_s": [
+        1.862,
+        1.894
+      ],
+      "steady_state_ms": [
+        16.12,
+        18.58
+      ],
+      "runs": 3,
+      "steady_state_samples": 15,
+      "vram_after_load_mb": null,
+      "vram_peak_mb": null,
+      "vram_after_mb": null,
+      "notes": "纯 CPU，不占显存，故 vram_* 一律 null（不估算、不填 0）。极稳，无预热效应。"
+    },
+    "tier1": {
+      "component": "Qwen3-VL-2B-Instruct bf16 (本地 VLM, GPU)",
+      "cold_start_s": [
+        19.362,
+        20.638
+      ],
+      "steady_state_ms": [
+        9046.6,
+        10603.29
+      ],
+      "runs": 3,
+      "steady_state_samples": 15,
+      "vram_after_load_mb": 4059.0,
+      "vram_peak_mb": 4546.9,
+      "vram_after_mb": 4096.3,
+      "notes": "稳态 15 个样本极差约 1.56s，相对波动约 17%；生成长度固定为 180 tokens。显存 after_load/peak/after 三次运行间一致。"
+    }
+  }
+}

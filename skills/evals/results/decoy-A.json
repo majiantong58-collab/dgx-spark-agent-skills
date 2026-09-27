@@ -1,0 +1,505 @@
+{
+  "arm": "A",
+  "n_cases": 9,
+  "runs": 3,
+  "concurrency": 4,
+  "skill_payload_chars": 0,
+  "total_tokens": 40305,
+  "n_errors": 0,
+  "results": [
+    {
+      "case_id": "gauge-decoy-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety_helmet_detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 136,
+        "completion_tokens": 1111,
+        "total_tokens": 1247,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12235,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety_helmet_detection\"],\"findings\":[{\"code\":\"NO_HELMET\",\"confidence\":1,\"evidence\":\"左侧一人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety_helmet_detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 136,
+        "completion_tokens": 1361,
+        "total_tokens": 1497,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 18656,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety_helmet_detection\"],\"findings\":[{\"code\":\"NO_HELMET\",\"confidence\":1,\"evidence\":\"车间左侧一人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety_helmet_detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 136,
+        "completion_tokens": 1111,
+        "total_tokens": 1247,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 12296,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety_helmet_detection\"],\"findings\":[{\"code\":\"NO_HELMET\",\"confidence\":1,\"evidence\":\"左侧一人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-002",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "ocr"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 135,
+        "completion_tokens": 1103,
+        "total_tokens": 1238,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 13265,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"ocr\"],\"findings\":[{\"code\":\"\",\"confidence\":0,\"evidence\":\"\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "ocr"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 135,
+        "completion_tokens": 1435,
+        "total_tokens": 1570,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 18250,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"ocr\"],\"findings\":[{\"code\":\"last_calibration_date\",\"confidence\":0,\"evidence\":\"表盘旁贴有检定标签（文字内容）\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "ocr"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 135,
+        "completion_tokens": 1586,
+        "total_tokens": 1721,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 19578,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"ocr\"],\"findings\":[{\"code\":\"last_calibration_date\",\"confidence\":0,\"evidence\":\"待识别表盘旁检定标签上的日期\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "image_analysis"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 140,
+        "completion_tokens": 2927,
+        "total_tokens": 3067,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 37375,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"image_analysis\"],\"findings\":[{\"code\":\"overpressure_hazard\",\"confidence\":0.95,\"evidence\":\"压力表指针位于红区，表明系统已超压\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "image_analysis"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 140,
+        "completion_tokens": 1502,
+        "total_tokens": 1642,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 19625,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"image_analysis\"],\"findings\":[{\"code\":\"OVERPRESSURE_RISK\",\"confidence\":0.95,\"evidence\":\"压力表指针位于红区，指示超压状态，存在超压隐患\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "image_analysis"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 140,
+        "completion_tokens": 2517,
+        "total_tokens": 2657,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 32750,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"image_analysis\"],\"findings\":[{\"code\":\"OVERPRESSURE\",\"confidence\":0.95,\"evidence\":\"压力表指针位于红区，表明当前压力超过安全阈值，存在超压隐患\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-002",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "data_analysis"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 135,
+        "completion_tokens": 1430,
+        "total_tokens": 1565,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 17703,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"data_analysis\"],\"findings\":[{\"code\":\"helmet_compliance_rate\",\"confidence\":1.0,\"evidence\":\"用户提供了上个月车间安全帽佩戴情况的 Excel 台账路径，可通过读取台账数据统计佩戴合规率\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-002",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "excel_analysis"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 135,
+        "completion_tokens": 1410,
+        "total_tokens": 1545,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 18578,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"excel_analysis\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-002",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "excel_analysis"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 135,
+        "completion_tokens": 1368,
+        "total_tokens": 1503,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 17327,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"excel_analysis\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-decoy-001",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 134,
+        "completion_tokens": 176,
+        "total_tokens": 310,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2625,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-decoy-001",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 134,
+        "completion_tokens": 207,
+        "total_tokens": 341,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2578,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-decoy-001",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 134,
+        "completion_tokens": 176,
+        "total_tokens": 310,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2358,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "pressure_gauge_reading",
+        "leak_detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 140,
+        "completion_tokens": 2793,
+        "total_tokens": 2933,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 35718,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"pressure_gauge_reading\",\"leak_detection\"],\"findings\":[{\"code\":\"pressure_gauge_reading\",\"confidence\":0,\"evidence\":\"压力表读数待识别\"},{\"code\":\"leak_detected\",\"confidence\":1,\"evidence\":\"泵体可见渗漏痕迹\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "pressure_gauge_reading",
+        "leak_detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 140,
+        "completion_tokens": 3603,
+        "total_tokens": 3743,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 43500,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"pressure_gauge_reading\",\"leak_detection\"],\"findings\":[{\"code\":\"pressure_gauge_reading\",\"confidence\":0,\"evidence\":\"压力表读数待识别\"},{\"code\":\"leak_detected\",\"confidence\":1,\"evidence\":\"泵体可见渗漏痕迹\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge_reading",
+        "leak_detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 140,
+        "completion_tokens": 3573,
+        "total_tokens": 3713,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 45811,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge_reading\",\"leak_detection\"],\"findings\":[{\"code\":\"gauge_reading\",\"confidence\":0,\"evidence\":\"压力表读数需视觉识别\"},{\"code\":\"leak_detected\",\"confidence\":1,\"evidence\":\"泵体可见渗漏痕迹\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 133,
+        "completion_tokens": 756,
+        "total_tokens": 889,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 11047,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 133,
+        "completion_tokens": 1289,
+        "total_tokens": 1422,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 17593,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 133,
+        "completion_tokens": 1182,
+        "total_tokens": 1315,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 15702,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-003",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "report_generation"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 131,
+        "completion_tokens": 2236,
+        "total_tokens": 2367,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 28764,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"report_generation\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-003",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 131,
+        "completion_tokens": 322,
+        "total_tokens": 453,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6125,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-003",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 131,
+        "completion_tokens": 322,
+        "total_tokens": 453,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4437,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 122,
+        "completion_tokens": 435,
+        "total_tokens": 557,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5389,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 122,
+        "completion_tokens": 317,
+        "total_tokens": 439,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3953,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 122,
+        "completion_tokens": 439,
+        "total_tokens": 561,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6422,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    }
+  ]
+}

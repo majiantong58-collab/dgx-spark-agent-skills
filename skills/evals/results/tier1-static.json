@@ -1,0 +1,466 @@
+{
+  "tool": {
+    "name": "NVIDIA SkillEvaluator",
+    "version": "0.3.0",
+    "install": "uv tool install --python 3.13 \"skillevaluator[all] @ git+https://github.com/NVIDIA/SkillEvaluator.git\""
+  },
+  "tier": "Tier 1 static (no LLM provider, no API spend)",
+  "skills": {
+    "inspection-orchestrator": {
+      "overall_score": 76.0,
+      "grade": "C",
+      "skill_type": "script-based",
+      "dimensions": {
+        "correctness": {
+          "score": 60.0,
+          "weight": 0.35,
+          "issues_count": 6,
+          "issues": [
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "No documented scripts in table format",
+              "suggestion": "Add '## Available Scripts' with table: | Script | Purpose | Arguments |"
+            },
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "Instructions don't mention 'run_script'",
+              "suggestion": "Add explicit run_script() call examples"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No examples provided",
+              "suggestion": "Add example usage with code blocks"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'version'",
+              "suggestion": "Add 'version' to frontmatter — Semantic version (e.g., \"1.0.0\")"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.author'",
+              "suggestion": "Add 'author' under metadata: — Author name or team (under metadata:)"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.tags'",
+              "suggestion": "Add 'tags' under metadata: — Categorization tags (under metadata:, list of 1-5 items)"
+            }
+          ]
+        },
+        "discoverability": {
+          "score": 85.0,
+          "weight": 0.25,
+          "issues_count": 2,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "Description doesn't mention WHEN to use this skill",
+              "suggestion": "Add trigger context: 'Use for...', 'When you need to...'"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No '## Purpose' section",
+              "suggestion": "Add purpose section to clarify use cases"
+            }
+          ]
+        },
+        "reliability": {
+          "score": 75.0,
+          "weight": 0.25,
+          "issues_count": 4,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "No mention of error handling or validation",
+              "suggestion": "Document expected errors and how to handle them"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No prerequisites/requirements documented",
+              "suggestion": "Document dependencies, API keys, or setup needed"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No limitations documented",
+              "suggestion": "Add '## Limitations' section with known issues/constraints"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No troubleshooting section documented",
+              "suggestion": "Add '## Troubleshooting' with Error/Cause/Solution patterns"
+            }
+          ]
+        },
+        "efficiency": {
+          "score": 100.0,
+          "weight": 0.15,
+          "issues_count": 0,
+          "issues": []
+        }
+      },
+      "pii_scan": {
+        "passed": true,
+        "status": "passed",
+        "warnings": 0,
+        "errors": 0
+      },
+      "security_scan": {
+        "passed": false,
+        "status": "incomplete",
+        "note": "incomplete — external scanners not installed"
+      }
+    },
+    "safety-hazard-detection": {
+      "overall_score": 77.8,
+      "grade": "C",
+      "skill_type": "script-based",
+      "dimensions": {
+        "correctness": {
+          "score": 65.0,
+          "weight": 0.35,
+          "issues_count": 5,
+          "issues": [
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "No documented scripts in table format",
+              "suggestion": "Add '## Available Scripts' with table: | Script | Purpose | Arguments |"
+            },
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "Instructions don't mention 'run_script'",
+              "suggestion": "Add explicit run_script() call examples"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'version'",
+              "suggestion": "Add 'version' to frontmatter — Semantic version (e.g., \"1.0.0\")"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.author'",
+              "suggestion": "Add 'author' under metadata: — Author name or team (under metadata:)"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.tags'",
+              "suggestion": "Add 'tags' under metadata: — Categorization tags (under metadata:, list of 1-5 items)"
+            }
+          ]
+        },
+        "discoverability": {
+          "score": 85.0,
+          "weight": 0.25,
+          "issues_count": 2,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "Description doesn't mention WHEN to use this skill",
+              "suggestion": "Add trigger context: 'Use for...', 'When you need to...'"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No '## Purpose' section",
+              "suggestion": "Add purpose section to clarify use cases"
+            }
+          ]
+        },
+        "reliability": {
+          "score": 75.0,
+          "weight": 0.25,
+          "issues_count": 4,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "No mention of error handling or validation",
+              "suggestion": "Document expected errors and how to handle them"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No prerequisites/requirements documented",
+              "suggestion": "Document dependencies, API keys, or setup needed"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No limitations documented",
+              "suggestion": "Add '## Limitations' section with known issues/constraints"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No troubleshooting section documented",
+              "suggestion": "Add '## Troubleshooting' with Error/Cause/Solution patterns"
+            }
+          ]
+        },
+        "efficiency": {
+          "score": 100.0,
+          "weight": 0.15,
+          "issues_count": 0,
+          "issues": []
+        }
+      },
+      "pii_scan": {
+        "passed": true,
+        "status": "passed",
+        "warnings": 0,
+        "errors": 0
+      },
+      "security_scan": {
+        "passed": false,
+        "status": "incomplete",
+        "note": "incomplete — external scanners not installed"
+      }
+    },
+    "gauge-reading": {
+      "overall_score": 77.8,
+      "grade": "C",
+      "skill_type": "script-based",
+      "dimensions": {
+        "correctness": {
+          "score": 65.0,
+          "weight": 0.35,
+          "issues_count": 5,
+          "issues": [
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "No documented scripts in table format",
+              "suggestion": "Add '## Available Scripts' with table: | Script | Purpose | Arguments |"
+            },
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "Instructions don't mention 'run_script'",
+              "suggestion": "Add explicit run_script() call examples"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'version'",
+              "suggestion": "Add 'version' to frontmatter — Semantic version (e.g., \"1.0.0\")"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.author'",
+              "suggestion": "Add 'author' under metadata: — Author name or team (under metadata:)"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.tags'",
+              "suggestion": "Add 'tags' under metadata: — Categorization tags (under metadata:, list of 1-5 items)"
+            }
+          ]
+        },
+        "discoverability": {
+          "score": 85.0,
+          "weight": 0.25,
+          "issues_count": 2,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "Description doesn't mention WHEN to use this skill",
+              "suggestion": "Add trigger context: 'Use for...', 'When you need to...'"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No '## Purpose' section",
+              "suggestion": "Add purpose section to clarify use cases"
+            }
+          ]
+        },
+        "reliability": {
+          "score": 75.0,
+          "weight": 0.25,
+          "issues_count": 4,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "No mention of error handling or validation",
+              "suggestion": "Document expected errors and how to handle them"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No prerequisites/requirements documented",
+              "suggestion": "Document dependencies, API keys, or setup needed"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No limitations documented",
+              "suggestion": "Add '## Limitations' section with known issues/constraints"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No troubleshooting section documented",
+              "suggestion": "Add '## Troubleshooting' with Error/Cause/Solution patterns"
+            }
+          ]
+        },
+        "efficiency": {
+          "score": 100.0,
+          "weight": 0.15,
+          "issues_count": 0,
+          "issues": []
+        }
+      },
+      "pii_scan": {
+        "passed": true,
+        "status": "passed",
+        "warnings": 0,
+        "errors": 0
+      },
+      "security_scan": {
+        "passed": false,
+        "status": "incomplete",
+        "note": "incomplete — external scanners not installed"
+      }
+    },
+    "inspection-report": {
+      "overall_score": 76.0,
+      "grade": "C",
+      "skill_type": "script-based",
+      "dimensions": {
+        "correctness": {
+          "score": 60.0,
+          "weight": 0.35,
+          "issues_count": 6,
+          "issues": [
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "No documented scripts in table format",
+              "suggestion": "Add '## Available Scripts' with table: | Script | Purpose | Arguments |"
+            },
+            {
+              "severity": "warning",
+              "deduction": 10,
+              "message": "Instructions don't mention 'run_script'",
+              "suggestion": "Add explicit run_script() call examples"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No examples provided",
+              "suggestion": "Add example usage with code blocks"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'version'",
+              "suggestion": "Add 'version' to frontmatter — Semantic version (e.g., \"1.0.0\")"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.author'",
+              "suggestion": "Add 'author' under metadata: — Author name or team (under metadata:)"
+            },
+            {
+              "severity": "warning",
+              "deduction": 5,
+              "message": "SKILL_SPEC recommended field missing: 'metadata.tags'",
+              "suggestion": "Add 'tags' under metadata: — Categorization tags (under metadata:, list of 1-5 items)"
+            }
+          ]
+        },
+        "discoverability": {
+          "score": 85.0,
+          "weight": 0.25,
+          "issues_count": 2,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "Description doesn't mention WHEN to use this skill",
+              "suggestion": "Add trigger context: 'Use for...', 'When you need to...'"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No '## Purpose' section",
+              "suggestion": "Add purpose section to clarify use cases"
+            }
+          ]
+        },
+        "reliability": {
+          "score": 75.0,
+          "weight": 0.25,
+          "issues_count": 4,
+          "issues": [
+            {
+              "severity": "info",
+              "deduction": 10,
+              "message": "No mention of error handling or validation",
+              "suggestion": "Document expected errors and how to handle them"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No prerequisites/requirements documented",
+              "suggestion": "Document dependencies, API keys, or setup needed"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No limitations documented",
+              "suggestion": "Add '## Limitations' section with known issues/constraints"
+            },
+            {
+              "severity": "info",
+              "deduction": 5,
+              "message": "No troubleshooting section documented",
+              "suggestion": "Add '## Troubleshooting' with Error/Cause/Solution patterns"
+            }
+          ]
+        },
+        "efficiency": {
+          "score": 100.0,
+          "weight": 0.15,
+          "issues_count": 0,
+          "issues": []
+        }
+      },
+      "pii_scan": {
+        "passed": true,
+        "status": "passed",
+        "warnings": 0,
+        "errors": 0
+      },
+      "security_scan": {
+        "passed": false,
+        "status": "incomplete",
+        "note": "incomplete — external scanners not installed"
+      }
+    }
+  }
+}

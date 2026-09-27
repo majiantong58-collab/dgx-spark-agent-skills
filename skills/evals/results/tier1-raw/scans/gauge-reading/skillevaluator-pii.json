@@ -1,0 +1,63 @@
+{
+  "overall_passed": true,
+  "overall_status": "passed",
+  "incomplete_scans": [],
+  "total_validators": 1,
+  "total_advisory_skipped": 0,
+  "total_errors": 0,
+  "total_warnings": 0,
+  "severity_counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "skills": [],
+  "contributors": [],
+  "results": [
+    {
+      "validator": "PII Scan",
+      "description": "Detect PII and local identifiers",
+      "passed": true,
+      "status": "passed",
+      "incomplete_scans": [],
+      "summary": {
+        "files_scanned": 5,
+        "checks_performed": 2,
+        "errors": 0,
+        "warnings": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0
+      },
+      "findings": [],
+      "success_details": [
+        {
+          "check": "pii_scan_start",
+          "message": "Scanning 5 files for PII",
+          "metadata": {
+            "file_count": 5
+          }
+        },
+        {
+          "check": "pii_detection",
+          "message": "No PII detected in 5 files (emails, SSNs, phone numbers, paths)",
+          "metadata": {
+            "files_scanned": 5
+          }
+        }
+      ],
+      "legacy": {
+        "errors": [],
+        "warnings": [],
+        "messages": [
+          "[OK] pii_scan_start: Scanning 5 files for PII",
+          "[OK] pii_detection: No PII detected in 5 files (emails, SSNs, phone numbers, paths)"
+        ]
+      }
+    }
+  ],
+  "evaluated_source": null,
+  "generated_at": "2026-09-26T18:39:14.093915+00:00"
+}

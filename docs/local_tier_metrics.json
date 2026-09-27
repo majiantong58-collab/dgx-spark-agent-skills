@@ -1,0 +1,58 @@
+{
+  "source": "skills/safety-hazard-detection/scripts/local_tier_pipeline.py",
+  "photos": [
+    "0df3783c8f95cdb8ec50264df1216167.jpg",
+    "48dc504f96c85b0de3e321d6cfe8fcfd.jpg",
+    "5c6ec8b67b58c8e7662f9639057db0ad.jpg"
+  ],
+  "tier_calls_total": {
+    "tier0": 3,
+    "tier0_5": 2,
+    "tier1": 2,
+    "tier2": 0
+  },
+  "per_photo": [
+    {
+      "file": "0df3783c8f95cdb8ec50264df1216167.jpg",
+      "tier_calls": {
+        "tier0": 1,
+        "tier0_5": 1,
+        "tier1": 1,
+        "tier2": 0
+      },
+      "wall_clock_s": 24.81,
+      "n_findings": 6,
+      "next_tier": 1,
+      "short_circuit": null
+    },
+    {
+      "file": "48dc504f96c85b0de3e321d6cfe8fcfd.jpg",
+      "tier_calls": {
+        "tier0": 1,
+        "tier0_5": 1,
+        "tier1": 1,
+        "tier2": 0
+      },
+      "wall_clock_s": 8.46,
+      "n_findings": 1,
+      "next_tier": 1,
+      "short_circuit": null
+    },
+    {
+      "file": "5c6ec8b67b58c8e7662f9639057db0ad.jpg",
+      "tier_calls": {
+        "tier0": 1,
+        "tier0_5": 0,
+        "tier1": 0,
+        "tier2": 0
+      },
+      "wall_clock_s": 0.15,
+      "n_findings": 0,
+      "next_tier": null,
+      "short_circuit": "no_person: 未进入 Tier 0.5，未调用 Tier 1"
+    }
+  ],
+  "wall_clock_total_s": 33.42,
+  "tier2_used": false,
+  "note": "Tier 2 未授权（cloud_authorized=False），route.enforce_safety_boundary 会将其压回本地；实测 tier2 调用为 0。墙钟时间为**单次点测**，波动范围见 docs/local_tier_variance.jsonl。"
+}

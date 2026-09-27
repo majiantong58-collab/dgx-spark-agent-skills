@@ -1,0 +1,238 @@
+{
+  "task": "A4 端到端打通 · token 基线",
+  "offline": false,
+  "generated_at": "2026-09-26T17:25:14+00:00",
+  "model": "step-5-preview",
+  "endpoint_host": "api.stepfun.com",
+  "task_id": "58638da3-a86a-4c73-8b58-52013c77b915",
+  "assets": [
+    {
+      "file": "synthetic_workshop.png",
+      "width": 1280,
+      "height": 720,
+      "bytes": 8104,
+      "sha256_16": "7e75671eef588da8",
+      "provenance": "程序合成（Pillow 绘制，非真实照片）",
+      "generator": "skills/evals/run_e2e.py::synth_workshop",
+      "license": "本仓库自产，无第三方素材权利",
+      "usable_as_accuracy_evidence": false
+    }
+  ],
+  "calls": [
+    {
+      "task_id": "58638da3-a86a-4c73-8b58-52013c77b915",
+      "model": "step-5-preview",
+      "image_name": "synthetic_workshop.png",
+      "image_bytes": 8104,
+      "image_sha256": "7e75671eef588da8",
+      "image_width": 1280,
+      "image_height": 720,
+      "base64_chars": 10808,
+      "prompt_tokens": 828,
+      "completion_tokens": 2207,
+      "total_tokens": 3035,
+      "content_chars": 192,
+      "reasoning_chars": 4025,
+      "answer_field": "content",
+      "finish_reason": "stop",
+      "latency_ms": 31031,
+      "ok": true,
+      "error": null,
+      "findings_count": 2
+    }
+  ],
+  "arm_prompt_probes": [
+    {
+      "arm": "A",
+      "skill_payload_chars": 0,
+      "latency_ms": 3608,
+      "model": "step-5-preview",
+      "prompt_tokens": 25,
+      "completion_tokens": 256,
+      "total_tokens": 281,
+      "finish_reason": "length"
+    },
+    {
+      "arm": "B",
+      "skill_payload_chars": 3050,
+      "latency_ms": 3671,
+      "model": "step-5-preview",
+      "prompt_tokens": 1666,
+      "completion_tokens": 256,
+      "total_tokens": 1922,
+      "finish_reason": "length"
+    },
+    {
+      "arm": "C",
+      "skill_payload_chars": 2989,
+      "latency_ms": 3593,
+      "model": "step-5-preview",
+      "prompt_tokens": 1628,
+      "completion_tokens": 256,
+      "total_tokens": 1884,
+      "finish_reason": "length"
+    },
+    {
+      "arm": "D",
+      "skill_payload_chars": 138,
+      "latency_ms": 4156,
+      "model": "step-5-preview",
+      "prompt_tokens": 123,
+      "completion_tokens": 256,
+      "total_tokens": 379,
+      "finish_reason": "length"
+    }
+  ],
+  "aggregate": {
+    "n_calls": 1,
+    "n_ok": 1,
+    "n_failed": 0,
+    "prompt_tokens_mean": 828.0,
+    "completion_tokens_mean": 2207.0,
+    "total_tokens_mean": 3035.0,
+    "total_tokens_sum": 3035,
+    "image_bytes_mean": 8104.0,
+    "base64_chars_mean": 10808.0,
+    "latency_ms_mean": 31031.0,
+    "latency_ms_max": 31031
+  },
+  "extrapolation_160": {
+    "basis": "40 条用例 × 4 臂 = 160 次调用（每用例每臂 1 次）",
+    "calls": 160,
+    "by_arm": {
+      "A": {
+        "skill_payload_chars": 0,
+        "prompt_tokens_per_call": 25,
+        "completion_tokens_per_call_assumed": 2207,
+        "calls": 40,
+        "total_tokens": 89280
+      },
+      "B": {
+        "skill_payload_chars": 3050,
+        "prompt_tokens_per_call": 1666,
+        "completion_tokens_per_call_assumed": 2207,
+        "calls": 40,
+        "total_tokens": 154920
+      },
+      "C": {
+        "skill_payload_chars": 2989,
+        "prompt_tokens_per_call": 1628,
+        "completion_tokens_per_call_assumed": 2207,
+        "calls": 40,
+        "total_tokens": 153400
+      },
+      "D": {
+        "skill_payload_chars": 138,
+        "prompt_tokens_per_call": 123,
+        "completion_tokens_per_call_assumed": 2207,
+        "calls": 40,
+        "total_tokens": 93200
+      }
+    },
+    "prompt_tokens": 137680,
+    "completion_tokens": 353120,
+    "total_tokens": 490800,
+    "measured_inputs": {
+      "prompt_tokens_per_arm": "实测（probe_arm_overhead，文本探测）",
+      "completion_tokens_per_call": "取视觉调用实测均值 2207，**上界口径**——评测用例是文本判定，CoT 应显著短于视觉识别"
+    },
+    "caveat": "上界估算；A5 应以真实运行值替换",
+    "with_3_runs": 1472400,
+    "three_runs_note": "comparison-design.md §2 要求每用例重复 ≥3 次时的总量"
+  },
+  "pipeline": {
+    "routes": [
+      {
+        "skill": "safety-hazard-detection",
+        "reason": "关键词命中：隐患",
+        "tier": 0,
+        "requires_cloud_auth": false
+      },
+      {
+        "skill": "inspection-report",
+        "reason": "关键词命中：报告",
+        "tier": 2,
+        "requires_cloud_auth": true
+      }
+    ],
+    "findings": [
+      {
+        "kind": "hazard",
+        "code": "PPE-NO-VEST",
+        "label": "未穿反光衣",
+        "severity": "medium",
+        "confidence": 0.9,
+        "bbox": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "last_bbox": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "source": "safety-hazard-detection",
+        "evidence": "两名人员均未穿着安全背心",
+        "evidence_ref": "frame_0001#bbox[0, 0, 0, 0]",
+        "uncertain": false,
+        "requires_human_review": false,
+        "frames": [
+          "frame_0001"
+        ],
+        "frame_count": 1,
+        "hit_count": 1,
+        "status": "unique",
+        "merged_from": [],
+        "tier": 2,
+        "source_skill": "safety-hazard-detection"
+      },
+      {
+        "kind": "hazard",
+        "code": "HOUSEKEEPING",
+        "label": "现场凌乱",
+        "severity": "low",
+        "confidence": 0.6,
+        "bbox": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "last_bbox": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "source": "safety-hazard-detection",
+        "evidence": "地面散落碎屑异物",
+        "evidence_ref": "frame_0001#bbox[0, 0, 0, 0]",
+        "uncertain": false,
+        "requires_human_review": false,
+        "frames": [
+          "frame_0001"
+        ],
+        "frame_count": 1,
+        "hit_count": 1,
+        "status": "unique",
+        "merged_from": [],
+        "tier": 2,
+        "source_skill": "safety-hazard-detection"
+      }
+    ],
+    "partial": false,
+    "report_summary": {
+      "total": 2,
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "uncertain_count": 0,
+      "tier2_calls": 2
+    },
+    "report_path": "skills\\evals\\results\\a4-sample-report.md"
+  }
+}

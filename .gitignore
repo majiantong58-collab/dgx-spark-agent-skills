@@ -2,6 +2,30 @@ node_modules/
 .DS_Store
 .env
 .env.local
+*.env
+!*.env.example
 *.log
 dist/
 build/
+.venv/
+__pycache__/
+*.py[cod]
+
+# 第三方原始素材（含明文凭据，禁止提交）
+补充信息/
+
+# 本地暂存区：克隆的第三方仓库、实验中间产物、抓取的页面缓存
+# 保留 .scratch/README.md（模板预留的说明文件）
+.scratch/*
+!.scratch/README.md
+
+# 模型权重：单文件达 4 GB，超过 GitHub 单文件 100 MB 上限，推送会被直接拒绝。
+# 权重可由 README/部署说明中的命令重新下载，不入库。
+models/
+
+# 用户实拍车间照片：画面中含可辨认的真实工人人脸，当事人未同意公开发布。
+# 在明确处置方式（打码 / 裁切 / 仅保留无人的照片）之前，一律不得提交。
+assets/real_photos/
+
+# 工具产物
+.codegraph/

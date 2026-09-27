@@ -1,0 +1,41 @@
+# ==============================================================================
+# 依赖清单
+#
+# ⚠️ 本环境分【两步】安装。只跑 `pip install -r requirements.txt` 会装到
+#    PyPI 的 CPU 版 torch —— 本地三层流水线（Tier 0 / Tier 1）将无法使用 GPU。
+#
+# 步骤 1 — 先装 CUDA 版 torch（必须指定 cu128 专用索引）：
+#
+#     ./.venv/Scripts/pip install torch torchvision \
+#         --index-url https://download.pytorch.org/whl/cu128
+#
+# 步骤 2 — 再装本文件其余依赖：
+#
+#     ./.venv/Scripts/pip install -r requirements.txt
+#
+# 实测环境（本仓库验证通过的版本）：
+#     torch 2.11.0+cu128 / torchvision 0.26.0+cu128
+#     Windows 11 · RTX 5060 Laptop 8 GB · CUDA 12.8
+#
+# ⚠️ 安装步骤 2 之后，请确认 `torch.__version__` 仍带 `+cu128` 后缀。
+#    若后缀消失，说明 torch 被 PyPI 的 CPU 版覆盖，重跑步骤 1 即可。
+#
+# 说明：torch / torchvision 不写在本文件内，因为 cu128 索引无法用单条
+#       `pip install -r` 表达；请按上方两步执行。
+# ==============================================================================
+
+# --- 本地推理栈（Tier 0 / Tier 1）---
+# torch / torchvision 见上方步骤 1，不列在此处
+transformers==5.17.0
+ultralytics==8.4.159
+
+# --- 云端（Tier 2）与基础工具 ---
+openai==3.17.0
+python-dotenv==1.2.3
+opencv-python==5.0.0.93
+pillow==12.3.0
+numpy==2.5.3
+requests==2.34.2
+
+# --- 交付门禁：NVIDIA 官方 skill 规范校验器（提供 agentskills 命令）---
+skills-ref==0.1.1

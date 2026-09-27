@@ -1,0 +1,151 @@
+{
+  "generated_at": "2026-09-27 11:54",
+  "model": "step-5-preview",
+  "n_calls": 480,
+  "runs": 3,
+  "cases": 40,
+  "negatives": 16,
+  "primary_metric": {
+    "name": "Δ2 = FTR(C) − FTR(B)",
+    "scope": "本技能口径（metrics.json 指标 1）",
+    "ftr_a": 0.0,
+    "ftr_b": 0.0,
+    "ftr_c": 0.0,
+    "ftr_d": 0.0,
+    "delta2": 0.0,
+    "reliable": true,
+    "reason": "B/C 两臂负例样本完整、无失败、无解析失败，且有效负例数一致",
+    "sensitivity": {
+      "majority": 0.0,
+      "any": 0.0,
+      "all": 0.0
+    },
+    "sensitivity_state": "all_zero"
+  },
+  "broad_metric": {
+    "name": "广义触发率（任何技能被调用）",
+    "denominator": "有效负例 16",
+    "rate_a": 0.5625,
+    "rate_b": 0.0625,
+    "rate_c": 0.1875,
+    "rate_d": 0.0,
+    "delta2_broad": 0.125,
+    "sensitivity_broad": {
+      "majority": 0.125,
+      "any": 0.1875,
+      "all": 0.0
+    }
+  },
+  "phantom_skills": {
+    "A": {
+      "calls": 76,
+      "runs": 66,
+      "distinct": 36,
+      "names": [
+        "anomaly_detection",
+        "csv_trend_analysis",
+        "document_ocr",
+        "extract_key_points",
+        "fire-safety-inspection",
+        "formal_document_generation",
+        "formal_report_generation",
+        "generate_report",
+        "helmet_detection",
+        "image-analysis",
+        "image_aesthetics_assessment",
+        "image_analysis",
+        "image_ocr",
+        "image_understanding",
+        "inspection_analysis",
+        "inspection_package_analysis",
+        "instrument_detection",
+        "key_point_extraction",
+        "latency_detection",
+        "latency_monitor",
+        "ocr",
+        "oil_leak_detection",
+        "oil_stain_detection",
+        "pressure_gauge_reading",
+        "realtime_patrol",
+        "reflective_clothing_detection",
+        "report-generation",
+        "report_generation",
+        "rtsp_stream_analysis",
+        "rtsp_stream_capture",
+        "safety_inspection",
+        "safety_report",
+        "safety_violation_detection",
+        "vision",
+        "vision_qa",
+        "workshop_safety_inspection"
+      ]
+    },
+    "B": {
+      "calls": 0,
+      "runs": 0,
+      "distinct": 0,
+      "names": []
+    },
+    "C": {
+      "calls": 0,
+      "runs": 0,
+      "distinct": 0,
+      "names": []
+    },
+    "D": {
+      "calls": 0,
+      "runs": 0,
+      "distinct": 0,
+      "names": []
+    }
+  },
+  "headline": {
+    "trigger_accuracy": {
+      "A": 0.55,
+      "B": 0.975,
+      "C": 0.9,
+      "D": 1.0
+    },
+    "conclusion_accuracy": {
+      "A": 0.16666666666666666,
+      "B": 1.0,
+      "C": 1.0,
+      "D": 0.16666666666666666
+    },
+    "route_sequence_accuracy": {
+      "A": 0.2222222222222222,
+      "B": 0.5555555555555556,
+      "C": 0.4444444444444444,
+      "D": 0.3333333333333333
+    },
+    "false_trigger_rate": {
+      "A": 0.0,
+      "B": 0.0,
+      "C": 0.0,
+      "D": 0.0
+    },
+    "negative_any_trigger_rate": {
+      "A": 0.5625,
+      "B": 0.0625,
+      "C": 0.1875,
+      "D": 0.0
+    },
+    "phantom_skill_count": {
+      "A": 76,
+      "B": 0,
+      "C": 0,
+      "D": 0
+    },
+    "p95_latency_ms": {
+      "A": 35750.0,
+      "B": 29469.0,
+      "C": 24438.0,
+      "D": 16078.0
+    }
+  },
+  "cost_cny": {
+    "input": 3.76,
+    "output": 8.58,
+    "total": 12.34
+  }
+}

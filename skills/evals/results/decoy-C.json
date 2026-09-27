@@ -1,0 +1,493 @@
+{
+  "arm": "C",
+  "n_cases": 9,
+  "runs": 3,
+  "concurrency": 4,
+  "skill_payload_chars": 3048,
+  "total_tokens": 70051,
+  "n_errors": 0,
+  "results": [
+    {
+      "case_id": "gauge-decoy-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1775,
+        "completion_tokens": 394,
+        "total_tokens": 2169,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6077,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE_VIOLATION\",\"confidence\":0.95,\"evidence\":\"画面左侧一人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1775,
+        "completion_tokens": 641,
+        "total_tokens": 2416,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8156,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"no_helmet\",\"confidence\":0.95,\"evidence\":\"画面左侧一人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1775,
+        "completion_tokens": 398,
+        "total_tokens": 2173,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5562,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\"],\"findings\":[{\"code\":\"PPE_VIOLATION\",\"confidence\":0.95,\"evidence\":\"左侧一人未戴安全帽\"}]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1774,
+        "completion_tokens": 328,
+        "total_tokens": 2102,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5702,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1774,
+        "completion_tokens": 327,
+        "total_tokens": 2101,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7093,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "gauge-decoy-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1774,
+        "completion_tokens": 314,
+        "total_tokens": 2088,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4500,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-001",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1991,
+        "completion_tokens": 659,
+        "total_tokens": 2650,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 9407,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1991,
+        "completion_tokens": 2120,
+        "total_tokens": 4111,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 26062,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-001",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1991,
+        "completion_tokens": 1645,
+        "total_tokens": 3636,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 20813,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1986,
+        "completion_tokens": 255,
+        "total_tokens": 2241,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3608,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1986,
+        "completion_tokens": 264,
+        "total_tokens": 2250,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3562,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "hazard-decoy-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 1986,
+        "completion_tokens": 291,
+        "total_tokens": 2277,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3843,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-decoy-001",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2187,
+        "completion_tokens": 425,
+        "total_tokens": 2612,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 7702,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-decoy-001",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2187,
+        "completion_tokens": 403,
+        "total_tokens": 2590,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6000,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "report-decoy-001",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2187,
+        "completion_tokens": 385,
+        "total_tokens": 2572,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 4781,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-001",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2198,
+        "completion_tokens": 1093,
+        "total_tokens": 3291,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 16110,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-001",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "safety-hazard-detection",
+        "gauge-reading"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2198,
+        "completion_tokens": 648,
+        "total_tokens": 2846,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 8562,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"safety-hazard-detection\",\"gauge-reading\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-001",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "gauge-reading",
+        "safety-hazard-detection"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2198,
+        "completion_tokens": 1590,
+        "total_tokens": 3788,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 22014,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"gauge-reading\",\"safety-hazard-detection\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-002",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2191,
+        "completion_tokens": 165,
+        "total_tokens": 2356,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2641,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-002",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2191,
+        "completion_tokens": 165,
+        "total_tokens": 2356,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2592,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-002",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2191,
+        "completion_tokens": 226,
+        "total_tokens": 2417,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 3594,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-003",
+      "run_index": 0,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2189,
+        "completion_tokens": 447,
+        "total_tokens": 2636,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5781,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-003",
+      "run_index": 1,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2189,
+        "completion_tokens": 456,
+        "total_tokens": 2645,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 6108,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-003",
+      "run_index": 2,
+      "triggered": true,
+      "route": [
+        "inspection-report"
+      ],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2189,
+        "completion_tokens": 447,
+        "total_tokens": 2636,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 5921,
+      "raw_response": "{\"call_skill\":true,\"skills\":[\"inspection-report\"],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-004",
+      "run_index": 0,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 184,
+        "total_tokens": 2364,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2718,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-004",
+      "run_index": 1,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 184,
+        "total_tokens": 2364,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2906,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    },
+    {
+      "case_id": "orch-decoy-004",
+      "run_index": 2,
+      "triggered": false,
+      "route": [],
+      "usage": {
+        "model": "step-5-preview",
+        "prompt_tokens": 2180,
+        "completion_tokens": 184,
+        "total_tokens": 2364,
+        "finish_reason": "stop"
+      },
+      "latency_ms": 2733,
+      "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+      "error": "",
+      "attempts": 1
+    }
+  ]
+}

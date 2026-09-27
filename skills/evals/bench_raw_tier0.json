@@ -1,0 +1,44 @@
+{
+  "env": {
+    "machine": "AMD64 / Windows 11",
+    "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "compute_capability": [
+      12,
+      0
+    ],
+    "vram_total_mb": 8150.6,
+    "torch": "2.11.0+cu128",
+    "cuda_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "result": {
+    "layer": "tier0",
+    "component": "YOLO11n (COCO person 检测, GPU)",
+    "cold_start_s": 4.147,
+    "steady_state_ms": [
+      51.42,
+      15.51,
+      14.47,
+      14.29,
+      14.81
+    ],
+    "vram_after_load_mb": 42.1,
+    "vram_peak_mb": 59.8,
+    "vram_after_mb": 42.1,
+    "model_file_bytes": 5613764,
+    "sanity": {
+      "detections_first_call": 8
+    }
+  },
+  "warm_n_per_process": 5,
+  "cold_start_definition": "进程启动(模块 import 时刻) → 该层首次产出结果",
+  "vram_unit": "MiB (1024^2 bytes)"
+}

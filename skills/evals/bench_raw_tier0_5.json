@@ -1,0 +1,45 @@
+{
+  "env": {
+    "machine": "AMD64 / Windows 11",
+    "gpu": "NVIDIA GeForce RTX 5060 Laptop GPU",
+    "compute_capability": [
+      12,
+      0
+    ],
+    "vram_total_mb": 8150.6,
+    "torch": "2.11.0+cu128",
+    "cuda_arch_list": [
+      "sm_75",
+      "sm_80",
+      "sm_86",
+      "sm_90",
+      "sm_100",
+      "sm_120"
+    ],
+    "python": "3.12.10",
+    "platform": "Windows-11-10.0.26200-SP0"
+  },
+  "result": {
+    "layer": "tier0_5",
+    "component": "颜色/几何启发式 (CPU, OpenCV+numpy, 无模型)",
+    "cold_start_s": 1.882,
+    "steady_state_ms": [
+      16.83,
+      16.12,
+      16.72,
+      18.11,
+      17.23
+    ],
+    "vram_after_load_mb": null,
+    "vram_peak_mb": null,
+    "vram_after_mb": null,
+    "model_file_bytes": 0,
+    "sanity": {
+      "hits_first_call": 2
+    },
+    "notes": "纯 CPU，不占显存，故 vram_* 一律 null（不估算）。hits 数为本次固定传入 3 个人形框所得，非召回率。"
+  },
+  "warm_n_per_process": 5,
+  "cold_start_definition": "进程启动(模块 import 时刻) → 该层首次产出结果",
+  "vram_unit": "MiB (1024^2 bytes)"
+}
