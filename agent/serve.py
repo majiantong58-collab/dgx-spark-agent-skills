@@ -27,6 +27,8 @@ import os
 import re
 import sys
 import traceback
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -36,7 +38,11 @@ sys.dont_write_bytecode = True
 import mes_agent  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
-MES_URL = "http://127.0.0.1:8790/index.html"   # 由 main() 覆盖
+# 🔴 为什么要有反代：助手的主题要跟 MES 同步，就得能读到 iframe 的 data-theme。
+# 而跨源读不到 —— 8790 与 8791 是**不同 origin**（localStorage 也按 origin 隔离）。
+# 把 MES 反代到本服务下，iframe 与助手就同源，父页面可以直接观察它的 <html data-theme>。
+MES_ORIGIN = "http://127.0.0.1:8790"          # 反代目标；由 main() 覆盖
+MES_URL = "/mes/index.html"                   # iframe src（同源路径）；由 main() 覆盖
 # 与 mes_agent.py 同一个缺省序：请求里指定 > ANTHROPIC_MODEL > 兜底名
 DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-haiku-4-5-20251001"
 
@@ -85,7 +91,32 @@ class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):  # noqa: N802
         self._send(b"", "text/plain", 204)
 
+    def _proxy_mes(self, sub: str) -> None:
+        """把 `/mes/...` 转发到 MES 服务，去掉 `/mes` 前缀。
+
+        前缀一去掉，iframe 里的相对路径就自动对上了：
+        页面 `/mes/docs/mes-demo/index.html` 里的 `mes-data/inbox.json`
+        浏览器会解析成 `/mes/docs/mes-demo/mes-data/inbox.json`
+        → 本函数剥掉 `/mes` → 转发到 8790 的同一路径。**不需要改页面里任何相对路径。**
+        """
+        url = MES_ORIGIN.rstrip("/") + (sub or "/")
+        try:
+            with urllib.request.urlopen(url, timeout=20) as r:
+                body = r.read()
+                ctype = r.headers.get("content-type") or "application/octet-stream"
+        except urllib.error.HTTPError as e:
+            self._send(b"", "text/plain", e.code)          # 透传状态码，页面自己会报 404
+            return
+        except Exception as exc:  # noqa: BLE001
+            self._json({"error": f"反代 MES 失败：{redact(exc)}"}, 502)
+            return
+        self._send(body, ctype)
+
     def do_GET(self):  # noqa: N802
+        # 反代要在最前面：它需要带 query 的原始 path
+        if self.path == "/mes" or self.path.startswith("/mes/"):
+            self._proxy_mes(self.path[4:])
+            return
         route = self.path.split("?", 1)[0]
         if route in ("/", "/index.html"):
             # 每次现读：改页面不用重启服务（演示时能实时改字）
@@ -103,6 +134,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json({
                 "ok": True,
                 "mes_url": MES_URL,
+                "mes_origin": MES_ORIGIN,
                 "model": DEFAULT_MODEL,
                 "endpoint_host": (os.environ.get("ANTHROPIC_BASE_URL") or "").split("//")[-1].split("/")[0] or None,
                 "model_is_local": False,
@@ -138,21 +170,25 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main(argv=None) -> int:
-    global MES_URL
+    global MES_URL, MES_ORIGIN
     ap = argparse.ArgumentParser(prog="mes-agent-serve", description="MES 助手的 HTTP 外壳")
     ap.add_argument("--port", type=int, default=8791)
     ap.add_argument("--host", default="127.0.0.1")
-    ap.add_argument("--mes-url", default=MES_URL, help="左栏 iframe 里的 MES 页面地址")
+    ap.add_argument("--mes-origin", default=MES_ORIGIN,
+                    help="反代目标：真正的 MES 服务地址")
+    ap.add_argument("--mes-url", default="/mes/index.html#view=qm-quality-exception",
+                    help="左栏 iframe 的 src。缺省走本服务的 /mes 反代 ⇒ 与助手同源 ⇒ 主题可同步")
     ap.add_argument("--proto", default=None, help="agent 读哪个宿主页（转成 MES_PROTO 环境变量）")
     args = ap.parse_args(argv)
 
+    MES_ORIGIN = args.mes_origin
     MES_URL = args.mes_url
     if args.proto:
         os.environ["MES_PROTO"] = args.proto
 
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"[agent-serve] MES 助手就绪 http://{args.host}:{args.port}")
-    print(f"[agent-serve] 左栏 MES：{MES_URL}")
+    print(f"[agent-serve] 左栏 MES：{MES_URL}（反代自 {MES_ORIGIN}，同源 ⇒ 主题同步）")
     print(f"[agent-serve] agent 读的宿主页：{os.environ.get('MES_PROTO') or '(仓库内默认 docs/mes-demo/index.html)'}")
     try:
         httpd.serve_forever()

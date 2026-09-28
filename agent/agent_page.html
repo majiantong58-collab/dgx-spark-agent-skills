@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <title>MES 助手 · Agent</title>
 <style>
-  /* 设计 token 逐字取自 MES 原型 index.html:26-53 的浅色主题（--brand / --bg / --border /
-     --text / 语义色 / 圆角 / 阴影 / focus-ring），不另创配色。
-     取法：从原型源码提取，不凭截图目测 —— 目测出来的色值对不上，而且会随主题漂移。 */
-  :root{
+  /* 设计 token 逐字取自 MES 原型 index.html:26-53（浅色）与 :55-79（暗色），不另创配色。
+     取法：从原型源码提取，不凭截图目测 —— 目测出来的色值对不上，而且会随主题漂移。
+     data-theme 挂在 <html> 上，由下方脚本**镜像 iframe 里 MES 的同一个属性**，
+     所以 MES 那边切主题（含「跟随系统」与 data-theme-lock 强制深色的视图），这边跟着变。 */
+  :root, [data-theme="light"]{
     --brand-700:#11458c; --brand-600:#1a57ad; --brand-500:#2769c6;
     --brand-200:#c4d9f9; --brand-100:#e6effc;
-    --bg-page:#f3f5f7; --bg-surface:#fbfcfe; --bg-wash:#e9ecf0;
+    --bg-page:#f3f5f7; --bg-surface:#fbfcfe; --bg-raised:#ffffff; --bg-wash:#e9ecf0;
     --border:#d9dde2; --border-strong:#c1c6cc;
     --text-0:#282f36; --text-1:#3b4249; --text-2:#5d646b; --text-muted:#7a8188;
     --success:#05893e; --success-bg:#e0f7e4;
@@ -19,6 +20,24 @@
     --radius-sm:4px; --radius-md:6px; --radius-lg:8px;
     --shadow-card:0 1px 2px rgba(20,42,75,.04), 0 2px 8px rgba(20,42,75,.06);
     --focus-ring:0 0 0 3px rgba(26,87,173,.25);
+    /* 主按钮的前景色：亮色主题下品牌蓝是深色，配白字 */
+    --on-brand:#ffffff;
+  }
+  [data-theme="dark"]{
+    color-scheme:dark;
+    --brand-600:#5e9ae7; --brand-500:#76afee; --brand-700:#3c79d1; --brand-100:#1e2e47;
+    --bg-page:#0d1116; --bg-surface:#151a1f; --bg-raised:#1c2128; --bg-wash:#1c2128;
+    --border:#2c323a; --border-strong:#3a4149;
+    --text-0:#e4e8ed; --text-1:#e4e8ed; --text-2:#afb5bc; --text-muted:#838a92;
+    --success:#53be70; --success-bg:#1a3520;
+    --warning:#ddb049; --warning-bg:#3f3112;
+    --danger:#f26b59;  --danger-bg:#462622;
+    --shadow-card:0 1px 2px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.28);
+    --focus-ring:0 0 0 3px rgba(94,154,231,.35);
+    /* 暗色下品牌蓝是浅色，白字会发虚 —— 原型对 .btn-primary 也是这么处理的（:142） */
+    --on-brand:#141b24;
+  }
+  :root{
     --sans:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",
            "Source Han Sans SC",system-ui,sans-serif;
     --mono:ui-monospace,"Cascadia Mono","Consolas",monospace;
@@ -43,8 +62,8 @@
       border-top:3px solid var(--brand-600);padding:12px 18px;flex:none;
       display:flex;align-items:center;gap:10px}
   #hd .logo{width:26px;height:26px;border-radius:var(--radius-sm);background:var(--brand-600);
-            color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;
-            justify-content:center;flex:none;letter-spacing:.02em}
+            color:var(--on-brand);font-size:12px;font-weight:700;display:flex;
+            align-items:center;justify-content:center;flex:none;letter-spacing:.02em}
   #hd .box{min-width:0}
   #hd .t{font-size:15px;font-weight:600;color:var(--text-0);line-height:1.3}
   #hd .s{font-size:12px;color:var(--text-muted);margin-top:1px}
@@ -73,10 +92,11 @@
         flex:none}
   #q{width:100%;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
      padding:9px 11px;font-family:var(--sans);font-size:13.5px;color:var(--text-0);
-     background:#fff;resize:vertical;min-height:54px;line-height:1.5}
+     background:var(--bg-raised);resize:vertical;min-height:54px;line-height:1.5}
+  #q::placeholder{color:var(--text-muted)}
   #q:focus{outline:none;border-color:var(--brand-500);box-shadow:var(--focus-ring)}
   #row{display:flex;gap:10px;margin-top:9px;align-items:center}
-  button{font-family:var(--sans);font-size:13px;font-weight:600;color:#fff;
+  button{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--on-brand);
          border:1px solid var(--brand-600);background:var(--brand-600);
          border-radius:var(--radius-sm);padding:7px 20px;cursor:pointer;
          transition:background-color 150ms ease,border-color 150ms ease}
@@ -121,6 +141,51 @@
   </div>
 </div>
 <script>
+/* ── 主题同步：把 iframe 里 MES 的 <html data-theme> 镜像到本页 ──────────────
+   MES 的主题真源是 <html data-theme>，取值 light|dark，由 `wm-mes-theme`
+   （localStorage，三档 light/dark/system）决定，原型在 index.html:7667-7680 实现。
+   本页**不自己判断该用哪档**，只镜像它最终的属性值 —— 这样「跟随系统」与
+   某些视图的 data-theme-lock 强制深色都自动跟上，不必在这里重写一遍规则。
+
+   为什么必须走反代：跨源读不到 contentDocument（8790 与 8791 是不同 origin）。
+   iframe 由本服务的 /mes 反代提供 ⇒ 同源 ⇒ 下面的 contentDocument 才可读，
+   且两边共用同一份 localStorage。 */
+(function () {
+  'use strict';
+  var html = document.documentElement;
+  var frame = document.getElementById('mes');
+
+  function apply(t) { if (t) { html.setAttribute('data-theme', t); } }
+
+  // 首屏兜底：iframe 还没加载完时先按 MES 同一套缺省序定一次，避免闪一下白/黑
+  (function () {
+    var t = 'dark';
+    try { t = localStorage.getItem('wm-mes-theme') || 'dark'; } catch (e) { /* 隐私模式等 */ }
+    if (t === 'system') {
+      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ? 'dark' : 'light';
+    }
+    apply(t === 'light' ? 'light' : 'dark');
+  })();
+
+  function attach() {
+    var d;
+    try { d = frame.contentDocument; } catch (e) { d = null; }
+    if (!d || !d.documentElement) { return; }          // 跨源或被拒：兜底那份仍然生效
+    apply(d.documentElement.getAttribute('data-theme'));
+    if (d.documentElement.__themeObs) { return; }      // 别重复挂
+    d.documentElement.__themeObs = new MutationObserver(function () {
+      apply(d.documentElement.getAttribute('data-theme'));
+    });
+    d.documentElement.__themeObs.observe(d.documentElement, {
+      attributes: true, attributeFilter: ['data-theme']
+    });
+  }
+
+  if (frame.contentDocument && frame.contentDocument.readyState === 'complete') { attach(); }
+  frame.addEventListener('load', attach);
+})();
+
 (function () {
   'use strict';
   var go = document.getElementById('go');
