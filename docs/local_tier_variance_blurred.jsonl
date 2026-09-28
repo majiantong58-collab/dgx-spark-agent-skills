@@ -1,0 +1,1 @@
+{"tag": "blurred", "run": 1, "severity_mode": "v2", "wall_clock_total_s": 33.26, "tier_calls_total": {"tier0": 3, "tier0_5": 2, "tier1": 2, "tier2": 0}, "per_photo_wall_s": [24.73, 8.36, 0.17], "per_photo_findings": [5, 2, 0]}
