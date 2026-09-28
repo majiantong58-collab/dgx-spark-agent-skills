@@ -77,11 +77,22 @@ def _serve(root):
     return srv, srv.server_address[1]
 
 
-def _provenance_note(inbox):
-    """按 §C.6 的**实际作用域**报来源证据，不作超出它的宣称。
+def _fmt_delta(sec):
+    """按量级选单位——`:.0f 天` 会把 16 分钟印成「0 天」（我犯过这个渲染错）。"""
+    if sec < 60:
+        return f"{sec:.2f} 秒"
+    if sec < 3600:
+        return f"{sec / 60:.1f} 分钟"
+    if sec < 86400:
+        return f"{sec / 3600:.1f} 小时"
+    return f"{sec / 86400:.0f} 天"
 
-    §C.6：Δ≈0 只能排除「倒填时间的老件」，**证明不了**它非手写（手写者当场写文件 Δ 也是 0）。
-    反过来 Δ 大 ⇒ 正是该判别式**明确能查**的那一类：倒填时间的老件。
+
+def _provenance_note(inbox):
+    """按 §C.6 的**实际作用域**报来源证据，分三档，不作超出它的宣称。
+
+    §C.6：脚本产出 Δ≤1s（写入即落盘）；手写件实例 Δ=46 天；且 Δ≈0 **证明不了**非手写。
+    故这里只报「是否满足脚本直写签名」，来源是否成立交由 D6 的复现判定。
     """
     try:
         doc = json.loads(inbox.read_text(encoding="utf-8"))
@@ -93,11 +104,14 @@ def _provenance_note(inbox):
     mtime = datetime.datetime.fromtimestamp(inbox.stat().st_mtime, tz=datetime.timezone.utc)
     delta = abs((mtime - stamp).total_seconds())
     if delta <= 1:
-        return (f"produced_at ↔ mtime Δ={delta:.2f}s ⇒ **不是倒填时间的老件**"
-                f"（§C.6 判据的作用域**仅此**：它证明不了「非手写」）"
-                f"—— 来源是否成立由 **D6 的复现**判定")
-    return (f"produced_at ↔ mtime 相差 **{delta / 86400:.0f} 天** ⇒ "
-            f"**倒填时间的老件**（§C.6 判别式明确能查的那一类）")
+        return (f"produced_at ↔ mtime Δ={_fmt_delta(delta)} ⇒ **脚本直写签名成立**（§C.6：写入即落盘）；"
+                f"但 §C.6 明示这**证明不了**「非手写」—— 来源是否成立由 **D6 的复现**判定")
+    if delta < 86400:
+        return (f"produced_at ↔ mtime Δ={_fmt_delta(delta)} ⇒ **不满足 §C.6 的脚本直写签名**（Δ≤1s）；"
+                f"典型成因是**先产出、后拷贝**（内容保留、mtime 被更新），"
+                f"也可能是倒填 —— 本判别式分不开这两者，内容来源由 **D6 的复现**判定")
+    return (f"produced_at ↔ mtime Δ={_fmt_delta(delta)} ⇒ **倒填时间的老件**"
+            f"（§C.6 判别式明确能查的那一类）")
 
 
 def _reproduce_payload(inbox):
