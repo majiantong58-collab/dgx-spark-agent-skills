@@ -201,6 +201,8 @@ The name cannot start or end with '-' or '.' and the maximum length is 96: '<本
 
 - `agentskills validate`：在干净 venv 中装 `skills-ref==0.1.1` → 提供 `agentskills.exe`；
   **4 个 skill 全部 `Valid skill`，退出码 0**。README 第②行「4/4 通过」属实。
+  > ⚠️ **截至 2026-09-28 已过期**：新增 4 个 MES skill 后共 8 个，README 第②行已改为「8 个 skill」；
+  > 8/8 实测见 `docs/DELIVERY.md` §7。**本条保留原文，仅标注。**
 - `run_e2e.py --offline`：**`EXIT=0`**，写出 `offline-sample-report.md` / `offline-baseline.json`，
   **确实未覆盖** `a4-baseline.json`（README 的警告是准的）。
 - `scripts/fetch_yolo.sh`：完整下载 **5,613,764 B**，

@@ -56,7 +56,9 @@
 > 此前「照清单从零安装无法复现本地流水线」的缺口**已修复**。
 > `[已实测]` 索引 `https://download.pytorch.org/whl/cu128` 返回 **HTTP 200**；`.venv` 实装 `torch 2.11.0+cu128`。
 
-### 2.3 交付的 4 个 skill（1 编排 + 3 窄触发）
+### 2.3 交付的 8 个 skill（巡检组 1 编排 + 3 窄触发 ｜ MES 组 4）
+
+**巡检组**（场景：电子厂洁净车间着装合规）
 
 | skill | 职责（一句话） |
 |---|---|
@@ -64,6 +66,17 @@
 | `safety-hazard-detection` | **窄触发**：图像 → 隐患标签 |
 | `gauge-reading` | **窄触发**：表盘 → 一个数 |
 | `inspection-report` | **窄触发**：结论 → 报告 |
+
+**MES 组**（把巡检发现落成 MES 里的业务动作；接口真源 `docs/agents/mes-bridge-contract.md`）
+
+| skill | 职责（一句话） |
+|---|---|
+| `mes-business-rules` | **知识层**：部门映射 / 单据号规则 / 隔离语义（含 `[团队自定]` 标注） |
+| `mes-inspection-intake` | **窄触发**：发现 → 异常单（产出 `inbox.json` + `xj-records.json`） |
+| `mes-record-query` | **窄触发**：查工单 / 设备 / 异常单；**单据号查重** |
+| `mes-closed-loop` | **编排**：识别→判级→落单→回执 的窄路由（**只路由不干活**） |
+
+> MES 组的「最小可复现宿主页」在 `docs/mes-demo/`（`python -m http.server` 三条命令跑通）。
 
 ---
 
@@ -471,7 +484,11 @@ done
 ```
 
 `[来源: skills/evals/check-compliance.md:11-19]`。
-**实测结果**：4 个 skill 全部输出 `Valid skill: skills\<name>`，**退出码 0**。运行后 `skills/*/SKILL.md` 的 md5 未变（该校验为只读）。
+**实测结果**：
+- **2026-09-28**：**8 个 skill** 全部输出 `Valid skill: skills\<name>`，**退出码 0**（含新增的 4 个 MES skill）。
+- （此前记录：4 个 skill 全部通过 —— 巡检组建立时测得，保留作为历史。）
+
+运行后 `skills/*/SKILL.md` 的 md5 未变（该校验为只读）。
 
 **③ 端到端最小通路 — `[已实测 --offline]`**
 

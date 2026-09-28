@@ -4,11 +4,14 @@
 
 ## 项目简介
 
-一套**跑在笔记本上的本地三层视觉巡检系统**，交付 **4 个 Agent Skills**（1 编排 + 3 窄触发子技能），
-场景是**电子厂洁净车间的着装合规检查**（防尘帽 / 防静电服）。
+一套**跑在笔记本上的本地三层视觉巡检系统**，交付 **8 个 Agent Skills**，分两组：
 
-系统按**「便宜层先判、贵层只在必要时介入」**分级路由：无人的帧在 Tier 0 直接短路，
-不进颜色启发式、也不调用本地视觉模型。
+- **巡检组（4 个）** —— 1 编排 + 3 窄触发子技能，场景是**电子厂洁净车间的着装合规检查**（防尘帽 / 防静电服）。
+  系统按**「便宜层先判、贵层只在必要时介入」**分级路由：无人的帧在 Tier 0 直接短路，
+  不进颜色启发式、也不调用本地视觉模型。
+- **MES 组（4 个）** —— 不止于"**识别出来**"，而是把发现**落进 MES 变成业务动作**：
+  按业务规则定部门与隔离、生成异常单、单据号查重、回执确认、闭环编排。
+  见下方「**MES 桥**」一节；接口真源是 `docs/agents/mes-bridge-contract.md`。
 
 > 完整立意、场景定义与全部决策见 `docs/agents/decision-log.md`；交付说明见 `docs/DELIVERY.md`。
 
@@ -109,7 +112,7 @@ python ui/server.py
 | # | 用途 | 命令 |
 |---|---|---|
 | ① | 本地三层流水线（**会写产物**） | `python skills/safety-hazard-detection/scripts/local_tier_pipeline.py --photos <你的图片目录>` |
-| ② | 合规校验（交付门禁） | `agentskills validate skills/gauge-reading`（4 个 skill 各跑一次；退出码 0 = 通过） |
+| ② | 合规校验（交付门禁） | `agentskills validate skills/<name>`（**8 个 skill** 各跑一次；退出码 0 = 通过） |
 | ③ | 端到端最小通路 | `python skills/evals/run_e2e.py --offline` |
 | ④ | 四臂对照评测（**需 StepFun 凭据**） | `python skills/evals/run_comparison.py --arm B --runs 3 --concurrency 5 --out skills/evals/results/out-b.json` |
 | ⑤ | 逐层性能基准复现 | `python skills/evals/bench_layers.py --layer tier0_5 --photo <你的图片> --out-dir .scratch` |
@@ -270,7 +273,8 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 
 | 交付物 | 位置 |
 |---|---|
-| **4 个 skill**（本赛核心交付物） | `skills/inspection-orchestrator/` · `safety-hazard-detection/` · `gauge-reading/` · `inspection-report/` |
+| **4 个巡检 skill**（本赛核心交付物） | `skills/inspection-orchestrator/` · `safety-hazard-detection/` · `gauge-reading/` · `inspection-report/` |
+| **4 个 MES skill**（把发现落成业务动作） | `skills/mes-business-rules/` · `mes-inspection-intake/` · `mes-record-query/` · `mes-closed-loop/` |
 | **可交互演示界面**（跑得起来的入口） | `ui/server.py` + `ui/index.html`（`python ui/server.py` → <http://127.0.0.1:8770>） |
 | **演示样片**（打码后，可公开） | `assets/samples/`（3 张，界面内置） |
 | **权重下载脚本**（不入库，跑前必做） | `scripts/fetch_ms.sh` · `scripts/fetch_yolo.sh`（备用 `scripts/fetch.sh` · `scripts/fetch_smol.sh`） |
@@ -392,7 +396,8 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 │   ├── local_tier_variance.jsonl # 墙钟方差证据
 │   ├── demo-script.md            # 演示视频脚本
 │   ├── article-draft.md          # 赛事征文草稿
-│   ├── agents/                   # 决策日志、情报、团队分工
+│   ├── agents/                   # 决策日志、情报、团队分工（含 mes-bridge-contract.md 契约真源）
+│   ├── mes-demo/                 # MES 桥最小可复现宿主页 ↗ 见下节（示例数据，独立可跑）
 │   └── adr/                      # Architecture Decision Records
 ├── requirements.txt              # 依赖清单（8 项，需两步安装）
 ├── CONTEXT.md                    # 项目上下文和背景
@@ -407,6 +412,26 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 > ⑤ `ui/screenshots/`（按最坏情况**整目录**不入库，不做筛选式部分入库——见 §关于测试素材的声明）。
 >
 > **随仓库分发**的是打码后的 `assets/samples/`——演示界面第 4 步用的就是它。
+
+## MES 桥 · 最小可复现宿主页 → `docs/mes-demo/`
+
+MES 桥（`skills/mes-inspection-intake` 产出 → 落进 MES 界面）此前**只能跑在一份不在本仓库的外部原型上**，
+⇒ 克隆本仓库后**跑不起来**。`docs/mes-demo/` 提供一份**独立可跑**的最小宿主页，
+按 [`docs/agents/mes-bridge-contract.md`](docs/agents/mes-bridge-contract.md) **从契约重写**（非剪裁外部原型），
+因此它同时证明：**那份契约是一份真接口规范，而不是对某一份实现的追认。**
+（契约当前版本以该文件首行为准，本处不复述，避免两处版本号漂移。）
+
+在仓库根执行**两条命令**即可跑通（详见 [`docs/mes-demo/README.md`](docs/mes-demo/README.md)）：
+
+```bash
+python -m http.server 8000
+# 打开 http://localhost:8000/docs/mes-demo/index.html
+```
+
+合规 fixture 随仓库分发，**打开页面即可看到落单**：计数 `共 97 条`（库内 96 + 本次 1），首行出现示例异常单。
+全部为**自造示例数据**，不含客户名或第三方数据。自带 `docs/mes-demo/verify_host_page.py` 自检 14 项。
+`mes-data/` 下的数据是**真产出物**（由 `skills/mes-inspection-intake/scripts/commit.py` 从
+`docs/mes-demo/evals/finding-demo.json` 生成，可逐字节复现），非手写件——见该目录 README。
 
 ## 开发工作流
 
