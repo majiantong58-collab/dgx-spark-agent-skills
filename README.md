@@ -439,6 +439,13 @@ python -m http.server 8000
 `mes-data/` 下的数据是**真产出物**（由 `skills/mes-inspection-intake/scripts/commit.py` 从
 `docs/mes-demo/evals/finding-demo.json` 生成，可逐字节复现），非手写件——见该目录 README。
 
+> **这套东西的证据链是可复核的**：测试台与依赖集的 canonical 哈希、四项门的实跑数字、
+> 以及**「怎么自己复现」的可粘贴脚本**，见
+> [`docs/agents/mes-bridge-freeze.md`](docs/agents/mes-bridge-freeze.md)。
+> 该文档**自身可自证**——从中抽出内嵌脚本单独运行，会复算并与记录逐项比对。
+> 验证方法与当日教训（五类「绿 ≠ 看起来的意思」）见
+> [`docs/agents/verification-lessons.md`](docs/agents/verification-lessons.md)。
+
 ## 开发工作流
 
 1. 在 GitHub Issues 中创建任务
