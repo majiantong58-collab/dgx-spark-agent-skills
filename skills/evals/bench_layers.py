@@ -206,9 +206,26 @@ def bench_tier1() -> dict:
 LAYERS = {"tier0": bench_tier0, "tier0_5": bench_tier0_5, "tier1": bench_tier1}
 
 
+def _console_gbk_safe() -> None:
+    """`--help` 会打印本模块的 docstring，其中含 `⚠️`(U+26A0 / U+FE0F)——Windows 控制台
+    默认 GBK 编不出来，`parser.print_help()` 直接抛 UnicodeEncodeError（不是参数写错）。
+
+    沿用 `run_comparison.py::_print_markdown` 的处置：**保留控制台原编码**，只把错误策略
+    改成 replace（中文仍正确，个别符号降级为 `?`）。不改成 utf-8——那会在 GBK 控制台上
+    把整个中文帮助文本变成乱码，代价比两个符号大得多。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
 def main() -> None:
     import argparse
 
+    _console_gbk_safe()
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--layer", required=True, choices=sorted(LAYERS))
     ap.add_argument("--out-dir", default=str(SELF_DIR),

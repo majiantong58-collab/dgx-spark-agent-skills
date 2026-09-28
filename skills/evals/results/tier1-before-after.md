@@ -258,7 +258,7 @@ done
 ### 验证命令
 
 ```bash
-cd "C:/Users/26270/Desktop/invda"
+cd "<repo>"
 .venv/Scripts/python.exe - <<'PYEOF'
 import re
 PRE={'inspection-orchestrator':51,'safety-hazard-detection':51,'gauge-reading':50,'inspection-report':48}
@@ -310,7 +310,7 @@ PYEOF
 **冻结后校验命令**：
 
 ```bash
-cd "C:/Users/26270/Desktop/invda"
+cd "<repo>"
 md5sum skills/*/SKILL.md
 ```
 

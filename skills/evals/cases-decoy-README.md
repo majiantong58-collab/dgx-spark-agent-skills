@@ -122,7 +122,7 @@ fe712cf3210d19490b94020c403df34a *skills/safety-hazard-detection/SKILL.md
 复核命令：
 
 ```bash
-cd "C:/Users/26270/Desktop/invda"
+cd "<repo>"
 md5sum skills/*/evals/cases.jsonl skills/*/SKILL.md
 ```
 

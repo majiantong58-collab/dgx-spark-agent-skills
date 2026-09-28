@@ -4,7 +4,7 @@
 
 ## 怎么跑
 
-在项目根 `C:\Users\26270\Desktop\invda` 执行：
+在项目根（`<repo>` = 本仓库克隆目录）执行：
 
 ```bash
 for d in inspection-orchestrator safety-hazard-detection gauge-reading inspection-report; do
@@ -38,7 +38,7 @@ Validation failed for <path>:
 
 ## 环境（已配置，勿重复折腾）
 
-- 解释器：`C:\Users\26270\Desktop\invda\.venv\Scripts\python.exe`（Python 3.12.10）
+- 解释器：`<repo>\.venv\Scripts\python.exe`（Python 3.12.10）
 - 包：`skills-ref==0.1.1`，Apache-2.0，PyPI 作者 `Keith Lazuka <klazuka@anthropic.com>`（Anthropic 官方）
 - 依赖：`click 8.5.0`、`strictyaml 1.7.3`、`python-dateutil`、`six`
 - 重装：`./.venv/Scripts/python.exe -m pip install "skills-ref==0.1.1"`

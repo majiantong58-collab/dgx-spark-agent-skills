@@ -7,7 +7,7 @@
 ```bash
 # 安装（一次性）
 uv tool install --python 3.13 "skillevaluator[all] @ git+https://github.com/NVIDIA/SkillEvaluator.git"
-# -> C:\Users\26270\.local\bin\skillevaluator.exe  (v0.3.0)
+# -> <用户目录>\.local\bin\skillevaluator.exe  (v0.3.0)
 
 # 质量评分（本文主数据）
 for d in inspection-orchestrator safety-hazard-detection gauge-reading inspection-report; do

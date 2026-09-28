@@ -38,6 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "inspection-orchest
 
 from ppe_color_probe import (  # noqa: E402
     BLUE_COVERALL_RANGES,
+    DetectorUnavailable,
     PpeParams,
     _yolo_person_boxes,
     detect_ppe,
@@ -118,7 +119,20 @@ def run_frame(
 
     # ---- Tier 0：人形框 ----
     t = time.perf_counter()
-    boxes = _yolo_person_boxes(image_path)
+    try:
+        boxes = _yolo_person_boxes(image_path, strict=True)
+    except DetectorUnavailable as exc:
+        # **跑不了 ≠ 没人。** 检测层挂了却走「无人的帧」那条短路，对外就成了
+        # 「跳过 · 上游无信号 + 人员区域 0 处」——整机检测故障被读成「画面里没有人」，
+        # 而安全场景里假安心会放走真违规的人。这里把两者在数据上分开：
+        #   tier_calls.tier0 = 0（这一层**没跑**，界面不得把它画成「跑过」）
+        #   short_circuit 用另一条措辞，界面据此显示「本层未能运行」
+        timings["tier0_ms"] = (time.perf_counter() - t) * 1000
+        timings["total_ms"] = (time.perf_counter() - t) * 1000
+        timings["short_circuit"] = "tier0_unavailable: " + str(exc) + "；本帧没有产生结论"
+        return _assemble(image_path, text, findings, calls, timings, vlm_answer=None)
+
+    # 跑到这里说明**这一层真的跑了**（上面失败分支已 return）——次数与耗时照旧记
     timings["tier0_ms"] = (time.perf_counter() - t) * 1000
     calls["tier0"] = 1
 
@@ -170,10 +184,23 @@ def run_frame(
         # 所以「便宜层几乎永远不出 info」不是 bug，而是对的事实。
         #
         # 本层的能力边界同样是**单向**的：能看到蓝色才说明「有」，
-        # 看不到蓝色什么也说明不了——它本来就看不见白色着装
-        # （实测白色掩膜 11.7% 覆盖率、17 个噪声块，墙面与机柜全在其中，
+        # 看不到蓝色什么也说明不了——它在当前配置下看不见白色着装
+        # （白色掩膜里混有大量噪声连通块，墙面与机柜全在其中，
         #  对白色人员的召回为 0）。「没找到」不构成「未佩戴」的证据。
-        # 故本层**绝不允许**输出 warning / critical —— 除非 Tier 1 确认。
+        #
+        # 成因是**实现缺陷，不是设计约束**（两处独立原因，修时都要改）：
+        #   1) ppe_color_probe._range_mask 对所有区间并集统一施加 sat_floor，
+        #      白色区间 S∈[0,45] 恒被清零（存活率 0.0000，与图像内容无关）；
+        #   2) SITE_PARAMS 把 helmet/vest 双双覆盖成只有蓝色，白区间根本没被选中。
+        # 但即便修好，把握仍全部低于 0.75 阈值——那是度量结构问题，不是同一件事。
+        # 详见 docs/local-tier-limitations.md §1。
+        #
+        # 故本层**绝不允许**输出 warning / critical。
+        #
+        # 【注】此处原有「—— 除非 Tier 1 确认」一句，**当前未实现**：
+        #   findings 在本函数内就已定稿，Tier 1 在其后才被调用，
+        #   其输出只写进结果顶层 tier1_answer，不回写 findings。
+        #   详见 docs/local-tier-limitations.md §8。
         if legacy_severity:
             # 【仅供对照演示与回归验证，禁止用于生产】
             # v2 修复前的旧规则：只看置信度的落点，忽略「本层根本没有正面证据」这一事实。
@@ -267,6 +294,17 @@ def main() -> None:
         help="【仅供对照演示与回归验证，禁止用于生产】重现 v2 修复前的 severity 判定"
              "（conf < REVIEW 即 warning），即「便宜层冤枉穿戴合规人员」的旧行为。默认关闭。",
     )
+    ap.add_argument(
+        "--photos", default=None,
+        help="测试图目录（取其中的 *.jpg）。默认按 assets/real_photos/ → assets/samples/ "
+             "的顺序取第一个有图的目录。前者含可辨认的工人人脸、当事人未同意公开发布，"
+             "不入库、克隆后不存在；两个目录都没有时必须用本参数指定自备图片。",
+    )
+    ap.add_argument(
+        "--force", action="store_true",
+        help="允许覆盖已存在的 docs/local_tier_metrics.json。默认不覆盖——该文件是 README "
+             "引用 tier_calls 的唯一真值来源，静默盖掉等于让已发布的数字失去出处。",
+    )
     args = ap.parse_args()
 
     tag = args.tag or time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
@@ -277,9 +315,28 @@ def main() -> None:
         print("!! 仅供对照演示与回归验证，本模式产物不得作为生产结果引用。")
         print("!" * 72)
 
-    photos = sorted((REPO / "assets" / "real_photos").glob("*.jpg"))
-    (REPO / "assets" / "real_photos" / "annotated").mkdir(exist_ok=True)
+    # 输入目录：--photos 优先，否则按「实拍素材 → 随仓库分发的样片」取第一个有图的。
+    # **目录不存在只是没图，不是错误；一张图都没有才是错误**——必须在写任何产物之前止步，
+    # 否则空跑会把 docs/local_tier_metrics.json 覆盖成全 0，已发布的 tier_calls 表随即失去出处。
+    candidates = ([Path(args.photos)] if args.photos
+                  else [REPO / "assets" / "real_photos", REPO / "assets" / "samples"])
+    photos_dir = next((d for d in candidates if any(d.glob("*.jpg"))), None)
+    if photos_dir is None:
+        raise SystemExit(
+            "没有找到任何 .jpg 测试图：本次未运行，也没有写入任何文件。\n"
+            "  assets/real_photos/ 含可辨认的工人人脸、当事人未同意公开发布，被 .gitignore\n"
+            "  排除，**克隆后不存在**；assets/samples/ 也可能为空。\n"
+            "  请用 --photos <目录> 指定自备的工业场景图片后重跑，例如：\n"
+            "      --photos C:/path/to/your/photos\n"
+            "  放 1 张即可跑通；放 3 张更接近 README 里的分层效果表。"
+        )
+    photos = sorted(photos_dir.glob("*.jpg"))
+    # 标注图写在**输入图同目录**的 annotated/ 下（run_frame 内的 ann_dir 就是这么算的），
+    # 故这里也必须按 photos_dir 建，两者才指向同一个地方。
+    # parents=True 是必需的：photos_dir 本身可能尚不存在（例如 --photos 指向一个待建目录）。
+    (photos_dir / "annotated").mkdir(parents=True, exist_ok=True)
     (REPO / "models" / "runs").mkdir(parents=True, exist_ok=True)
+    print("[in] 测试图目录：%s（%d 张）" % (photos_dir, len(photos)))
 
     for run_i in range(1, args.runs + 1):
         out = []
@@ -292,6 +349,12 @@ def main() -> None:
             print("[%s run%d] %-44s %6.2fs  tier_calls=%s  findings=%d"
                   % (tag, run_i, Path(p).name[:44], r["wall_clock_s"], r["tier_calls"],
                      len(r["findings"])))
+            sc = r["timings"].get("short_circuit")
+            if sc and sc.startswith("tier0_unavailable"):
+                # **检测层没跑起来 ≠ 画面里没有人。** 缺权重/缺 ultralytics 时这是最常见的
+                # 失败，而它长得跟「无人帧短路」几乎一样（tier_calls 全 0、findings 0）——
+                # 上面那行不点破，装不上就会被读成「没发现问题」。
+                print("        未运行：%s" % sc)
             for f in r["findings"]:
                 print("        person#%s conf=%.3f uncertain=%s sev=%s cap=%s coverall=%s"
                       % (f["person_index"], f["confidence"], f["uncertain"], f["severity"],
@@ -341,9 +404,17 @@ def main() -> None:
                 "note": "Tier 2 未授权（cloud_authorized=False），route.enforce_safety_boundary 会将其压回本地；实测 tier2 调用为 0。"
                         "墙钟时间为**单次点测**，波动范围见 docs/local_tier_variance.jsonl。",
             }
-            (REPO / "docs" / "local_tier_metrics.json").write_text(
-                json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8"
-            )
+            metrics_path = REPO / "docs" / "local_tier_metrics.json"
+            # 默认**不覆盖**既有 metrics：它是 README 里 tier_calls 表的唯一真值来源，
+            # 而这批数字是在固定的三张实拍图上测的。换一批输入图静默盖掉它，
+            # 等于让已发布的数字失去可核查的出处（D-012 的同类事故：覆盖过 a4-baseline.json）。
+            if metrics_path.exists() and not args.force:
+                print("[跳过] %s 已存在，本次未覆盖（要覆盖请加 --force）。"
+                      % metrics_path.relative_to(REPO))
+            else:
+                metrics_path.write_text(
+                    json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
 
         print("TOTAL tier_calls:", tot, "| 端到端合计 %.2fs" % total_s)
 

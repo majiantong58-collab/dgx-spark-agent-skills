@@ -215,15 +215,33 @@ def visualize(image_bgr: np.ndarray, result: PpeResult, person_boxes=None) -> np
     return vis
 
 
-def _yolo_person_boxes(image_path: str) -> list[tuple[int, int, int, int]]:
-    """用本地 yolo11n 取 person 框。失败则返回空表并提示。"""
+class DetectorUnavailable(RuntimeError):
+    """人员检测层**跑不了**（缺 ultralytics 或缺权重）。
+
+    它和「跑过了，画面里没有人」是两件事：前者是故障，后者是结论。
+    调用方若把两者混为一谈，整机检测挂掉就会被读成「画面里没有人」——
+    那是最危险的一类假安心（安全场景里，假安心会放走真违规的人）。
+    """
+
+
+def _yolo_person_boxes(image_path: str, *, strict: bool = False) -> list[tuple[int, int, int, int]]:
+    """用本地 yolo11n 取 person 框。
+
+    返回空表 = **跑过了**，画面里没有 person 框。
+    检测器不可用时：默认（strict=False）打印提示并返回空表——这是探针工具的老行为；
+    **strict=True 时抛 `DetectorUnavailable`**，让上层能把「跑不了」和「没人」分开。
+    """
     try:
         from ultralytics import YOLO
-    except ImportError:
+    except ImportError as exc:
+        if strict:
+            raise DetectorUnavailable("没装 ultralytics，人员检测层无法运行") from exc
         print("[warn] 未安装 ultralytics，跳过人形框，误报率会升高")
         return []
     model_path = Path(__file__).resolve().parents[3] / "models" / "yolo11n.pt"
     if not model_path.is_file():
+        if strict:
+            raise DetectorUnavailable("找不到人员检测权重文件（models/yolo11n.pt）")
         print(f"[warn] 找不到 {model_path}，跳过人形框")
         return []
     r = YOLO(str(model_path))(image_path, verbose=False)[0]

@@ -1,0 +1,2566 @@
+{
+  "A": {
+    "ftr": 0.0,
+    "broad": 0.6666666666666666,
+    "phantom": 19,
+    "hist_ftr": 0.0,
+    "hist_broad": 0.5625,
+    "ftr_ok": true,
+    "broad_ok": true,
+    "samples": {
+      "cases_total": 16,
+      "cases_valid": 9,
+      "negatives_valid": 9,
+      "negatives_total": 16,
+      "positives_valid": 0,
+      "n_errors": 21,
+      "n_unparsed": 0,
+      "negatives_errors": 21,
+      "negatives_unparsed": 0,
+      "n_retried": 21
+    },
+    "reliable": false,
+    "results": [
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 0,
+        "triggered": true,
+        "route": [
+          "safety_helmet_detection",
+          "instrument_detection"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 132,
+          "completion_tokens": 2432,
+          "total_tokens": 2564,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 31453,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"safety_helmet_detection\",\"instrument_detection\"],\"findings\":[{\"code\":\"NO_HELMET\",\"confidence\":0.95,\"evidence\":\"1人未戴安全帽\"},{\"code\":\"NO_INSTRUMENT\",\"confidence\":0.9,\"evidence\":\"无任何仪表\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 1,
+        "triggered": true,
+        "route": [
+          "helmet_detection",
+          "instrument_detection"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 132,
+          "completion_tokens": 2263,
+          "total_tokens": 2395,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 30797,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"helmet_detection\",\"instrument_detection\"],\"findings\":[{\"code\":\"NO_HELMET\",\"confidence\":0.95,\"evidence\":\"1人未戴安全帽\"},{\"code\":\"NO_INSTRUMENT\",\"confidence\":0.9,\"evidence\":\"无任何仪表\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 2,
+        "triggered": true,
+        "route": [
+          "image_analysis"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 132,
+          "completion_tokens": 2737,
+          "total_tokens": 2869,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 35828,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_analysis\"],\"findings\":[{\"code\":\"no_helmet\",\"confidence\":95,\"evidence\":\"1人未戴安全帽\"},{\"code\":\"no_instrument\",\"confidence\":95,\"evidence\":\"无任何仪表\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 0,
+        "triggered": true,
+        "route": [
+          "csv_trend_analysis"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 136,
+          "completion_tokens": 2828,
+          "total_tokens": 2964,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 40438,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"csv_trend_analysis\"],\"findings\":[{\"code\":\"pressure_trend\",\"confidence\":1.0,\"evidence\":\"CSV contains 30-day date and pressure values suitable for time-series trend analysis\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 1,
+        "triggered": true,
+        "route": [
+          "csv_trend_analysis"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 136,
+          "completion_tokens": 3634,
+          "total_tokens": 3770,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 55188,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"csv_trend_analysis\"],\"findings\":[{\"code\":\"TREND_ANALYSIS_REQUIRED\",\"confidence\":1,\"evidence\":\"素材为CSV日期与压力值，任务要求判断最近30天压力趋势，无图像\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 2,
+        "triggered": true,
+        "route": [
+          "csv-trend-analysis"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 136,
+          "completion_tokens": 2362,
+          "total_tokens": 2498,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 37452,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"csv-trend-analysis\"],\"findings\":[{\"code\":\"pressure-trend\",\"confidence\":0.9,\"evidence\":\"CSV包含日期与压力值，可进行最近30天压力时间序列趋势判断\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 0,
+        "triggered": true,
+        "route": [
+          "ocr"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 123,
+          "completion_tokens": 1438,
+          "total_tokens": 1561,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 18358,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"ocr\"],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 1,
+        "triggered": true,
+        "route": [
+          "ocr"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 123,
+          "completion_tokens": 1562,
+          "total_tokens": 1685,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 22546,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"ocr\"],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 2,
+        "triggered": true,
+        "route": [
+          "ocr"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 123,
+          "completion_tokens": 1945,
+          "total_tokens": 2068,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 28733,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"ocr\"],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 128,
+          "completion_tokens": 160,
+          "total_tokens": 288,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 2421,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 128,
+          "completion_tokens": 160,
+          "total_tokens": 288,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 2610,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 128,
+          "completion_tokens": 160,
+          "total_tokens": 288,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 2218,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 0,
+        "triggered": true,
+        "route": [
+          "image_understanding"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 122,
+          "completion_tokens": 2497,
+          "total_tokens": 2619,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 34171,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_understanding\"],\"findings\":[{\"code\":\"pressure_reading\",\"confidence\":0,\"evidence\":\"pressure_gauge_photo\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 1,
+        "triggered": true,
+        "route": [
+          "image_understanding"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 122,
+          "completion_tokens": 1141,
+          "total_tokens": 1263,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 15312,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_understanding\"],\"findings\":[{\"code\":\"pressure_value\",\"confidence\":0,\"evidence\":\"需通过图像理解识别压力表指针位置、量程及单位，得出具体压力数值\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 2,
+        "triggered": true,
+        "route": [
+          "image_understanding"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 122,
+          "completion_tokens": 1589,
+          "total_tokens": 1711,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 21437,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_understanding\"],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 121,
+          "completion_tokens": 195,
+          "total_tokens": 316,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 3078,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 121,
+          "completion_tokens": 259,
+          "total_tokens": 380,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 3968,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 121,
+          "completion_tokens": 259,
+          "total_tokens": 380,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 3562,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 119,
+          "completion_tokens": 349,
+          "total_tokens": 468,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 5031,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 119,
+          "completion_tokens": 349,
+          "total_tokens": 468,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 5000,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 119,
+          "completion_tokens": 334,
+          "total_tokens": 453,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 4483,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 0,
+        "triggered": true,
+        "route": [
+          "image_aesthetics_assessment"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 122,
+          "completion_tokens": 1014,
+          "total_tokens": 1136,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 12625,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_aesthetics_assessment\"],\"findings\":[{\"code\":\"\",\"confidence\":0,\"evidence\":\"\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 122,
+          "completion_tokens": 1324,
+          "total_tokens": 1446,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 18968,
+        "raw_response": "{\"call_skill\":false,\"skills\":[],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 2,
+        "triggered": true,
+        "route": [
+          "image_aesthetics_assessment"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 122,
+          "completion_tokens": 2807,
+          "total_tokens": 2929,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 41328,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_aesthetics_assessment\"],\"findings\":[{\"code\":\"composition\",\"confidence\":0.9,\"evidence\":\"风景照构图与视觉平衡分析\"},{\"code\":\"color_tonality\",\"confidence\":0.9,\"evidence\":\"色彩搭配与影调表现分析\"},{\"code\":\"sharpness\",\"confidence\":0.9,\"evidence\":\"焦点清晰度与细节还原分析\"},{\"code\":\"overall_aesthetics\",\"confidence\":0.9,\"evidence\":\"综合美学质量评级\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 0,
+        "triggered": true,
+        "route": [
+          "workshop_safety_inspection"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 121,
+          "completion_tokens": 2360,
+          "total_tokens": 2481,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 31203,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"workshop_safety_inspection\"],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 1,
+        "triggered": true,
+        "route": [
+          "visual_inspection"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 121,
+          "completion_tokens": 1615,
+          "total_tokens": 1736,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 23922,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"visual_inspection\"],\"findings\":[]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 2,
+        "triggered": true,
+        "route": [
+          "image_analysis"
+        ],
+        "usage": {
+          "model": "step-5-preview",
+          "prompt_tokens": 121,
+          "completion_tokens": 1932,
+          "total_tokens": 2053,
+          "finish_reason": "stop"
+        },
+        "latency_ms": 28610,
+        "raw_response": "{\"call_skill\":true,\"skills\":[\"image_analysis\"],\"findings\":[{\"code\":\"workshop_safety_check\",\"confidence\":0,\"evidence\":\"分析原始车间帧，检测安全隐患、违规操作或设备异常\"}]}",
+        "error": "",
+        "attempts": 1
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      }
+    ]
+  },
+  "B": {
+    "ftr": null,
+    "broad": null,
+    "phantom": 0,
+    "hist_ftr": 0.0,
+    "hist_broad": 0.0625,
+    "ftr_ok": false,
+    "broad_ok": false,
+    "samples": {
+      "cases_total": 16,
+      "cases_valid": 0,
+      "negatives_valid": 0,
+      "negatives_total": 16,
+      "positives_valid": 0,
+      "n_errors": 48,
+      "n_unparsed": 0,
+      "negatives_errors": 48,
+      "negatives_unparsed": 0,
+      "n_retried": 48
+    },
+    "reliable": false,
+    "results": [
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      }
+    ]
+  },
+  "C": {
+    "ftr": null,
+    "broad": null,
+    "phantom": 0,
+    "hist_ftr": 0.0,
+    "hist_broad": 0.1875,
+    "ftr_ok": false,
+    "broad_ok": false,
+    "samples": {
+      "cases_total": 16,
+      "cases_valid": 0,
+      "negatives_valid": 0,
+      "negatives_total": 16,
+      "positives_valid": 0,
+      "n_errors": 48,
+      "n_unparsed": 0,
+      "negatives_errors": 48,
+      "negatives_unparsed": 0,
+      "n_retried": 48
+    },
+    "reliable": false,
+    "results": [
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "gauge-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "orch-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "report-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-001",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-002",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-003",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 0,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 1,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      },
+      {
+        "case_id": "hazard-neg-004",
+        "run_index": 2,
+        "triggered": false,
+        "route": [],
+        "usage": {
+          "model": "",
+          "prompt_tokens": 0,
+          "completion_tokens": 0,
+          "total_tokens": 0,
+          "finish_reason": ""
+        },
+        "latency_ms": 0,
+        "raw_response": "",
+        "error": "RetriesExhausted: APIStatusError: Error code: 402 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details', 'type': 'quota_exceeded'}}",
+        "attempts": 3
+      }
+    ]
+  },
+  "_verdict": {
+    "pass": false,
+    "arms": {
+      "A": true,
+      "B": false,
+      "C": false
+    }
+  }
+}
