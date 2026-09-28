@@ -5,149 +5,369 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>本地三层视觉推理流水线 · 演示</title>
 <style>
+  /* ============================================================
+     新粗野主义：硬边、荧光块、封条。
+
+     三条硬规矩（都有对应的失败史，别退回去）：
+     1. **黄色只有一个含义：这一层本次真的跑了。** 不做文字高亮、不做 hover、不做告警。
+     2. **封条是全页唯一的「白字黑块」。** 其余需要强调的地方一律黑字米底 + 黑规线。
+     3. **时间轴上所有条形共用一个 px/秒**，由同一条轨道的实测宽度算出并复用；
+        说明文字里的比例尺是**量出来的数**，不是写死的口号。
+
+     两级层级：一级（层级卡/时间轴/预览台/秒表）3px 黑边 + 8px 8px 0 硬投影；
+     二级（判定明细/引文块/对照条）**无边框无投影**，只用通栏线与留白。
+
+     无外部字体、无 CDN：离线可跑。
+     ============================================================ */
   :root{
-    --bg:#0B0F14; --fg:#E6EDF3; --accent:#39D0D8; --uncertain:#8A94A6;
-    --panel:#121821; --panel2:#0E141C; --line:#232C38;
-    --mono: ui-monospace,"Cascadia Mono",Consolas,"DejaVu Sans Mono",monospace;
-    --sans: "Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
-    --fs-body:32px; --fs-title:56px; --fs-num:48px; --fs-fine:24px;
+    --paper:#E9E6DF; --ink:#0A0A0A;
+    --lemon:#FFE24B;      /* 唯一含义：本层本次跑了（黑字 15.3:1） */
+    --gray:#D9D9D9; --gray-ink:#3D3D3D;   /* 未参与，7.7:1 */
+    --hatch:#B4B4B4;      /* 灰斜纹：被拒绝，黑字 9.6:1 */
+    --cobalt:#1B3BFF;     /* 仅用于时间轴的触发刻度 */
+    --white:#FFFFFF;
+
+    --sans:"Microsoft YaHei","PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",
+           "Source Han Sans SC","Segoe UI",system-ui,-apple-system,sans-serif;
+    --disp:Impact,"Haettenschweiler","Arial Black","Franklin Gothic Heavy",var(--sans);
+    --mono:Consolas,"Cascadia Mono","DejaVu Sans Mono","Courier New",monospace;
+
+    --edge:3px solid var(--ink);
+    --hard:8px 8px 0 var(--ink);
+    --hair:3px solid var(--ink);
+
+    --fs-display:96px; --fs-h2:26px; --fs-card:22px; --fs-body:17px; --fs-min:13px;
+    --fs-seal:20px;
+    --seal-turn:-4deg;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
-            font-size:var(--fs-body);line-height:1.4}
-  .fine{font-size:var(--fs-fine);color:var(--uncertain);line-height:1.35}
+  html{overflow-x:hidden}
+  html,body{margin:0;background:var(--paper);color:var(--ink);
+            font-family:var(--sans);font-size:var(--fs-body);font-weight:500;
+            line-height:1.42;-webkit-font-smoothing:antialiased}
+  img{max-width:100%}
+  .fine{font-size:var(--fs-min);line-height:1.4}
+  .mono{font-family:var(--mono)}
+  b,strong{font-weight:900}
 
-  /* ---- 常驻免责声明条 ---- */
-  #disclaimer{border-bottom:3px solid #2A3644;background:#151C26;padding:14px 28px;
-              font-size:var(--fs-fine);color:#B9C4D2;display:flex;gap:18px;align-items:baseline}
-  #disclaimer .tag{color:#F0B429;font-weight:700;white-space:nowrap}
-  #disclaimer .txt{flex:1}
+  /* ---- 常驻免责声明条：黑字白底 + 黑规线（不是白字黑块） ---- */
+  #disclaimer{position:sticky;top:0;z-index:60;background:var(--white);color:var(--ink);
+              display:flex;gap:16px;align-items:baseline;padding:11px 26px;
+              border-bottom:6px solid var(--ink)}
+  #disclaimer .tag{background:transparent;color:var(--ink);font-weight:900;
+                   font-size:var(--fs-min);padding:2px 9px;border:2px solid var(--ink);
+                   white-space:nowrap;letter-spacing:.06em}
+  #disclaimer .txt{flex:1;font-size:var(--fs-body);font-weight:500}
 
-  header{display:grid;grid-template-columns:1fr auto;gap:10px 34px;align-items:end;
-         padding:18px 28px 12px}
-  h1{font-size:var(--fs-title);margin:0;letter-spacing:-1px;font-weight:800}
-  h1 small{display:block;font-size:var(--fs-fine);font-weight:400;color:var(--uncertain);
-           letter-spacing:0;margin-top:6px}
-  .wall{text-align:right}
-  .wall .num{font-family:var(--mono);font-size:64px;color:var(--accent);font-weight:700}
-  .wall .unit{font-size:var(--fs-body);color:var(--accent);margin-left:6px}
-  .wall .lbl{display:block;font-size:var(--fs-fine);color:var(--uncertain)}
-  #cmp,#gallery{grid-column:1/-1}
-  #cmp{background:var(--panel2);border-left:6px solid var(--accent);
-       padding:10px 18px;font-size:var(--fs-fine);color:#C6D0DC}
-  #cmp div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #cmp .k{color:var(--uncertain);display:inline-block;min-width:5em}
-  #cmp .n{font-family:var(--mono);color:var(--fg)}
+  header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 30px;
+         align-items:end;padding:26px 26px 0}
+  h1{margin:0;font-size:var(--fs-display);font-weight:900;line-height:.94;
+     letter-spacing:-.035em;max-width:100%;overflow-wrap:anywhere}
+  h1 small{display:block;font-family:var(--sans);font-size:var(--fs-body);font-weight:700;
+           letter-spacing:0;line-height:1.4;margin-top:14px;max-width:46ch}
 
-  main{display:grid;grid-template-columns:400px 1fr;gap:24px;padding:8px 28px 0;align-items:start}
+  .wall{background:var(--white);border:var(--edge);box-shadow:var(--hard);
+        padding:12px 20px 14px;text-align:right;white-space:nowrap}
+  .wall .num{font-family:var(--disp);font-size:var(--fs-display);font-weight:900;
+             line-height:.9;letter-spacing:-.02em}
+  .wall .unit{font-size:var(--fs-h2);font-weight:900;margin-left:6px}
+  .wall .lbl{display:block;font-size:var(--fs-min);font-weight:700;font-family:var(--mono);
+             margin-top:8px;letter-spacing:.02em}
+  .wall .src{display:block;font-size:var(--fs-min);font-weight:500;color:var(--gray-ink);
+             margin-top:4px;max-width:34ch;white-space:normal;text-align:right;
+             font-family:var(--mono);line-height:1.3}
 
-  /* ---- 左：上传 / 预览 ---- */
-  #dropzone{border:5px dashed #33404F;border-radius:16px;min-height:330px;display:flex;
-            flex-direction:column;align-items:center;justify-content:center;gap:14px;
-            text-align:center;padding:24px;color:var(--uncertain);cursor:pointer}
-  #dropzone.hot{border-color:var(--accent);color:var(--accent)}
-  #dropzone .big{font-size:40px;color:var(--fg)}
-  #stage{position:relative;border-radius:16px;overflow:hidden;border:3px solid var(--line);
-         background:#000;min-height:330px;display:none}
-  #stage img{width:100%;display:block;filter:none;transition:filter .2s}
-  #stage.busy img{filter:brightness(.34) saturate(.6)}
+  /* ---- 二级：对照条。无边框无投影 ---- */
+  #cmp,#gallery,#tlwrap,#err,#res{grid-column:1/-1}
+  #cmp{margin-top:22px;background:transparent;
+       border-top:var(--hair);border-bottom:var(--hair)}
+  #cmp .row{display:flex;gap:14px;align-items:baseline;padding:9px 4px;flex-wrap:wrap;
+            border-top:1px solid rgba(10,10,10,.28)}
+  #cmp .row:first-child{border-top:0}
+  #cmp .k{font-weight:900;font-size:var(--fs-min);background:transparent;color:var(--ink);
+          border:2px solid var(--ink);padding:1px 9px;white-space:nowrap}
+  #cmp .nm{font-family:var(--mono);font-size:var(--fs-min);color:var(--gray-ink);
+           max-width:34ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #cmp .v{font-family:var(--mono);font-size:var(--fs-body);font-weight:900}
+  #cmp .res{font-weight:900;border-bottom:4px solid var(--ink);padding:0 2px}
+  #cmp:empty{display:none}
+
+  #gallery{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+  #gallery .lb{font-size:var(--fs-min);font-weight:700;font-family:var(--mono)}
+  #gallery button{font-family:var(--mono);font-size:var(--fs-min);font-weight:700;
+                  background:var(--white);color:var(--ink);border:var(--edge);
+                  box-shadow:4px 4px 0 var(--ink);padding:6px 12px;cursor:pointer}
+  #gallery button:hover:not(:disabled){background:var(--gray)}
+  #gallery button:active:not(:disabled){transform:translate(4px,4px);box-shadow:none}
+  #gallery button:disabled{background:var(--gray);color:var(--gray-ink);
+                           box-shadow:none;transform:translate(4px,4px);cursor:progress}
+  :focus-visible{outline:4px solid var(--cobalt);outline-offset:2px}
+
+  main{display:grid;grid-template-columns:360px minmax(0,1fr);gap:26px;
+       padding:22px 26px 0;align-items:start;min-width:0}
+  header,main>section,#tl,#res,.box,.in,ul.findings{min-width:0}
+
+  /* ---- 左：上传 / 预览（一级） ---- */
+  #dropzone{border:var(--edge);background:var(--white);box-shadow:var(--hard);
+            min-height:300px;display:flex;flex-direction:column;align-items:center;
+            justify-content:center;gap:12px;text-align:center;padding:22px;cursor:pointer;
+            background-image:repeating-linear-gradient(45deg,transparent 0 14px,
+                            rgba(10,10,10,.05) 14px 28px)}
+  #dropzone.hot{background-color:var(--gray)}
+  #dropzone .big{font-size:var(--fs-card);font-weight:900}
+  #dropzone .fine{font-family:var(--mono)}
+  /* 跑过一帧后上传框**不消失**，只压成窄带留在左侧栏（照片上方）。
+     否则用户想再测一张就只能刷新页面，而刷新会连「上一张」对照一起丢掉。 */
+  #dropzone.again{min-height:0;padding:9px 12px;gap:3px;box-shadow:none}
+  #dropzone.again .big{font-size:var(--fs-body)}
+  #dropzone.again .fine{display:none}
+  #stage{position:relative;border:var(--edge);box-shadow:var(--hard);background:var(--ink);
+         display:none;line-height:0;min-height:300px}
+  #stage img{width:100%;display:block}
+  /* 「已完成」条：黑字白底 + 黑规线，不再是白字黑块 */
+  #stage .st{position:absolute;left:0;right:0;bottom:0;padding:8px 12px;
+             background:var(--white);color:var(--ink);border-top:var(--hair);
+             font-family:var(--mono);font-size:var(--fs-min);font-weight:700;line-height:1.4}
   #scan{position:absolute;inset:0;display:none;pointer-events:none}
   #stage.busy #scan{display:block}
-  #scan i{position:absolute;left:0;right:0;height:5px;background:var(--accent);
-          box-shadow:0 0 26px 10px rgba(57,208,216,.55);animation:scan 1.5s linear infinite}
-  @keyframes scan{from{top:-2%}to{top:102%}}
-  #stage .st{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;
-             background:rgba(11,15,20,.86);font-size:var(--fs-fine);font-family:var(--mono)}
-  #gallery{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-  #gallery .lb{font-size:var(--fs-fine);color:var(--uncertain)}
-  #gallery button{font-family:var(--sans);font-size:var(--fs-fine);background:var(--panel);
-                  color:var(--fg);border:2px solid var(--line);border-radius:10px;
-                  padding:6px 12px;cursor:pointer}
-  #gallery button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  #scan i{position:absolute;left:0;right:0;height:16px;background:var(--gray);
+          background-image:repeating-linear-gradient(45deg,var(--ink) 0 8px,
+                          transparent 8px 16px);animation:scan 1.15s steps(14,end) infinite}
+  @keyframes scan{from{top:-3%}to{top:101%}}
 
-  /* ---- 中：四张卡片横向 ---- */
-  #pipeline{display:flex;align-items:stretch;gap:0}
-  .card{flex:1 1 0;min-width:0;background:var(--panel);border:4px solid var(--line);
-        border-radius:14px;padding:16px 14px;position:relative;display:flex;
-        flex-direction:column;gap:8px;transition:opacity .2s}
-  .card .hd{display:flex;align-items:center;gap:10px}
-  .card .dot{width:16px;height:16px;border-radius:50%;background:#2C3644;flex:none}
-  .card .lbl{font-size:var(--fs-fine);color:var(--uncertain);font-family:var(--mono)}
-  .card .nm{font-size:var(--fs-body);font-weight:700}
-  .card .body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
-  .card .ms{font-family:var(--mono);font-size:var(--fs-num);color:var(--accent);
-            font-weight:700;line-height:1.1}
-  .card .note{font-size:var(--fs-fine);color:var(--uncertain);line-height:1.3}
+  /* ---- 右：四张层级卡（一级） ---- */
+  #pipeline{display:flex;align-items:stretch;gap:28px;min-width:0}
+  .card{flex:1 1 0;min-width:0;position:relative;background:var(--white);
+        border:var(--edge);box-shadow:var(--hard);padding:12px 13px 16px;
+        display:flex;flex-direction:column;gap:9px}
+  .card .hd{display:flex;align-items:center;gap:8px}
+  .card .sq{width:15px;height:15px;flex:none;background:var(--white);border:3px solid var(--ink)}
+  .card .lbl{font-family:var(--mono);font-size:var(--fs-min);font-weight:900;letter-spacing:.08em}
+  .card .nm{font-size:var(--fs-card);font-weight:900;line-height:1.15}
+  .card .desc{font-family:var(--mono);font-size:var(--fs-min);color:var(--gray-ink)}
+  .card .rule{height:3px;background:var(--ink);margin:2px 0}
+  .card .body{flex:1;display:flex;flex-direction:column;gap:6px}
+  .card .ms{font-family:var(--mono);font-size:var(--fs-h2);font-weight:900;
+            line-height:1.05;letter-spacing:-.02em}
+  .card .note{font-size:var(--fs-min);line-height:1.4;color:var(--gray-ink)}
 
-  .card.fired{border-color:var(--accent);background:#0F1F25}
-  .card.fired .dot{background:var(--accent);box-shadow:0 0 14px 3px rgba(57,208,216,.7)}
-  .card.fired.pulse{animation:pulse .15s ease-out}
-  @keyframes pulse{from{filter:brightness(1.9)}to{filter:brightness(1)}}
+  /* 「本层被调用」= 荧光块。全页**唯一**用黄的地方 */
+  .card.fired{background:var(--lemon)}
+  .card.fired .sq{background:var(--ink)}
+  .card.fired .note{color:var(--ink);font-weight:700}
+  .card.fired.pulse{animation:pulse .16s steps(2,end)}
+  @keyframes pulse{from{transform:translate(-4px,-4px);box-shadow:12px 12px 0 var(--ink)}
+                   to{transform:none;box-shadow:var(--hard)}}
 
-  .card.skipped{opacity:.3;animation:collapse .2s ease-out;
-    background-image:repeating-linear-gradient(45deg,#1A222D 0 12px,#141B24 12px 24px)}
-  @keyframes collapse{from{transform:scaleY(.55);opacity:.85}to{transform:scaleY(1);opacity:.3}}
-  .card.skipped .skip{font-size:46px;font-weight:800;color:#C3CCD8;text-align:center}
-  .card.skipped .why{font-size:var(--fs-fine);color:#A9B4C2;text-align:center;line-height:1.3}
+  .card.skipped,.card.locked{background:var(--gray);color:var(--gray-ink)}
+  .card.skipped .nm,.card.skipped .lbl,.card.skipped .note,
+  .card.locked .nm,.card.locked .lbl,.card.locked .desc,.card.locked .note
+    {color:var(--gray-ink)}
+  .card.skipped .sq,.card.locked .sq{background:var(--gray);border-color:var(--gray-ink)}
+  .card.skipped .rule,.card.locked .rule{background:var(--gray-ink)}
+  .card.skipped .note{font-style:italic}
 
-  .card.running{border-color:#3B5566}
-  .card.running .dot{background:#3B5566;animation:blink .7s steps(2,end) infinite}
-  @keyframes blink{50%{opacity:.25}}
-  .card.running .ms{color:var(--uncertain);font-size:40px}
-  .card.waiting .dot{background:#33404F}
+  /* 封条：全页**唯一**的「白字黑块」。盒宽固定为卡宽 → 四张卡角度一致 */
+  .seal{position:absolute;left:-10px;right:-10px;top:52%;z-index:3;
+        transform:translateY(-50%) rotate(var(--seal-turn));
+        background:var(--ink);color:var(--white);
+        border:2px solid var(--white);box-shadow:4px 4px 0 rgba(10,10,10,.42);
+        font-size:var(--fs-seal);font-weight:900;letter-spacing:.06em;
+        text-align:center;padding:7px 6px;line-height:1.15;white-space:nowrap}
+  /* Tier 2 是被**拒绝**（不是没达标）：降级成灰斜纹黑字，不得比真跑过的层醒目 */
+  .seal.refused{background:var(--hatch);color:var(--ink);border-color:var(--gray-ink);
+                background-image:repeating-linear-gradient(45deg,
+                                rgba(255,255,255,.55) 0 7px, transparent 7px 14px)}
+  .halftone{height:16px;border:3px solid var(--gray-ink);
+            background-image:radial-gradient(var(--gray-ink) 1.7px,transparent 1.8px);
+            background-size:8px 8px}
+  .lock{font-size:var(--fs-card);font-weight:900;color:var(--gray-ink)}
 
-  .card.locked{opacity:.45;border-style:dashed;border-color:#41505F}
-  .card.locked .lock{font-size:40px;font-weight:700;color:#A9B4C2;text-align:center}
+  .card.running{background:var(--white)}
+  .card.running .sq{background:var(--ink);animation:blink .8s steps(2,end) infinite}
+  @keyframes blink{50%{opacity:.15}}
+  .card.running .ms{font-family:var(--sans);font-size:var(--fs-card);font-weight:900}
+  .card.waiting{background:var(--gray);color:var(--gray-ink)}
+  .card.waiting .note,.card.waiting .ms{color:var(--gray-ink)}
+  .card.waiting .sq{background:var(--gray);border-color:var(--gray-ink)}
+  .card.waiting .rule{background:var(--gray-ink)}
 
-  .link{flex:0 0 34px;display:flex;align-items:center;justify-content:center;position:relative}
-  .link .bar{height:6px;width:100%;background:var(--accent);border-radius:3px}
-  .link.cut .bar{background:none;border-top:6px dashed #55606E}
-  .link .x{position:absolute;font-size:34px;color:#77828F;font-weight:700;background:var(--bg);
-           padding:0 4px}
+  .link{flex:0 0 22px;display:flex;align-items:center;justify-content:center;
+        position:relative;align-self:center;width:22px;height:22px}
+  .link .bar{width:100%;height:10px;background:var(--ink)}
+  .link.cut .bar{height:0;border-top:4px dashed var(--gray-ink)}
+  .link .x{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+           background:var(--paper);font-size:var(--fs-card);font-weight:900;line-height:1}
 
-  /* ---- 时间轴 ---- */
-  #tlwrap{margin:16px 28px 0;background:var(--panel2);border:2px solid var(--line);
-          border-radius:14px;padding:14px 18px}
-  #tlhead{display:flex;justify-content:space-between;align-items:baseline;gap:20px;
-          font-size:var(--fs-fine);color:var(--uncertain)}
-  #tlhead b{color:var(--fg);font-size:28px}
-  #tl{position:relative;height:158px;margin-top:22px}
-  #tl .seg{position:absolute;top:30px;height:44px;border-radius:4px;min-width:2px}
-  #tl .in{position:absolute;top:0;font-family:var(--mono);font-size:var(--fs-fine);
-          white-space:nowrap;color:var(--fg)}
-  #tl .in.low{top:118px}
-  #tl .hair{position:absolute;top:24px;width:3px;height:56px;background:var(--accent)}
-  #tl .ruler{position:absolute;left:0;right:0;top:74px;height:1px;background:#2A3644}
-  #tl .tick{position:absolute;top:74px;height:9px;width:1px;background:#2A3644}
-  #tl .tick span{position:absolute;top:12px;left:0;font-family:var(--mono);
-                 font-size:20px;color:#5D6875;white-space:nowrap}
-  #tl .empty{position:absolute;top:30px;height:44px;border-radius:4px;
-             background:repeating-linear-gradient(45deg,#1D2733 0 10px,#141C26 10px 20px)}
-  #tlmsg{margin-top:8px;font-size:var(--fs-fine);color:var(--uncertain)}
+  /* ---- 时间轴（一级）。戏眼 ---- */
+  #tlwrap{margin:26px 26px 0;border:var(--edge);background:var(--white);
+          box-shadow:var(--hard);padding:0 0 14px}
+  #tlhead{display:flex;justify-content:space-between;align-items:baseline;gap:18px;
+          color:var(--ink);padding:10px 16px;flex-wrap:wrap;border-bottom:var(--hair)}
+  #tlhead .t{font-size:var(--fs-h2);font-weight:900}
+  #tlhead b{text-decoration:underline;text-decoration-thickness:4px;text-underline-offset:4px}
+  #tlhead .sc{font-family:var(--mono);font-size:var(--fs-min);font-weight:700}
+  #tl{padding:0 16px}
+  .tlh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:16px}
+  .tlh .nm{font-family:var(--mono);font-size:var(--fs-min);font-weight:700;color:var(--gray-ink);
+           max-width:36ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tlh .tag{font-size:var(--fs-min);font-weight:900;background:transparent;color:var(--ink);
+            border:2px solid var(--ink);padding:1px 8px;letter-spacing:.06em}
+  .tlh .tag.g{color:var(--gray-ink);border-color:var(--gray-ink)}
+  .tlh .ms{font-family:var(--mono);font-size:var(--fs-h2);font-weight:900;margin-left:auto}
+  .track{position:relative;margin-top:6px}
+  .fbar{height:28px;min-width:8px;background:var(--ink);
+        box-shadow:6px 6px 0 rgba(10,10,10,.32)}
+  .ghost{height:28px;border:3px dashed var(--gray-ink);background:transparent;
+         display:flex;align-items:center;justify-content:center;
+         font-family:var(--mono);font-size:var(--fs-min);font-weight:700;color:var(--gray-ink)}
+  .arrow{display:inline-flex;align-items:center;gap:9px;margin-top:7px}
+  .arrow .tri{width:0;height:0;border-top:8px solid transparent;
+              border-bottom:8px solid transparent;border-right:15px solid var(--ink)}
+  .arrow .cap{font-family:var(--mono);font-size:var(--fs-body);font-weight:900}
+  .ruler{position:relative;height:22px;margin-top:34px;border-bottom:3px solid var(--ink)}
+  .ruler .tk{position:absolute;bottom:0;width:3px;height:9px;background:var(--ink)}
+  .ruler .tk span{position:absolute;top:-19px;left:2px;font-family:var(--mono);
+                  font-size:var(--fs-min);font-weight:700;white-space:nowrap}
+  .ruler .tk:last-child span{left:auto;right:0}
+  .tierblock{margin-top:18px;border-top:var(--hair);padding-top:10px}
+  .tierhead{font-family:var(--mono);font-size:var(--fs-min);font-weight:900;
+            margin-bottom:2px;letter-spacing:.04em}
+  /* 逐层：**与帧条同一条轨道几何**——标签与数值在上，轨道独占整行，
+     所以 .tr 与 .track 等宽，两者共用同一个 px/ms */
+  .tierrow{margin-top:10px}
+  .tierrow .hd{display:flex;align-items:baseline;gap:10px}
+  .tierrow .n{font-family:var(--mono);font-size:var(--fs-min);font-weight:700}
+  .tierrow .v{font-family:var(--mono);font-size:var(--fs-min);font-weight:900;
+              white-space:nowrap;margin-left:auto}
+  .tierrow .tr{position:relative;height:14px;margin-top:3px;
+               background-image:linear-gradient(to right,rgba(10,10,10,.22) 1px,transparent 1px);
+               background-size:40px 100%}
+  .tierrow .tb{position:absolute;left:0;top:0;bottom:0;background:var(--ink);min-width:8px}
+  .tierrow .tb.hatch{background:var(--gray);
+                     background-image:repeating-linear-gradient(45deg,var(--gray-ink) 0 6px,
+                                     var(--gray) 6px 12px);border:2px solid var(--gray-ink)}
+  .tiernote{margin-top:10px;font-size:var(--fs-min);line-height:1.45;color:var(--gray-ink)}
+  .tick{position:absolute;top:-4px;bottom:-4px;width:4px;background:var(--cobalt);z-index:4}
+  .tickcap{position:absolute;top:50%;transform:translateY(-50%);left:10px;
+           font-family:var(--mono);font-size:var(--fs-min);
+           font-weight:900;color:var(--cobalt);white-space:nowrap}
+  .tickcap .narrow{display:none}
+  .spacer{height:46px;flex:none}
+  .spacer.lg{height:58px}
+  #tlmsg{margin:16px 16px 0;font-size:var(--fs-min);line-height:1.55;font-weight:500}
+  #tlmsg b{background:var(--gray);padding:0 3px}
+  #tlmsg code{font-family:var(--mono);font-weight:700;background:var(--gray);padding:0 3px}
 
-  /* ---- 结果 ---- */
-  #res{margin:16px 28px 40px;display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
-  .box{background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:14px 18px}
-  .box h2{font-size:30px;margin:0 0 10px;font-weight:700}
-  ul.findings{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;
-              max-height:44vh;overflow:auto}
-  li.f{border-left:6px solid var(--uncertain);background:#151C26;padding:10px 14px;border-radius:8px}
-  li.f.unc .sev{background:var(--uncertain);color:#0B0F14;border-radius:6px;padding:1px 10px;
-                font-weight:800;font-style:italic;font-family:var(--mono);font-size:28px}
-  li.f.warning{border-left-color:#F0B429} li.f.critical{border-left-color:#F85149}
-  li.f .q{font-family:var(--mono);font-size:36px;color:var(--uncertain);font-weight:800;
-          font-style:italic;margin-right:4px}
-  li.f .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  li.f .mono{font-family:var(--mono);font-size:28px}
-  blockquote.vlm{margin:0;background:#101821;border-left:6px solid var(--accent);
-                 padding:12px 16px;max-height:36vh;overflow:auto}
-  blockquote.vlm p{margin:0;font-size:28px;line-height:1.5;white-space:pre-wrap;
-                   font-family:var(--sans)}
-  .verdict{font-size:30px;margin-bottom:8px}
-  .verdict b{font-family:var(--mono);color:var(--fg)}
-  #err{display:none;margin:0 28px 20px;border-left:6px solid #F85149;background:#1F1416;
-       padding:12px 18px;font-size:26px;color:#FFB4AE}
-  img.ann{width:100%;border-radius:10px;border:2px solid var(--line);margin-top:8px}
+  /* ---- 结果（二级：**外层容器无边框无投影**，只用通栏线与留白） ---- */
+  #res{margin:30px 26px 60px;display:grid;grid-template-columns:1.05fr 1fr;gap:34px;
+       align-items:start}
+  .box{background:transparent;border:0;box-shadow:none;padding:0}
+  .box h2{margin:0 0 4px;background:transparent;color:var(--ink);font-size:var(--fs-h2);
+          font-weight:900;padding:0 0 6px;border-bottom:4px solid var(--ink)}
+  .box .in{padding:12px 0 0}
+  ul.findings{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;
+              gap:0;max-height:46vh;overflow:auto}
+  .fgroup{font-family:var(--mono);font-size:var(--fs-min);font-weight:900;
+          color:var(--ink);border-bottom:3px solid var(--ink);padding:10px 0 4px;
+          letter-spacing:.05em}
+  li.f{border:0;border-left:8px solid var(--ink);box-shadow:none;background:transparent;
+       padding:10px 0 12px 14px;border-bottom:1px solid rgba(10,10,10,.28)}
+  li.f .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  li.f .sev{font-family:var(--mono);font-size:var(--fs-min);font-weight:900;
+            background:transparent;color:var(--ink);border:2px solid var(--ink);
+            padding:1px 8px;letter-spacing:.05em}
+  li.f .who{font-family:var(--mono);font-size:var(--fs-min);font-weight:700}
+  li.f .q{font-family:var(--mono);font-size:var(--fs-h2);font-weight:900;font-style:italic;
+          line-height:1;color:var(--ink)}
+  /* uncertain：灰底 + 斜体 + 前置「?」，灰值 7.7:1，绝不画成红色告警 */
+  li.f.unc{background:var(--gray);border-left-color:var(--gray-ink);
+           box-shadow:none;padding:10px 14px}
+  li.f.unc .sev{color:var(--gray-ink);border-color:var(--gray-ink)}
+  li.f.unc .q,li.f.unc .who{color:var(--gray-ink)}
+  li.f .basis{margin-top:8px;font-family:var(--mono);font-size:var(--fs-min);font-weight:900;
+              font-style:italic;border-top:3px solid currentColor;padding-top:5px}
+  li.f .rule{font-size:var(--fs-min);font-weight:500;margin-top:3px;font-style:italic}
+  li.f .meta{margin-top:5px;font-family:var(--mono);font-size:var(--fs-min);
+             font-weight:500;word-break:break-all}
+  /* VLM 引文头：黑字米底 + 黑规线，不再是白字黑块 */
+  blockquote.vlm{margin:0;border:var(--hair);box-shadow:none;background:var(--white)}
+  blockquote.vlm .hd{background:var(--paper);color:var(--ink);font-size:var(--fs-min);
+                     font-weight:900;padding:6px 12px;letter-spacing:.05em;
+                     border-bottom:var(--hair)}
+  blockquote.vlm .hd .warn{color:var(--ink);text-decoration:underline;
+                           text-decoration-thickness:3px;text-underline-offset:3px}
+  blockquote.vlm p{margin:0;padding:12px 14px;font-size:var(--fs-body);font-weight:500;
+                   line-height:1.55;white-space:pre-wrap;max-height:40vh;overflow:auto}
+  .verdict{font-size:var(--fs-card);font-weight:900;line-height:1.3}
+  .verdict b{background:var(--gray);padding:0 4px}
+  /* 标注图是**辅助说明**，不该抢主视觉：缩到 400px 并降饱和，
+     避免后端高饱和品红（读作告警色）成为全页视觉重量最大的一块 */
+  img.ann{width:100%;max-width:400px;border:var(--hair);margin-top:10px;display:block;
+          filter:saturate(.45);opacity:.9}
+  #err{display:none;margin:22px 26px 0;border:var(--edge);background:var(--gray);
+       color:var(--ink);box-shadow:var(--hard);padding:14px 16px;font-size:var(--fs-body);
+       font-weight:900;font-family:var(--mono)}
+
+  /* ---- 技术说明：默认折叠。二级语言（通栏线 + 留白），不抢主路径的视觉重量 ---- */
+  #tech{margin:26px 26px 60px;border-top:var(--hair);border-bottom:var(--hair)}
+  #tech>summary{cursor:pointer;padding:11px 4px;font-family:var(--mono);
+                font-size:var(--fs-min);font-weight:900;letter-spacing:.02em}
+  #tech>summary:hover{background:var(--gray)}
+  #tech .in{padding:2px 4px 14px}
+  #tech h3{margin:12px 0 4px;font-family:var(--mono);font-size:var(--fs-min);font-weight:900}
+  #tech p{margin:0 0 6px;font-size:var(--fs-min);line-height:1.5;color:var(--gray-ink);
+          max-width:110ch}
+  #tech .raw{font-family:var(--mono);font-size:var(--fs-min);line-height:1.45;
+             background:var(--gray);padding:5px 8px;margin:0 0 4px;
+             overflow-wrap:anywhere;max-width:110ch}
+  #tech .in:empty,#tlmsg:empty{display:none}
+  .wall .src:empty{display:none}
+  /* 导出按钮：与内置样片按钮同一套外观 */
+  #tally button{margin-top:12px;font-family:var(--mono);font-size:var(--fs-min);font-weight:700;
+                background:var(--white);color:var(--ink);border:var(--edge);
+                box-shadow:4px 4px 0 var(--ink);padding:7px 14px;cursor:pointer}
+  #tally button:hover{background:var(--gray)}
+  #tally button:active{transform:translate(4px,4px);box-shadow:none}
+
+  /* ---- 移动端：<900px 纵向堆叠（375px 实测通过） ---- */
+  @media (max-width:900px){
+    :root{--fs-display:52px}
+    #disclaimer{flex-direction:column;align-items:flex-start;gap:6px;padding:10px 16px}
+    #disclaimer .txt,#disclaimer .tag{min-width:0;max-width:100%;overflow-wrap:anywhere}
+    header{grid-template-columns:1fr;gap:12px;padding:18px 16px 0}
+    .wall{text-align:left;white-space:normal;justify-self:start}
+    .wall .num{font-size:var(--fs-display)}
+    .wall .src{text-align:left;max-width:none}
+    h1 small{font-size:var(--fs-min)}
+    main{grid-template-columns:1fr;gap:20px;padding:16px 16px 0}
+    #pipeline{flex-direction:column;gap:20px}
+    .card{flex:1 1 auto;width:100%}
+    .link{display:none}
+    #tlwrap{margin:20px 16px 0}
+    #tl{padding:0 12px}
+    #tlmsg{margin:16px 12px 0}
+    #res{margin:22px 16px 40px;grid-template-columns:1fr;gap:26px}
+    #err{margin:16px 16px 0}
+    #cmp .nm{max-width:none}
+    .seal{left:-6px;right:-6px}
+    .tickcap .wide{display:none}
+    .tickcap .narrow{display:inline}
+  }
+  @media (max-width:520px){
+    /* 375px：标题必须整行落进 375−32=343px，故降到 30px（11 字 × 29 ≈ 319px） */
+    :root{--fs-display:30px;--fs-seal:16px}
+    #gallery button{padding:5px 8px}
+    .wall .unit{font-size:var(--fs-card)}
+    .tlh .nm{max-width:100%}
+    .tlh .ms{margin-left:0}
+    .arrow .cap{font-size:var(--fs-min)}
+    li.f.unc{padding:10px}
+    li.f .basis,li.f .rule,li.f .meta,#tally,#tlmsg{overflow-wrap:anywhere}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important}
+  }
 </style>
 </head>
 <body>
@@ -162,10 +382,11 @@
     <small>边缘端分层巡检 · Tier 0 / 0.5 / 1 全部在本机 GPU 上完成 · 数据不出机</small>
   </h1>
   <div class="wall">
-    <span class="num" id="wallNum">—</span><span class="unit">秒</span>
-    <span class="lbl">端到端墙钟（wall clock）</span>
+    <span class="num" id="wallNum">--</span><span class="unit" id="wallUnit">秒</span>
+    <span class="lbl" id="wallLbl">端到端墙钟 · 服务自打点</span>
+    <span class="src" id="wallSrc"></span>
   </div>
-  <div id="cmp"><div><span class="k">上一张</span></div></div>
+  <div id="cmp"></div>
   <div id="gallery"></div>
 </header>
 
@@ -174,7 +395,7 @@
     <div id="dropzone">
       <div class="big">拖入现场照片</div>
       <div>或点击选择文件</div>
-      <div style="font-size:22px">jpg / png，短边不小于 64 像素</div>
+      <div class="fine">jpg / png，短边不小于 64 像素</div>
     </div>
     <div id="stage"><img id="shot" alt="现场照片"><div id="scan"><i></i></div>
       <div class="st" id="stageNote"></div></div>
@@ -187,28 +408,42 @@
 
 <div id="tlwrap">
   <div id="tlhead">
-    <div>分层耗时 · <b id="tlMode">等待首帧</b></div>
-    <div id="tlScale">线性刻度，同一全长对比，未取对数</div>
+    <div class="t">时间轴 · <b id="tlMode">等待首帧</b></div>
+    <div class="sc" id="tlScale">全帧共用同一线性刻度，未取对数</div>
   </div>
   <div id="tl"></div>
-  <div id="tlmsg" class="fine"></div>
+  <div id="tlmsg"></div>
 </div>
 
 <div id="err"></div>
 
+<details id="tech">
+  <summary>技术说明 · 原始字段（点开看：数字的出处、为什么不求和、原始字段名）</summary>
+  <div class="in" id="techBody"></div>
+</details>
+
 <div id="res">
   <div class="box">
     <h2>判定明细</h2>
-    <div id="tally" class="fine" style="margin-bottom:10px"></div>
-    <ul class="findings" id="list"></ul>
-    <div id="annBox" style="display:none">
-      <div class="fine" style="margin-top:12px">Tier 0.5 标注图（Tier 1 触发时写出，中文标签一律在 HTML 里，不烙在图里）</div>
-      <img class="ann" id="annImg" alt="Tier 0.5 标注图">
+    <div class="in">
+      <div id="tally" class="fine"></div>
+      <ul class="findings" id="list"></ul>
+      <div id="annBox" style="display:none">
+        <div class="fine" style="margin-top:14px">
+          <b>颜色测量结果（仅供参照，不是判定）</b> —— 由后端在 Tier 1 触发时写出，本页只做降饱和显示。
+        </div>
+        <div class="fine">
+          图上烙着的 helmet NN% / vest NN% 是<b>色块覆盖率</b>：本层在该人员框里量到的「帽子色／工服色」
+          像素占比，<b>不是「戴没戴」的判断</b>。百分比低只说明「本层没量到足够的颜色」，
+          不等于不合规 —— 本层看不见白色等着装，也分不清机台、地面上的同色块（掩膜就是这些颜色命中的原始区域）。
+        </div>
+        <img class="ann" id="annImg" alt="Tier 0.5 原始掩膜" loading="lazy" decoding="async">
+      </div>
     </div>
   </div>
   <div class="box">
-    <h2>Tier 1 本地模型自述</h2>
-    <div id="quoteWrap"></div>
+    <h2>画面描述（AI 生成 · 仅供参考 · 不是结论）</h2>
+    <div class="in" id="quoteWrap"></div>
   </div>
 </div>
 
@@ -216,279 +451,625 @@
 "use strict";
 const $ = id => document.getElementById(id);
 const CARDS = [
-  {key:"tier0",   lbl:"Tier 0",   nm:"人员检测",  desc:"YOLO11n · COCO"},
-  {key:"tier0_5", lbl:"Tier 0.5", nm:"颜色判读",  desc:"色块覆盖率启发式"},
-  {key:"tier1",   lbl:"Tier 1",   nm:"本地模型",  desc:"Qwen3-VL-2B · bf16"},
-  {key:"tier2",   lbl:"Tier 2",   nm:"云端",      desc:"需要显式授权"},
+  {key:"tier0",   lbl:"TIER 0",   nm:"人员检测", desc:"YOLO11n · COCO"},
+  {key:"tier0_5", lbl:"TIER 0.5", nm:"颜色判读", desc:"色块覆盖率启发式"},
+  {key:"tier1",   lbl:"TIER 1",   nm:"本地模型", desc:"Qwen3-VL-2B · bf16"},
+  {key:"tier2",   lbl:"TIER 2",   nm:"云端",     desc:"需要显式授权"},
 ];
-const MIN_SCALE_MS = 26000;   // 固定全长，让「几乎看不见」可见
-let scaleMs = MIN_SCALE_MS;
-let busy = false, first = true;
+const SCALE_FLOOR_MS = 16000; // 固定全长，让「几乎看不见」可见，且各帧可比
+const MIN_BAR_PX = 8;         // 条宽下限：按刻度画不出的条，为可辨识取 8 px 下限
+const ARROW_BELOW_PCT = 3;    // 条宽不足全长 3% 时补一支实心箭头 + 绝对量标注
+let scaleMs = SCALE_FLOOR_MS;
+let busy = false;
+
+function el(tag, cls, text){
+  const d = document.createElement(tag);
+  if (cls) d.className = cls;
+  if (text != null) d.textContent = String(text);
+  return d;
+}
+const fmtMsFull = ms => ms >= 1000 ? (ms/1000).toFixed(2) + " s" : Math.round(ms) + " ms";
+const fmtMsShort = ms => ms >= 1000 ? (ms/1000).toFixed(2) + "s" : Math.round(ms) + "ms";
+const fmtS = s => (s == null ? "—" : Number(s).toFixed(2));
+
+/* ---------- 跳过原因：不同原因用不同措辞，绝不一句话套所有情况 ----------
+   一个**从未被调用**的层，压根没碰到阈值，不能说它「未达阈值」。
+   字段名（next_tier= 之类）不上屏：数字留着，名字留给写代码的人看。 */
+function skipWording(T, which, tier0Failed){
+  T = T || {};
+  // 检测层**没跑成**（不是「跑了但没人」）：措辞必须与「跳过」分开，
+  // 否则「整机检测故障」会被读成「画面里没有人」。
+  if (tier0Failed) return {seal:"未能运行", why:"人员检测层没有跑成，本层没有机会执行"};
+  if (T.short_circuit) return {seal:"跳过 · 上游无信号", why:"上游未检测到人员区域，本层未执行"};
+  if (which === "tier1") return {seal:"跳过 · 无需升级",
+                                 why:"上游本层的把握已达判定线，无需升级到 " +
+                                     (T.next_tier != null ? "Tier " + T.next_tier : "上一层") +
+                                     " 复核"};
+  return {seal:"跳过 · 未达阈值", why:"本层跑过，判据未达升级阈值"};
+}
+/* short_circuit 的值形如 "no_person: 未进入 Tier 0.5，未调用 Tier 1"：
+   冒号前是给机器看的原因码，不该出现在屏幕上；冒号后的中文原样留着。
+   格式要是变了就整句原样显示——不猜、不编。 */
+function plainReason(s){
+  s = String(s || "");
+  const i = s.search(/[:：]/);
+  return i > 0 ? s.slice(i + 1).trim() : s;
+}
+/* severity 是后端字段值，屏幕上不该出现英文枚举。
+   没见过的值原样回退显示：宁可露出原值，也不改写成别的话。 */
+const SEVERITY_WORDS = {
+  uncertain: "证据不足，需人工判断",
+  info: "把握达线，本层不下结论",
+  warning: "疑似异常，需优先复核",
+  critical: "疑似严重，需立即复核",
+};
+const severityWord = s => SEVERITY_WORDS[s] || String(s);
 
 /* ---------- 卡片骨架 ---------- */
 function buildCards(){
   const p = $("pipeline"); p.textContent = "";
   CARDS.forEach((c, i) => {
     if (i > 0){
-      const l = document.createElement("div");
-      l.className = "link"; l.id = "link" + i;
-      l.innerHTML = '<div class="bar"></div>';
+      const l = el("div", "link"); l.id = "link" + i;
+      l.appendChild(el("div", "bar"));
       p.appendChild(l);
     }
-    const d = document.createElement("div");
-    d.className = "card"; d.id = "card" + i;
-    d.innerHTML =
-      '<div class="hd"><span class="dot"></span><span class="lbl">' + c.lbl + '</span></div>' +
-      '<div class="nm">' + c.nm + '</div>' +
-      '<div class="fine">' + c.desc + '</div>' +
-      '<div class="body"></div>';
+    const d = el("div", "card"); d.id = "card" + i;
+    const hd = el("div", "hd");
+    hd.append(el("span", "sq"), el("span", "lbl", c.lbl));
+    d.append(hd, el("div", "nm", c.nm), el("div", "desc", c.desc),
+             el("div", "rule"), el("div", "body"));
     p.appendChild(d);
   });
-  setCard(3, "locked", {main:'🔒 未授权', note:'cloud_authorized=False<br>实测调用 0 次，从不上色'});
+  setCard(3, "locked", {main:"🔒 未授权", seal:"跳过 · 未授权",
+    note:["cloud_authorized=False", "实测调用 0 次，从不上色"]});
 }
 function setCard(i, kind, opt){
   const d = $("card" + i), b = d.querySelector(".body");
-  d.className = "card " + (kind === "skip" ? "skipped" : kind);
-  b.textContent = "";
   const o = opt || {};
+  d.className = "card " + (kind === "skip" ? "skipped" : kind);
+  d.querySelectorAll(".seal, .halftone").forEach(n => n.remove());
+  b.textContent = "";
   if (kind === "fired"){
-    if (o.ms != null){
-      const e = document.createElement("div"); e.className = "ms";
-      e.textContent = fmtMsFull(o.ms); b.appendChild(e);
-    }
-    if (o.note){
-      const e = document.createElement("div"); e.className = "note";
-      e.textContent = o.note; b.appendChild(e);
-    }
+    if (o.ms != null) b.appendChild(el("div", "ms", fmtMsFull(o.ms)));
+    (o.note || []).forEach(t => b.appendChild(el("div", "note", t)));
     d.classList.add("pulse");
-    setTimeout(() => d.classList.remove("pulse"), 160);
+    setTimeout(() => d.classList.remove("pulse"), 180);
   } else if (kind === "skip"){
-    const a = document.createElement("div"); a.className = "skip"; a.textContent = "跳过";
-    const c = document.createElement("div"); c.className = "why";
-    c.innerHTML = o.note || ""; b.append(a, c);
+    b.appendChild(el("div", "spacer"));   // 留出封条的位置，封条不压正文
+    (o.note || []).forEach(t => b.appendChild(el("div", "note", t)));
+    const s = el("div", "seal" + (o.refused ? " refused" : ""), o.seal || "跳过");
+    d.appendChild(s);
   } else if (kind === "locked" || kind === "running" || kind === "waiting"){
-    const a = document.createElement("div");
-    a.className = kind === "locked" ? "lock" : "ms";
-    a.textContent = o.main || ""; b.appendChild(a);
-    if (o.note){
-      const c = document.createElement("div"); c.className = "note";
-      c.innerHTML = o.note; b.appendChild(c);
+    if (kind === "locked"){
+      b.appendChild(el("div", "spacer lg"));
+      b.appendChild(el("div", "lock", o.main || ""));
+      if (o.hatch !== false) b.appendChild(el("div", "halftone"));
+    } else {
+      b.appendChild(el("div", "ms", o.main || ""));
+    }
+    (o.note || []).forEach(t => b.appendChild(el("div", "note", t)));
+    if (kind === "locked"){
+      d.appendChild(el("div", "seal refused", o.seal || "跳过 · 未授权"));
     }
   } else { d.className = "card"; }
 }
 function setLink(i, cut){
   const l = $("link" + i); if (!l) return;
   l.className = "link" + (cut ? " cut" : "");
-  l.innerHTML = '<div class="bar"></div>' + (cut ? '<span class="x">╳</span>' : '');
+  l.textContent = "";
+  l.appendChild(el("div", "bar"));
+  if (cut) l.appendChild(el("span", "x", "✕"));
 }
 
-/* ---------- 格式化 ---------- */
-const fmtMsFull = ms => ms >= 1000 ? (ms/1000).toFixed(2) + " s" : Math.round(ms) + " ms";
-const fmtMsShort = ms => ms >= 1000 ? (ms/1000).toFixed(2) + "s" : Math.round(ms) + "ms";
-const fmtS = s => (s == null ? "—" : Number(s).toFixed(2));
+/* ---------- 时间轴 ----------
+   每段的毫秒数只从**实测字段**取；tier2 没有耗时字段（它从没被调用过）。
+   timings.total_ms 只累加 *_ms 键、不含 tier1_s，所以逐层单独取，绝不求和。
 
-/* ---------- 时间轴：1:1 真实比例，不取对数 ---------- */
-// 每段的毫秒数只从**实测字段**取；tier2 的耗时字段不存在（它就没人调用过）。
-// timings.total_ms 只累加 *_ms 键、不含 tier1_s，所以这里逐层单独取，绝不求和。
+   比例尺只有**一个**：量出帧条轨道的实际像素宽 → pxPerMs → 帧条与逐层条共用。
+   逐层的轨道独占整行，与帧条轨道等宽，所以「同一原点、同一刻度」是几何事实。 */
 function timelineRows(T, C){
   T = T || {}; C = C || {};
   return [
-    {name:"Tier 0 人员检测",   color:"#39D0D8", ms: C.tier0   > 0 ? (T.tier0_ms   || 0) : 0},
-    {name:"Tier 0.5 颜色判读", color:"#2FA9B4", ms: C.tier0_5 > 0 ? (T.tier0_5_ms || 0) : 0},
-    {name:"Tier 1 本地模型",   color:"#7BE3E8", ms: C.tier1   > 0 ? ((T.tier1_s || 0) * 1000) : 0},
-    {name:"Tier 2 云端",       color:"#55606E", ms: 0},
+    {name:"Tier 0　人员检测", ms: C.tier0   > 0 ? (T.tier0_ms   || 0) : 0},
+    {name:"Tier 0.5 颜色判读", ms: C.tier0_5 > 0 ? (T.tier0_5_ms || 0) : 0},
+    {name:"Tier 1　本地模型", ms: C.tier1   > 0 ? ((T.tier1_s || 0) * 1000) : 0},
+    {name:"Tier 2　云端",     ms: 0},
   ];
 }
-function renderTimeline(timings, calls, wallS){
+function renderTimeline(timings, calls, wallS, findings, photoName){
   const tl = $("tl"); tl.textContent = "";
-  const wallMs = wallS * 1000;
-  scaleMs = Math.max(MIN_SCALE_MS, Math.ceil(wallMs / 1000) * 1000);
   const rows = timelineRows(timings, calls);
-  const accounted = rows.reduce((a, r) => a + r.ms, 0);
-  const rest = Math.max(0, wallMs - accounted);
+  const F = findings || [];
+  calls = calls || {};
 
-  $("tlScale").textContent = "线性刻度（1:1，未取对数）：全长 " + (scaleMs/1000).toFixed(1) +
-                             " 秒，与所有帧同一刻度";
+  // 本帧一律以**实参**为准，不依赖上一轮存下的状态：
+  // 后端跑过的帧，界面必须画得出来。上一版在这里读缓存，导致「跑了却说没跑」。
+  const liveKind = F.length > 0 ? "person" : "empty";
+  const live = {name: photoName || window.__lastPhoto || "(未命名)", wall: wallS,
+                calls: calls, n: F.length};
+  window.__frames = window.__frames || {};
+  window.__frames[liveKind] = live;
+  const frames = {person: window.__frames.person, empty: window.__frames.empty};
+  frames[liveKind] = live;
 
-  // 标尺
-  const ruler = document.createElement("div"); ruler.className = "ruler"; tl.appendChild(ruler);
-  for (let s = 0; s <= scaleMs/1000; s += 5){
-    const tk = document.createElement("div"); tk.className = "tick";
-    tk.style.left = (s*1000/scaleMs*100) + "%";
-    tk.innerHTML = '<span>' + s + 's</span>';
-    tl.appendChild(tk);
+  const known = [frames.person, frames.empty].filter(Boolean).map(f => f.wall);  // 秒
+  // 刻度上限必须 ≥ 任何一帧的实测墙钟。单位换算漏掉 *1000 会让长于 16 秒的帧
+  // 画出 >100% 的条——条比自己的轴还长，轴上读数就是假的。
+  scaleMs = Math.max(SCALE_FLOOR_MS, Math.ceil(Math.max.apply(null, known)) * 1000);
+  const leftPct = ms => (ms / scaleMs * 100);
+
+  // —— 标尺 ——
+  const ruler = el("div", "ruler");
+  const step = scaleMs > 20000 ? 4 : 2;
+  for (let s = 0; s <= scaleMs/1000; s += step){
+    const tk = el("div", "tk");
+    tk.style.left = leftPct(s*1000) + "%";
+    tk.appendChild(el("span", null, s + "s"));
+    ruler.appendChild(tk);
   }
-  // 段。标签分上下两行做首次适配：窄段（如 119ms 占全长 0.46%）的标签会落在
-  // 相邻宽段的标签位置上，不避让就会叠成一团乱码。
-  const tlW = tl.clientWidth || 1400;
-  const labelPx = s => [...s].reduce((a, ch) =>
-      a + (/[　-鿿＀-￯]/.test(ch) ? 26 : 13), 0) + 24;
-  // 标签位置 = max(该段起点, 本行已占用的末端)。窄段（如 158ms 只占全长 0.6%）
-  // 的标签起点会和邻段标签起点几乎重合，光分两行仍会叠字，必须往后推。
-  // 标签用段自身的颜色，读者靠颜色把被推开的标签认回它那一段。
-  const cursor = [0, 0];
-  let x = 0;
-  rows.forEach(r => {
-    if (r.ms <= 0) return;
-    const left = x / scaleMs * 100, w = r.ms / scaleMs * 100;
-    const text = r.name + " " + fmtMsShort(r.ms);
-    const lane = cursor[0] <= cursor[1] ? 0 : 1;
-    const lx = Math.max(left / 100 * tlW, cursor[lane]);
-    cursor[lane] = lx + labelPx(text);
-    if (w < 0.25){   // 太窄画不出段：改画一根发丝，标签仍然照打
-      const h = document.createElement("div"); h.className = "hair";
-      h.style.left = left + "%"; tl.appendChild(h);
+  tl.appendChild(ruler);
+
+  // —— 两条端到端条，上下对照 ——
+  const tracks = [];
+  [["person", "有人帧"], ["empty", "无人帧"]].forEach(([k, tagText]) => {
+    const f = frames[k];
+    const h = el("div", "tlh");
+    h.appendChild(el("span", "nm", f ? f.name : "（本会话尚未跑过" + tagText + "）"));
+    h.appendChild(el("span", "tag" + (f ? "" : " g"), tagText));
+    if (f) h.appendChild(el("span", "ms", fmtS(f.wall) + " s"));
+    tl.appendChild(h);
+    const track = el("div", "track");
+    if (!f){
+      track.appendChild(el("div", "ghost", "尚未跑过 · 同一刻度下按实测值绘制"));
     } else {
-      const s = document.createElement("div"); s.className = "seg";
-      s.style.left = left + "%"; s.style.width = w + "%";
-      s.style.background = r.color;
-      tl.appendChild(s);
+      const bar = el("div", "fbar");
+      track.appendChild(bar);
+      track._bar = bar; track._f = f; track._ms = f.wall * 1000;
     }
-    const lab = document.createElement("div");
-    lab.className = "in" + (lane ? " low" : "");
-    lab.textContent = text;
-    lab.style.left = lx + "px";
-    lab.style.color = r.color;
-    tl.appendChild(lab);
-    x += r.ms;
+    tl.appendChild(track);
+    tracks.push(track);
   });
-  if (rest > 0){
-    const e = document.createElement("div"); e.className = "empty";
-    e.style.left = (x/scaleMs*100) + "%"; e.style.width = (rest/scaleMs*100) + "%";
-    e.title = "未纳入 timings 的墙钟时间";
-    tl.appendChild(e);
+
+  // 量出帧条轨道的实测像素宽 → **唯一** pxPerMs，逐层区一律复用
+  const trackW = (tracks[0] && tracks[0].getBoundingClientRect().width) || 1000;
+  const pxPerMs = trackW / scaleMs;
+  const pxPerSec = Math.round(pxPerMs * 1000);       // 说明文字里写的就是这个实测量
+  tracks.forEach(t => {
+    if (!t._bar) return;
+    const px = t._ms * pxPerMs;
+    t._bar.style.width = Math.max(MIN_BAR_PX, px) + "px";
+    if (px < ARROW_BELOW_PCT/100 * trackW){
+      const a = el("div", "arrow");
+      a.appendChild(el("span", "tri"));
+      a.appendChild(el("span", "cap",
+        fmtS(t._f.wall) + " s · Tier 1 调用 " + (t._f.calls.tier1 || 0) + " 次"));
+      t.appendChild(a);
+    }
+  });
+  // 主路径上只留一句人话；「线性 1:1 · 未取对数 · 实测 N px/秒」的完整口径进技术面板
+  $("tlScale").textContent = "刻度 0–" + (scaleMs/1000).toFixed(0) + " 秒 · 全帧共用一个比例尺";
+
+  // —— 逐层分解：轨道与帧条轨道等宽，共用同一个 pxPerMs ——
+  const block = el("div", "tierblock");
+  const built = [];
+  const triggerMs = (calls.tier1 > 0) ? ((timings.tier0_ms || 0) + (timings.tier0_5_ms || 0)) : null;
+  rows.forEach(r => {
+    const row = el("div", "tierrow");
+    const hd = el("div", "hd");
+    hd.appendChild(el("div", "n", r.name));
+    const vEl = el("div", "v", r.ms > 0 ? fmtMsShort(r.ms) : "未调用 · 0 ms");
+    hd.appendChild(vEl);
+    const tr = el("div", "tr");
+    row.append(hd, tr);
+    block.appendChild(row);
+    built.push({r:r, tr:tr, vEl:vEl, floored:false});
+  });
+  block.insertBefore(el("div", "tierhead",
+    "逐层 · 与上两条同一原点、同一比例尺（复用同一个 " + pxPerSec + " px/秒，不各自换算）"),
+    block.firstChild);
+  tl.appendChild(block);
+
+  const trW = (built[0] && built[0].tr.getBoundingClientRect().width) || trackW;
+  const tierPxPerSec = Math.round(trW / scaleMs * 1000);
+  built.forEach(b => {
+    const r = b.r;
+    if (r.ms > 0){
+      const bar = el("div", "tb");
+      const px = r.ms * pxPerMs;
+      bar.style.width = Math.max(MIN_BAR_PX, px) + "px";
+      b.tr.appendChild(bar);
+      if (px < MIN_BAR_PX){ b.floored = true; b.vEl.textContent += " *"; }
+      if (triggerMs != null && r.name.indexOf("Tier 0.5") === 0){
+        const tk = el("div", "tick");
+        tk.style.left = Math.max(MIN_BAR_PX, triggerMs * pxPerMs) + "px";
+        const cap = el("span", "tickcap");
+        cap.append(el("span", "wide",
+          "触发刻度 · 本层最弱把握 " + (timings.weakest_conf != null ? timings.weakest_conf : "—") +
+          " → 升级 Tier " + (timings.next_tier != null ? timings.next_tier : "—")),
+          el("span", "narrow", "触发刻度"));
+        tk.appendChild(cap);
+        b.tr.appendChild(tk);
+      }
+    } else {
+      const bar = el("div", "tb hatch");
+      bar.style.width = MIN_BAR_PX + "px";
+      b.tr.appendChild(bar);
+    }
+  });
+  const floored = built.filter(b => b.floored)
+                       .map(b => b.r.name.replace(/　/g, " ") + "（" + fmtMsShort(b.r.ms) + "）");
+  if (floored.length){
+    tl.appendChild(el("div", "tiernote",
+      "* " + floored.join("、") + " 按本视口刻度只该画不足 " + MIN_BAR_PX +
+      " px，条宽已取下限 —— 这几条的「长度不代表比例」，数值以右列为准。"));
   }
-  const parts = rows.filter(r => r.ms > 0).map(r => r.name + " " + fmtMsShort(r.ms)).join(" ＋ ");
-  $("tlmsg").innerHTML =
-    "端到端墙钟 <b style='color:#E6EDF3'>" + fmtS(wallS) + " 秒</b>；" +
-    "其中 timings 记账 " + fmtMsShort(accounted) + "（" + (parts || "无") + "）；" +
-    "未纳入 timings 的墙钟 " + fmtMsShort(rest) + "（斜纹区，框架/解码/写盘开销）。<br>" +
-    "⚠ 各层耗时<b style='color:#E6EDF3'>不能相加</b>：<code>timings.total_ms</code> 只累加 <code>*_ms</code> 结尾的键，" +
-    "本帧它等于 " + fmtMsShort((timings.tier0_ms||0) + (timings.tier0_5_ms||0)) +
-    "（<b style='color:#E6EDF3'>不含 Tier 1</b> 的 " + fmtMsShort(timings.tier1_s ? timings.tier1_s*1000 : 0) +
-    "）。求和会与上面的对外数字矛盾，故一律以墙钟为准。";
+
+  const accounted = rows.reduce((a, r) => a + r.ms, 0);
+  const rest = Math.max(0, wallS * 1000 - accounted);
+  // 这三段口径说明从主路径挪进了折叠的「技术说明」面板：内容全对、也该留证，
+  // 但读者不该在自己的结果页上先读到实现细节。原话在面板里一字不少。
+  $("tlmsg").textContent = "";
+  renderTech({
+    wallS: wallS, pxPerSec: pxPerSec, tierPxPerSec: tierPxPerSec,
+    pct: leftPct(wallS*1000).toFixed(2),
+    px: Math.round(wallS*1000*pxPerMs),
+    flooredNote: wallS*1000*pxPerMs < MIN_BAR_PX
+      ? "本帧窄到画不出，取 " + MIN_BAR_PX + " px 下限并以实心箭头指认" : "",
+    accounted: accounted, rest: rest,
+    parts: rows.filter(r => r.ms > 0).map(r => r.name.replace(/　/g," ") + " " + fmtMsShort(r.ms)),
+    rows: rows, scaleMs: scaleMs,
+  });
+}
+
+/* ---------- 技术说明面板：收纳，不是删除 ----------
+   主路径上只留人话 + 数字；字段名、口径原文、比例尺与掩膜的取证说明收进这个默认折叠的
+   面板。判断边界：**已经在主路径上翻成人话的（例如跳过原因的中文说明），
+   面板里只补它的机器原文，绝不把人话再藏起来**；本来就是给人看的一律留在主路径。 */
+function renderTech(o){
+  const b = $("techBody"); b.textContent = "";
+  const r = window.__lastResult || {}, F = r.findings || [], T = r.timings || {};
+  const addH = t => b.appendChild(el("h3", null, t));
+  const addP = t => b.appendChild(el("p", null, t));
+  const addRaw = t => b.appendChild(el("div", "raw", t));
+  const msOf = v => fmtMsShort(v || 0);
+
+  addH("一、本帧数字的出处");
+  addP("端到端墙钟的口径：" + (window.__wallSrc || "—"));
+  addP("本帧端到端墙钟 " + fmtS(o.wallS) + " 秒（服务自打点）。其中 timings 记账 " +
+       msOf(o.accounted) + "（" + (o.parts.join(" ＋ ") || "无") + "）；未纳入 timings 的墙钟 " +
+       msOf(o.rest) + "（框架 / 解码 / 写盘开销）。");
+  addP("全图只有一条比例尺：" + o.pxPerSec + " px/秒（逐层轨道实测 " + o.tierPxPerSec +
+       " px/秒，两者共用同一个像素换算）。本帧占全长 " + o.pct + "%（约 " + o.px + " px）" +
+       (o.flooredNote ? "，" + o.flooredNote : "") + "；刻度本身没有放大，也没有取对数。");
+  addP("各层耗时不能相加：timings.total_ms 只累加 *_ms 结尾的键，本帧它等于 " +
+       msOf((T.tier0_ms || 0) + (T.tier0_5_ms || 0)) + "，不含 Tier 1 的 " +
+       msOf((T.tier1_s || 0) * 1000) + "。求和会与上面的对外数字矛盾，故一律以墙钟为准。");
+  addP("刻度 0–" + (o.scaleMs/1000).toFixed(0) + " 秒 · 线性 1:1 · 未取对数 · 全帧共用 · " +
+       "本视口实测 " + o.pxPerSec + " px/秒");
+
+  addH("二、本帧原始字段");
+  addRaw("timings：weakest_conf=" + (T.weakest_conf != null ? T.weakest_conf : "—") +
+         " · next_tier=" + (T.next_tier != null ? T.next_tier : "—") +
+         " · cloud_allowed=" + (T.cloud_allowed != null ? T.cloud_allowed : "—"));
+  addRaw("cloud_authorized=False（本演示不开云端）· Tier 2 实测调用 " +
+         ((r.tier_calls || {}).tier2 || 0) + " 次");
+  addRaw("findings[].tier 实测值：" + [...new Set(F.map(f => f.tier))].join(" / ") +
+         "（未在界面里重新推导）");
+  addRaw("partial 原文：" + (window.__partialRaw || "—"));
+  if ((r.timings || {}).short_circuit) {
+    addRaw("short_circuit 原文：" + r.timings.short_circuit);
+  }
+  F.forEach(f => addRaw("人员区域 #" + f.person_index + "：cap_found=" + f.cap_found +
+    " · coverall_found=" + f.coverall_found + " · confidence=" + f.confidence +
+    " · tier=" + f.tier + " · box=" + JSON.stringify(f.box)));
+
+  addH("三、图的画法");
+  addP("颜色掩膜由后端在 Tier 1 触发时写出；色相由后端绘制，本页只做降饱和显示；" +
+       "中文标签一律在 HTML 里，不烙在图里。");
+  $("tech").open = false;   // 每帧回到折叠态
+}
+
+/* ---------- 导出：照片 + 结论句 + 时间拼成一张图，纯前端，不碰后端 ----------
+   给厂长汇报的人不该只能拍屏幕——拍屏幕拍到的是「证据不足」。 */
+function wrapText(ctx, s, maxW){
+  const out = []; let line = "";
+  for (const ch of s){
+    if (line && ctx.measureText(line + ch).width > maxW){ out.push(line); line = ch; }
+    else line += ch;
+  }
+  if (line) out.push(line);
+  return out;
+}
+function saveResult(){
+  const img = $("shot");
+  if (!img || !img.naturalWidth) return;      // 没有照片就没什么可存的
+  const MAXW = 1200, PAD = 26, LINE = 42, SMALL = 20;
+  const scale = Math.min(1, MAXW / img.naturalWidth);
+  const w = Math.round(img.naturalWidth * scale);
+  const ih = Math.round(img.naturalHeight * scale);
+  const cv = document.createElement("canvas");
+  const ctx = cv.getContext("2d");
+  // 结论句用真人话那句（与页面上判定区顶部同一句），并钉死「不是结论」
+  const text = (window.__verdict || "（本帧没有结论句）").trim() +
+               "　｜　本页不构成合规结论，需人工复核。";
+  const meta = "端到端墙钟 " + fmtS(window.__lastWall) + " 秒（服务自打点）· 导出时间 " +
+               new Date().toLocaleString("zh-CN", { hour12: false }) +
+               " · 出处：本机三层视觉推理流水线演示界面";
+  const big = "900 " + Math.round(LINE * 0.66) + "px 'Microsoft YaHei','PingFang SC',sans-serif";
+  const small = "500 " + Math.round(SMALL * 0.82) + "px 'Microsoft YaHei','PingFang SC',sans-serif";
+  ctx.font = big;
+  const lines = wrapText(ctx, text, w - PAD * 2);
+  ctx.font = small;
+  const metaLines = wrapText(ctx, meta, w - PAD * 2);
+  const bandH = PAD + lines.length * LINE + 6 + metaLines.length * SMALL + PAD;
+  cv.width = w; cv.height = ih + bandH;
+  ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.drawImage(img, 0, 0, w, ih);
+  ctx.fillStyle = "#0A0A0A"; ctx.font = big;
+  let y = ih + PAD + LINE * 0.66;
+  lines.forEach(t => { ctx.fillText(t, PAD, y); y += LINE; });
+  ctx.fillStyle = "#3D3D3D"; ctx.font = small;
+  y += 6;
+  metaLines.forEach(t => { ctx.fillText(t, PAD, y); y += SMALL; });
+  cv.toBlob(bl => {
+    if (!bl) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(bl);
+    a.download = "巡检_" + String(window.__lastPhoto || "result").replace(/\.[^.]+$/, "") + "_" +
+                 new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "") + ".png";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, "image/png");
 }
 
 /* ---------- 结果 ---------- */
 function renderResult(r, wallS, wallSrc){
   const CALLS = r.tier_calls || {}, T = r.timings || {}, F = r.findings || [];
+  // Tier 0 一次都没调用、却又有短路原因 ⇒ 不是「画面里没人」，是**检测层没跑成**。
+  // （真·无人帧是跑过的：tier_calls.tier0 = 1。）
+  const tier0Failed = (CALLS.tier0 || 0) === 0 && !!T.short_circuit;
 
-  // 顶部免责声明：逐字渲染 r.disclaimers，不改写
   const ds = r.disclaimers || [];
+  window.__dsText = ds.join(" ");      // 失败时还要用：免责声明留着，partial 判定不能留
   $("dTag").textContent = "免责声明 · 原文照录";
-  $("dTxt").textContent = ds.join(" ") +
-    (r.partial ? " ｜ partial=true：本帧存在显式标注 uncertain 的条目（route.assemble_result 的定义）。"
-               : " ｜ partial=false：本帧无显式标注 uncertain 的条目。");
+  // 免责声明正文是编排层给的，逐字照录；后面这半句是界面自己加的，
+  // 所以界面自己把它说成人话——屏幕上不该出现 uncertain / route.assemble_result 这种字样。
+  // 原文照旧留证，只是收进技术面板。
+  window.__partialRaw = r.partial
+    ? "partial=true：本帧存在显式标注 uncertain 的条目（route.assemble_result 的定义）。"
+    : "partial=false：本帧无显式标注 uncertain 的条目。";
+  $("dTxt").textContent = ds.join(" ") + (r.partial
+    ? " ｜ 本帧有条目被显式标注为「证据不足」，需人工判断。"
+    : " ｜ 本帧没有条目被显式标注为「证据不足」。");
 
   $("wallNum").textContent = fmtS(wallS);
+  $("wallUnit").style.display = "";      // 上一帧若是失败态，这两个要还原
+  $("wallLbl").textContent = WALL_LBL;
+  // 口径原文（ui: perf_counter() 包住 run_frame()…）挪进技术面板：
+  // 主路径只留「端到端墙钟 · 服务自打点」这句人能读的
+  window.__wallSrc = wallSrc || "";
+  $("wallSrc").textContent = "";
+  window.__lastResult = r;               // 技术面板要按本帧的原始字段拼
+  window.__lastWall = wallS;             // 导出图片时写进图里
 
-  // 卡片 0/1/2：按 tier_calls 与 timings 的实测值决定触发/跳过
-  const shortCircuit = T.short_circuit;
-  const c0 = CALLS.tier0 > 0;
-  setCard(0, c0 ? "fired" : "waiting",
-    {ms: c0 ? T.tier0_ms : null,
-     note: c0 ? "人员区域 " + F.length + " 处（非精确人数）" : "未调用"});
-
-  const c1 = CALLS.tier0_5 > 0;
-  setCard(1, c1 ? "fired" : "skip",
-    {ms: c1 ? T.tier0_5_ms : null,
-     note: c1 ? "weakest_conf=" + (T.weakest_conf != null ? T.weakest_conf : "—") +
-                " · next_tier=" + (T.next_tier != null ? T.next_tier : "—")
-              : (shortCircuit ? "上游未检测到人员区域<br>本层未执行" : "未调用")});
-  setLink(1, !c1);
-
-  const c2 = CALLS.tier1 > 0;
-  setCard(2, c2 ? "fired" : "skip",
-    {ms: c2 ? T.tier1_s * 1000 : null,
-     note: c2 ? "帧级复核一次 · 非逐人" + (T.tier1_s ? "（" + fmtMsShort(T.tier1_s*1000) + "）" : "")
-              : (shortCircuit ? "未检测到人员区域<br>无可升级结论" : "判据未升级")});
-  setLink(2, !c2);
-  setLink(3, true);
-  setCard(3, "locked", {main:"🔒 未授权", note:"cloud_authorized=False<br>实测调用 " +
-        (CALLS.tier2 || 0) + " 次，从不上色"});
-
-  // 明细
-  $("tally").textContent = F.length
-    ? ("检出人员区域 " + F.length + " 处（非精确人数；findings[].tier 实测值全部为 " +
-       [...new Set(F.map(f => f.tier))].join("/") + "）")
-    : "本帧未检出人员区域，findings 为空数组。";
-  const ul = $("list"); ul.textContent = "";
-  F.forEach(f => {
-    const li = document.createElement("li");
-    li.className = "f " + (f.severity === "uncertain" ? "unc" :
-                           f.severity === "critical" ? "critical" :
-                           f.severity === "warning" ? "warning" : "");
-    const row = document.createElement("div"); row.className = "row";
-    if (f.severity === "uncertain"){
-      const q = document.createElement("span"); q.className = "q"; q.textContent = "?";
-      row.appendChild(q);
-    }
-    const sev = document.createElement("span"); sev.className = "sev mono";
-    sev.textContent = f.severity;                       // 逐字渲染，不重新推导
-    const who = document.createElement("span"); who.className = "mono";
-    who.textContent = "人员区域 #" + f.person_index;
-    row.append(sev, who);
-    li.appendChild(row);
-    const b = document.createElement("div"); b.className = "fine";
-    b.textContent = "判据原文：" + (f.severity_basis || "—");
-    const rl = document.createElement("div"); rl.className = "fine";
-    rl.textContent = "规则原文：" + (f.severity_rule || "—");
-    const fl = document.createElement("div"); fl.className = "fine mono";
-    fl.textContent = "cap_found=" + f.cap_found + " · coverall_found=" + f.coverall_found +
-                     " · confidence=" + f.confidence + " · tier=" + f.tier +
-                     " · box=" + JSON.stringify(f.box);
-    li.append(b, rl, fl);
-    ul.appendChild(li);
-  });
-
-  // 标注图
-  if (window.__annUrl){
-    $("annBox").style.display = "block"; $("annImg").src = window.__annUrl;
+  const c0 = CALLS.tier0 > 0, c1 = CALLS.tier0_5 > 0, c2 = CALLS.tier1 > 0;
+  if (tier0Failed){
+    // 这一层**没跑**，所以绝不能给它上色（黄 = 本次真的跑了）
+    setCard(0, "skip", {seal:"未能运行", note:["人员检测层没有跑成", "本帧没有结论"]});
   } else {
-    $("annBox").style.display = "none";
+    setCard(0, c0 ? "fired" : "waiting",
+      {ms: c0 ? T.tier0_ms : null,
+       note: c0 ? ["人员区域 " + F.length + " 处（非精确人数）"] : ["未调用"]});
   }
 
-  // Tier 1 原文：引文块，标注「未经核验」
+  const s05 = skipWording(T, "tier0_5", tier0Failed), s1 = skipWording(T, "tier1", tier0Failed);
+  const wc = (T.weakest_conf != null ? T.weakest_conf : "—");
+  const nt = (T.next_tier != null ? T.next_tier : "—");
+  setCard(1, c1 ? "fired" : "skip",
+    {ms: c1 ? T.tier0_5_ms : null, seal: s05.seal,
+     // 数字留着，字段名进技术面板：卡片是给人看的，不是变量表
+     note: c1 ? ["本层最弱把握 " + wc, "升级判据指向 Tier " + nt]
+              : [s05.why]});
+  setLink(1, !c1);
+
+  setCard(2, c2 ? "fired" : "skip",
+    {ms: c2 ? T.tier1_s * 1000 : null, seal: s1.seal,
+     note: c2 ? ["帧级复核一次 · 非逐人",
+                 T.tier1_s ? "实测 " + fmtMsShort(T.tier1_s*1000) : ""].filter(Boolean)
+              : [s1.why]});
+  setLink(2, !c2);
+  setLink(3, true);
+  setCard(3, "locked", {main:"🔒 未授权", hatch:true, seal:"跳过 · 未授权",
+    note:["授权开关：关闭", "实测调用 " + (CALLS.tier2 || 0) + " 次，从不上色"]});
+
+  /* 判定明细：**人话在前、数字在后**，字段名一律不上屏。
+     数字一个不删：把握、判定线、框选坐标都留在次要行里。 */
+  const tally = $("tally"); tally.textContent = "";
+  const anyUncertain = F.some(f => f.severity === "uncertain");
+  const verdict = tier0Failed
+    ? "本帧的人员检测层未能运行，没有产生任何结论 —— 这不代表画面里没有人。"
+    : (F.length
+       ? "本帧检出人员区域 " + F.length + " 处（非精确人数）；着装是否合规：" +
+         (anyUncertain ? "证据不足，本帧未下结论" : "本帧不下结论") + "，需人工复核。"
+       : "本帧未检出人员区域，Tier 0.5 与 Tier 1 未参与。");
+  window.__verdict = verdict;    // 导出的图片用同一句，不另写一份免得两处漂移
+  tally.appendChild(el("div", "verdict", verdict));
+  tally.appendChild(el("div", "fine", tier0Failed
+    ? "原因：" + plainReason(T.short_circuit) + "。请检查运行环境后重跑本帧。"
+    : (F.length ? "上面这一行里的每个数都取自本帧结果，界面没有重新推导。"
+                : "本帧没有待判定的人员区域，所以没有判定明细。")));
+  const saveBtn = el("button", null, "保存这张结果（存成图片）");
+  saveBtn.onclick = saveResult;
+  tally.appendChild(saveBtn);
+  const ul = $("list"); ul.textContent = "";
+  const groups = new Map();
+  F.forEach(f => {
+    const k = String(f.tier);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(f);
+  });
+  groups.forEach((items, k) => {
+    ul.appendChild(el("div", "fgroup",
+      "TIER " + k + " ｜ 人员区域 " + items.length + " 处（非精确人数）"));
+    items.forEach(f => {
+      const uncertain = f.severity === "uncertain";
+      const li = el("li", "f" + (uncertain ? " unc" : ""));
+      const row = el("div", "row");
+      if (uncertain) row.appendChild(el("span", "q", "?"));
+      row.appendChild(el("span", "sev", severityWord(f.severity)));
+      row.appendChild(el("span", "who", "人员区域 #" + f.person_index));
+      li.appendChild(row);
+      // 判定线这个数取自本帧载荷里的判据字段，不是界面写死的
+      const acc = (String(f.severity_basis || "").match(/ACCEPT=([\d.]+)/) || [])[1];
+      li.appendChild(el("div", "basis", "本层量到的把握 " + f.confidence +
+        (acc ? "，判定线 " + acc : "") +
+        (uncertain ? " —— 低于判定线，所以本层不下结论，交人工判断。"
+                   : " —— 已达判定线；但本层只做颜色测量，仍不构成合规结论。")));
+      li.appendChild(el("div", "rule",
+        "本层规则：颜色测量与升级判据共用同一条判定线；低于它一律按「证据不足」处理，不下结论。"));
+      const box = (Array.isArray(f.box) && f.box.length === 4)
+        ? "框选 (" + f.box[0] + ", " + f.box[1] + ")–(" + f.box[2] + ", " + f.box[3] + ") 像素"
+        : "框选 " + JSON.stringify(f.box);
+      li.appendChild(el("div", "meta",
+        "防护帽色块 " + (f.cap_found ? "测到" : "未测到") +
+        " · 防护服色块 " + (f.coverall_found ? "测到" : "未测到") +
+        "（未测到 ≠ 没戴） · " + box));
+      ul.appendChild(li);
+    });
+  });
+
+  if (window.__annUrl){ $("annBox").style.display = "block"; $("annImg").src = window.__annUrl; }
+  else { $("annBox").style.display = "none"; }
+
   const qw = $("quoteWrap"); qw.textContent = "";
   if (r.tier1_answer){
-    const tag = document.createElement("div"); tag.className = "fine";
-    tag.style.marginBottom = "8px";
-    tag.textContent = "以下为本地 VLM 原文，未经核验；其中的计数为模型自述，不构成本系统的人员计数结论。";
-    const bq = document.createElement("blockquote"); bq.className = "vlm";
-    const p = document.createElement("p"); p.textContent = r.tier1_answer;  // 纯文本，杜绝注入
-    bq.appendChild(p);
-    qw.append(tag, bq);
-    const m = document.createElement("div"); m.className = "fine"; m.style.marginTop = "8px";
-    m.textContent = "提示词：" + "画面里有几个人？他们是否都佩戴了防护帽、穿着防护服？逐个说明。";
-    qw.appendChild(m);
+    const bq = el("blockquote", "vlm");
+    const hd = el("div", "hd");
+    hd.append(document.createTextNode("Tier 1 本地模型原文 · "),
+              el("span", "warn", "未经核验 · 不是判定结果"));
+    const p = el("p", null, r.tier1_answer);
+    bq.append(hd, p);
+    qw.appendChild(bq);
+    // ⑥ 一致性：这段描述跟左边的判定必然可能对不上，必须当场说明白，
+    // 不能留给读者自己去撞。
+    const n1 = el("div", "fine");
+    n1.append(document.createTextNode("这段文字是"),
+      el("b", null, "模型看着图说的话，没有接进判定链路"),
+      document.createTextNode("：模型没有读过左边的颜色测量数值，里面的「都佩戴 / 都合规」" +
+        "不是系统判定；其中的计数也不构成本系统的人员计数结论。"));
+    qw.appendChild(n1);
+    const n2 = el("div", "fine");
+    n2.append(document.createTextNode("它与左边判定明细对不上是"),
+      el("b", null, "必然的，两边都不是最终结论"),
+      document.createTextNode("：左边写「证据不足」，是因为本层只量颜色、按设计不下结论；" +
+        "这段描述完全不参与判定。合规与否需人工复核。"));
+    qw.appendChild(n2);
+    qw.appendChild(el("div", "fine", "提示词：画面里有几个人？他们是否都佩戴了防护帽、穿着防护服？逐个说明。"));
   } else {
-    const d = document.createElement("div"); d.className = "verdict";
-    d.innerHTML = "本帧<b>未调用 Tier 1</b>，因此没有模型自述。";
-    const w = document.createElement("div"); w.className = "fine";
-    w.textContent = shortCircuit ? "原因（timings.short_circuit 原文）：" + shortCircuit
-                                 : "原因：无 findings 需要复核。";
-    qw.append(d, w);
+    const d = el("div", "verdict");
+    d.append(document.createTextNode("本帧"), el("b", null, "未调用 Tier 1"),
+             document.createTextNode("，因此没有对画面的描述。"));
+    qw.append(d, el("div", "fine", T.short_circuit
+      ? "原因：" + plainReason(T.short_circuit)
+      : "原因：本帧没有需要复核的条目。"));
   }
   $("res").style.display = "grid";
 
-  // 对比：绝对量，不写倍率
   const nm = window.__lastPhoto || "(未命名)";
-  const line = (k, n, hasPerson, wall, t1) =>
-    '<div><span class="k">' + k + '</span>' + n + "：<b>" + (hasPerson ? "有人" : "无人") +
-    "</b> → 端到端 <span class='n'>" + fmtS(wall) + " 秒</span>，Tier 1 调用 <span class='n'>" +
-    t1 + " 次</span></div>";
-  const cur = line("本　次", nm, F.length > 0, wallS, CALLS.tier1 || 0);
-  $("cmp").innerHTML = (first ? '<div><span class="k">上一张</span>—</div>' : window.__prevLine) + cur;
-  window.__prevLine = cur; first = false;
+  const kind = F.length > 0 ? "person" : "empty";
+  window.__frames = window.__frames || {};
+  window.__frames[kind] = {name: nm, wall: wallS, calls: CALLS,
+                           findings: F.length, tier: T};
+  const row = (k, name, hasPerson, wall, t1) => {
+    const d = el("div", "row");
+    d.appendChild(el("span", "k", k));
+    d.appendChild(el("span", "nm", name));
+    if (hasPerson !== null) d.appendChild(el("span", "res", hasPerson ? "有人" : "无人"));
+    if (wall != null){
+      d.appendChild(el("span", "v", "端到端 " + fmtS(wall) + " 秒"));
+      d.appendChild(el("span", "v", "Tier 1 调用 " + t1 + " 次"));
+    }
+    return d;
+  };
+  // 存**数据**、不存渲染好的节点：节点里烘死了「本　次」这个标签，
+  // 下一帧再把它原样贴回去，就会两行都印「本　次」。这里每帧按数据重贴标签。
+  const cur = {name: nm, hasPerson: F.length > 0, wall: wallS, t1: CALLS.tier1 || 0};
+  const cmp = $("cmp"); cmp.textContent = "";
+  const prev = window.__prev;
+  cmp.appendChild(prev
+    ? row("上一张", prev.name, prev.hasPerson, prev.wall, prev.t1)
+    : row("上一张", "（本会话尚无上一张）", null, null, 0));
+  cmp.appendChild(row("本　次", cur.name, cur.hasPerson, cur.wall, cur.t1));
+  window.__prev = cur;
 }
 
 /* ---------- 上传与运行 ---------- */
+const WALL_LBL = "端到端墙钟 · 服务自打点";
 function showError(msg){
-  $("err").style.display = "block";
-  $("err").textContent = "错误：" + msg;
+  const e = $("err"); e.style.display = "block"; e.textContent = "错误：" + msg;
+}
+/* 失败：**所有**「处理中」必须同时结束——时间轴、照片区、卡片、右上角数字。
+   上一帧的结论 / 对照条 / 标注图一并清空：它们属于上一帧，
+   留在「失败」旁边就会被读成本帧的结果。
+   错误文案只说人话，异常名与本机路径由服务端留在终端里，不上页面。 */
+function failFrame(msg){
+  // 顶部免责声明条：原文照录的免责声明留着，但上一帧那句 partial=… 是**那一帧**的
+  // 判定，留在「失败」旁边就会被读成本帧的结论，必须换成明确的失败说明。
+  $("dTag").textContent = "免责声明 · 原文照录";
+  $("dTxt").textContent = (window.__dsText ? window.__dsText + " ｜ " : "") +
+    "本帧失败，未产生结果，因此没有 partial 判定。";
+  $("tlMode").textContent = "失败";
+  $("tl").textContent = "";
+  $("tlmsg").textContent = "本帧失败，没有时间轴数据。";
+  // 刻度行里那个「本视口实测 N px/秒」是**上一帧渲染时量出来的**，条都清了还留着它，
+  // 就成了一个出处没了的数字。退回初始那句设计规则（它不是测量值）。
+  $("tlScale").textContent = "全帧共用同一线性刻度，未取对数";
+  $("cmp").textContent = "";
+  $("tally").textContent = "";
+  $("list").textContent = "";
+  $("quoteWrap").textContent = "";
+  $("annBox").style.display = "none";
+  $("techBody").textContent = "";        // 技术面板里是上一帧的原始字段，一并收起
+  $("tech").open = false;
+  $("stage").className = "";
+  $("stageNote").textContent = "失败 · 本帧没有产生结果";
+  $("wallNum").textContent = "失败";
+  $("wallUnit").style.display = "none";
+  $("wallLbl").textContent = "本帧未产生结果";
+  $("wallSrc").textContent = "";
+  for (const i of [0, 1, 2]){
+    setCard(i, "waiting", {main:"未完成", note:["本帧失败，未产生结果"]});
+  }
+  [1, 2, 3].forEach(i => setLink(i, true));
+  showError(msg);
+}
+/* 处理中：三层在**一次** POST 里串行跑完，且服务端是单线程 HTTPServer——
+   另开一条连接问进度会被本帧自己挡住，所以前端结构上拿不到逐层进度。
+   既然拿不到，就**不给任何一层编造「运行中」**：只显示整帧真实的已用时长，
+   这个数字是 performance.now() 量出来的，不是定时器编出来的。 */
+let waitTimer = null;
+function startWaiting(){
+  // 先停掉可能还活着的上一个计时器：只要有一个泄漏，它就会每 100ms 把
+  // 「处理中 · 已 N 秒」写回顶部，于是出现「卡片已经出结果、顶部却一直在转」
+  // ——正是 PM 走查撞到的那一幕。这条路径按现在的代码走不到（成功/失败/异常
+  // 三条出口都在 finally 里 stopWaiting），但这一行让「计时器泄漏」在结构上不可能。
+  stopWaiting();
+  const t0 = performance.now();
+  const tick = () => {
+    const s = ((performance.now() - t0) / 1000).toFixed(1);
+    $("tlMode").textContent = "处理中 · 已 " + s + " 秒";
+    $("stageNote").textContent = "处理中 · 已 " + s + " 秒 · 单线程服务，" +
+      "本帧期间页面会等待（Tier 1 单帧 10–14 秒）";
+  };
+  tick();
+  waitTimer = setInterval(tick, 100);
+}
+function stopWaiting(){
+  if (waitTimer){ clearInterval(waitTimer); waitTimer = null; }
 }
 function setStage(name, busyFlag, note){
-  $("dropzone").style.display = "none";
+  $("dropzone").classList.add("again");   // 上传入口常驻，不随出结果消失
   $("stage").style.display = "block";
   $("stage").className = busyFlag ? "busy" : "";
   $("stageNote").textContent = note || "";
@@ -498,18 +1079,21 @@ async function runPhoto(name, b64, objectUrl){
   if (busy) return;
   busy = true;
   $("err").style.display = "none";
-  setStage(name, true, "处理中 · 单线程服务，本帧期间页面会等待（Tier 1 单帧 10–14 秒）");
+  setStage(name, true);              // 照片区的说明文字由 startWaiting 每 100ms 刷实测值
+  startWaiting();
   $("shot").src = objectUrl;
-  $("wallNum").textContent = "…";
-  $("tlMode").textContent = "处理中";
-  // 处理中：卡片从左到右逐个点亮，但不显示任何耗时数字（数字只能来自实测）
-  setCard(0, "running", {main:"运行中…", note:"Tier 0 人员检测"});
-  setCard(1, "waiting", {main:"等待上游", note:"Tier 0.5 颜色判读"});
-  setCard(2, "waiting", {main:"等待上游", note:"Tier 1 本地模型"});
-  setCard(3, "locked", {main:"🔒 未授权", note:"Tier 2 云端"});
+  $("wallNum").textContent = "--";
+  $("wallUnit").style.display = "";
+  $("wallLbl").textContent = WALL_LBL;
+  $("wallSrc").textContent = "";
+  // 三层在一次请求里串行跑完，前端拿不到逐层进度 → 三张卡一律说「本帧未出结果」，
+  // **不假装哪一层在跑**。真实的进度只有上面那个实测计时器。
+  setCard(0, "waiting", {main:"本帧未出结果", note:["整帧一次请求，逐层进度前端拿不到"]});
+  setCard(1, "waiting", {main:"本帧未出结果", note:["逐层耗时随整帧一起返回"]});
+  setCard(2, "waiting", {main:"本帧未出结果", note:["Tier 1 通常 10–14 秒（服务端实测）"]});
+  setCard(3, "locked", {main:"🔒 未授权", hatch:true, seal:"跳过 · 未授权",
+                        note:["Tier 2 云端"]});
   [1,2,3].forEach(i => setLink(i, false));
-  const timers = [setTimeout(() => setCard(1,"running",{main:"运行中…",note:"Tier 0.5 颜色判读"}), 900),
-                  setTimeout(() => setCard(2,"running",{main:"运行中…",note:"Tier 1 本地模型"}), 2200)];
   document.querySelectorAll("button").forEach(b => b.disabled = true);
 
   try{
@@ -518,20 +1102,38 @@ async function runPhoto(name, b64, objectUrl){
       body: JSON.stringify({name: name, data_b64: b64})
     });
     const j = await resp.json();
-    timers.forEach(clearTimeout);
-    if (!j.ok){ showError(j.error || ("HTTP " + resp.status)); setCard(0,"idle",{}); return; }
-    window.__annUrl = j.annotated_url;
+    if (!j.ok){
+      failFrame(j.error || ("本地服务返回 HTTP " + resp.status +
+                            "，这次检测没有结果。换一张试试。"));
+      return;
+    }
+    // 标注图随本次 /run 的 JSON 一起回来，**刻意不再发第二个 HTTP 请求**：
+    // 本服务是单线程 HTTPServer，浏览器若在一条空闲 keep-alive 连接之外另开一条
+    // 去取图，那一条会一直阻塞到前一条关闭。内嵌后这个场景在结构上不会发生。
+    const prevAnn = window.__annUrl;
+    window.__annUrl = j.annotated_b64
+      ? blobUrlFromB64(j.annotated_b64, j.annotated_mime)
+      : j.annotated_url;                       // 兜底：老响应仍可用 URL
+    if (prevAnn && prevAnn.startsWith("blob:")) URL.revokeObjectURL(prevAnn);
     setStage(name, false, "已完成 · " + j.upload_name);
     renderResult(j.result, j.wall_clock_s, j.wall_clock_source);
-    renderTimeline(j.result.timings, j.result.tier_calls, j.wall_clock_s);
+    renderTimeline(j.result.timings, j.result.tier_calls, j.wall_clock_s,
+                   j.result.findings, name);
     $("tlMode").textContent = "实测";
-  } catch(e){
-    timers.forEach(clearTimeout);
-    showError(String(e));
+  } catch {
+    // 网络中断 / 响应不是 JSON：同样是一个「明确结束」的失败，不能停在处理中
+    failFrame("这次检测没能跑完（与本地服务的通信出错），没有产生结果。" +
+              "刷新页面后再试一次。");
   } finally {
+    stopWaiting();
     busy = false;
     document.querySelectorAll("button").forEach(b => b.disabled = false);
   }
+}
+function blobUrlFromB64(b64, mime){
+  const bin = atob(b64), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([u8], {type: mime || "image/jpeg"}));
 }
 function fileToB64(file){
   return new Promise((res, rej) => {
@@ -543,13 +1145,14 @@ function fileToB64(file){
   });
 }
 async function handleFile(file){
-  if (!file) return;
+  if (!file || busy) return;      // 本帧还没回来之前不发第二帧：单线程服务会排队
   const {b64, url} = await fileToB64(file);
   await runPhoto(file.name, b64, url);
 }
 function initDrop(){
   const dz = $("dropzone");
-  dz.onclick = () => { const i = document.createElement("input");
+  dz.onclick = () => { if (busy) return;      // 处理中就别弹文件框，免得选了没反应
+    const i = document.createElement("input");
     i.type = "file"; i.accept = "image/*"; i.onchange = () => handleFile(i.files[0]); i.click(); };
   ["dragenter","dragover"].forEach(ev => document.addEventListener(ev, e => {
     e.preventDefault(); dz.classList.add("hot"); }));
@@ -562,26 +1165,30 @@ async function loadGallery(){
   try{
     const j = await (await fetch("/photos")).json();
     const g = $("gallery"); g.textContent = "";
-    const lb = document.createElement("span");
-    lb.className = "lb";
-    lb.textContent = "内置实拍照片（点击直跑，免拖拽）：";
-    g.appendChild(lb);
+    g.appendChild(el("span", "lb", "内置实拍照片（点击直跑，免拖拽）："));
     (j.photos || []).forEach(p => {
-      const b = document.createElement("button");
-      b.textContent = p.name.slice(0, 8) + "…";
+      const b = el("button", null, p.name.slice(0, 8) + "…");
       b.onclick = () => runBuiltin(p);
       g.appendChild(b);
     });
-    // ?auto=<文件名前缀> 直接跑内置照片：录屏彩排用，免去每次拖拽
+    // ?auto=<前缀>[,<前缀>…] 顺序跑内置照片：录屏彩排用。
+    // 单线程服务一次只吃一帧，必须串行 await，不能并发。
     const want = new URLSearchParams(location.search).get("auto");
     if (want){
-      const hit = (j.photos || []).find(p => p.name.startsWith(want));
-      if (hit) runBuiltin(hit); else showError("?auto= 没匹配到内置照片：" + want);
+      const pre = want.split(",").map(s => s.trim()).filter(Boolean);
+      const hits = pre.map(w => (j.photos || []).find(p => p.name.startsWith(w)));
+      const miss = pre.filter((w, i) => !hits[i]);
+      if (miss.length) showError("?auto= 没匹配到内置照片：" + miss.join(", "));
+      else for (const h of hits) await runBuiltin(h);
     }
   } catch(e){ /* 内置照片列表不可用不影响拖拽上传 */ }
 }
+// 内置样片走**和上传完全一样**的路径：把字节读进内存后用一个 blob URL 显示。
+// 这里曾把服务器地址 p.url 当图片地址用，于是显示大图成了第二个 HTTP 请求；
+// 服务端是单线程，那个请求被本帧的 POST 堵住 —— 大图就一直停在上一张
+// （新开页面没得停，就只剩 #stage 的黑色底）。实测：点完 30 秒都不换。
 const runBuiltin = p => fetch(p.url).then(r => r.blob()).then(bl => fileToB64(bl))
-                             .then(o => runPhoto(p.name, o.b64, p.url));
+                             .then(o => runPhoto(p.name, o.b64, o.url));
 buildCards(); initDrop(); loadGallery();
 </script>
 </body>
