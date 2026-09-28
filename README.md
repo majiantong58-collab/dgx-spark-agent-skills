@@ -428,6 +428,10 @@ python -m http.server 8000
 # 打开 http://localhost:8000/docs/mes-demo/index.html
 ```
 
+> ⚠️ **Windows 上若 `python` 报 `Python was not found`**（Microsoft Store 占位符，非真 Python），
+> 换成 **`py -3 -m http.server 8000`**。这一节**不要求先建 venv**，
+> 故上方「先 activate 再用 `python`」的流程在此不适用。（2026-09-28 Windows 11 + Git Bash 实测。）
+
 合规 fixture 随仓库分发，**打开页面即可看到落单**：计数 `共 97 条`（库内 96 + 本次 1），首行出现示例异常单。
 全部为**自造示例数据**，不含客户名或第三方数据。自带 `docs/mes-demo/verify_host_page.py` 自检 14 项。
 `mes-data/` 下的数据是**真产出物**（由 `skills/mes-inspection-intake/scripts/commit.py` 从

@@ -26,6 +26,11 @@ python -m http.server 8000
 http://localhost:8000/docs/mes-demo/index.html
 ```
 
+> ⚠️ **Windows 上若 `python` 报 `Python was not found`**（那是 Microsoft Store 的占位符，
+> 不是真的 Python），把第 1 步换成 **`py -3 -m http.server 8000`**。
+> 本项目 README 的「先 activate 再用 `python`」流程在这里不适用 —— 这一节不要求建 venv。
+> （2026-09-28 在 Windows 11 + Git Bash 实测：`py -3` 可用。）
+
 **应当看到**：表头计数 **`共 97 条`**（库内 96 条 + 本次落单 1 条），分页 `97` 条 / `13` 页，
 列表**首行**出现 `QA-20260106-100`（高亮行），隔离列显示「未隔离」，状态徽标「待处理」。
 

@@ -18,6 +18,11 @@
     py -3 skills/evals/contract_bridge_delivery.py --root <交付区目录>
 
 退出码 0=通过 / 1=失败（同 run_e2e.py 约定）。
+
+📌 **冻结规则**：对外引用哈希一律用 **LF 归一后的 canonical 值**。
+   `core.autocrlf=true` 会让同一文件在仓库(LF)与 Windows 工作区(CRLF)字节不同，
+   对工作区字节算哈希 ⇒ 评委 clone 后对不上 ⇒ 那条冻结对除本机外任何人都无效。
+   本仓已加 `.gitattributes: * text=auto eol=lf`；本脚本仍归一计算（双保险）。
 ⚠️ **只读**：SimpleHTTPRequestHandler 仅实现 GET/HEAD，本脚本不向交付区写任何字节。
 """
 
@@ -88,11 +93,26 @@ def _fmt_delta(sec):
     return f"{sec / 86400:.0f} 天"
 
 
-def _provenance_note(inbox):
-    """按 §C.6 的**实际作用域**报来源证据，分三档，不作超出它的宣称。
+def _sha256_canonical(path):
+    """**冻结用**哈希：按 LF 归一后计算。
 
-    §C.6：脚本产出 Δ≤1s（写入即落盘）；手写件实例 Δ=46 天；且 Δ≈0 **证明不了**非手写。
-    故这里只报「是否满足脚本直写签名」，来源是否成立交由 D6 的复现判定。
+    为什么不能直接对工作区字节算：`core.autocrlf=true` 时同一份内容**仓库存 LF、Windows 工作区存 CRLF**
+    ⇒ 对工作区原始字节算出的哈希，**评委 clone 后必然对不上**。本仓 2026-09-28 实踩：
+    同一文件两侧分别是 `0b4a9ed9…` 与 `16022f27…`，而当时我们把它当有效冻结在用。
+    归一后两侧一致，冻结才对**所有人**有效。（`.gitattributes` 已固定 `* text=auto eol=lf`，此处仍归一，双保险。）
+    """
+    return _sha256(bytes(Path(path).read_bytes()).replace(bytes([13, 10]), bytes([10])))
+
+
+def _provenance_note(inbox):
+    """报 §C.6 那个判别式的**本机参考值**，并写明它证明不了什么、又会被什么破坏。
+
+    🔴 两条边界（都在本仓实踩过）：
+      · Δ≈0 **证明不了**「非手写」（手写者当场写文件 Δ 也是 0）——§C.6 明示；
+      · 反方向同样不能下结论：**任何 checkout / clone 都会把 mtime 重置为检出时刻**，
+        于是 `produced_at ↔ mtime` **必然**失配，**那不是倒填，是刚被检出**。
+    ⇒ 本判别式**分不开**「倒填」与「刚检出」，故这里只报数值与成因候选，**不判定来源**；
+      来源结论由 **D6 的复现**承担。一条在评委机器上**必然报警**的门，与永远红的门同类。
     """
     try:
         doc = json.loads(inbox.read_text(encoding="utf-8"))
@@ -103,15 +123,10 @@ def _provenance_note(inbox):
         stamp = stamp.replace(tzinfo=datetime.timezone.utc)
     mtime = datetime.datetime.fromtimestamp(inbox.stat().st_mtime, tz=datetime.timezone.utc)
     delta = abs((mtime - stamp).total_seconds())
-    if delta <= 1:
-        return (f"produced_at ↔ mtime Δ={_fmt_delta(delta)} ⇒ **脚本直写签名成立**（§C.6：写入即落盘）；"
-                f"但 §C.6 明示这**证明不了**「非手写」—— 来源是否成立由 **D6 的复现**判定")
-    if delta < 86400:
-        return (f"produced_at ↔ mtime Δ={_fmt_delta(delta)} ⇒ **不满足 §C.6 的脚本直写签名**（Δ≤1s）；"
-                f"典型成因是**先产出、后拷贝**（内容保留、mtime 被更新），"
-                f"也可能是倒填 —— 本判别式分不开这两者，内容来源由 **D6 的复现**判定")
-    return (f"produced_at ↔ mtime Δ={_fmt_delta(delta)} ⇒ **倒填时间的老件**"
-            f"（§C.6 判别式明确能查的那一类）")
+    sig = "符合 ≤1s 的脚本直写签名" if delta <= 1 else "不符合 ≤1s 的脚本直写签名"
+    return (f"mtime 与 produced_at 差 {_fmt_delta(delta)}（**本机参考值**，{sig}）。"
+            f"成因**分不开**：checkout/clone 会重置 mtime（非缺陷）／也可能是倒填。"
+            f"**来源结论见 D6**，本条不下判定")
 
 
 def _reproduce_payload(inbox):
@@ -305,9 +320,12 @@ def _run(site, source, note, results, check):
     print(f"  payload 文件       {source}")
     for label, p in (("index.html", index), ("inbox.json", inbox),
                      ("xj-records.json", root / "mes-data" / "xj-records.json")):
-        print(f"  {label:<18} " + (f"sha256={_sha256_file(p)}" if p.is_file() else "（不存在）"))
-    print(f"  契约               sha256={_sha256_file(cb.DEFAULT_CONTRACT)}")
-    print(f"  本脚本             sha256={_sha256_file(Path(__file__))}")
+        print(f"  {label:<18} " + (f"canonical={_sha256_canonical(p)}" if p.is_file()
+                                      else "（不存在）"))
+    print("  （以上为 **LF 归一后**的 canonical 哈希 —— 跨平台可比；"
+          "工作区原始字节在 autocrlf 下不同，勿直接引用）")
+    print(f"  契约               canonical={_sha256_canonical(cb.DEFAULT_CONTRACT)}")
+    print(f"  本脚本             canonical={_sha256_canonical(Path(__file__))}")
     return _report(results)
 
 

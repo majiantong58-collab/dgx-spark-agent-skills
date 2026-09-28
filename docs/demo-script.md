@@ -329,8 +329,39 @@
 
 > 副本 = 原型单文件，**14 处客户名已替换**，浏览器标签页现为
 > `AgileMoM · 示例电子 MES 高保真原型 V2`。取数走相对路径 `mes-data/inbox.json`，数据已就位。
-> **起服务**：在 `.scratch/mes-demo-surface/` 下 `python -m http.server 8123`，
+> **起服务**：在 `.scratch/mes-demo-surface/` 下
+> ```bash
+> py -3 -m http.server 8123
+> ```
 > 打开 `http://127.0.0.1:8123/index.html#view=qm-quality-exception`。
+
+🔴 **拍摄时用 `py -3`，不要用 `python`** —— 见下方「解释器」一节。
+（`2026-09-28 实测`：`py -3 -m http.server 8123` 起服务后
+`index.html` 与 `mes-data/inbox.json` 均 HTTP 200。）
+
+### 🔴 解释器（**拍摄当天最容易出事的一处**）
+
+本机 Git Bash 的 **`python` 是 Windows Store 占位符**，会直接报：
+
+```
+Python was not found; run without arguments to install from the Microsoft Store, ...
+```
+
+**本段所有命令都在「非仓库根、无激活 venv」的环境下跑**（拍摄副本在 `.scratch/` 下），
+**所以不能依赖 README 里那套「先 activate 再用 python」的流程。**
+
+| 用什么 | 值 |
+|---|---|
+| **统一用** | **`py -3`**（2026-09-28 实测 3.14.4 可用） |
+| 备选 | `C:/Users/26270/Desktop/invda/.venv/Scripts/python.exe`（3.12.10） |
+
+**镜 8 的落单命令同理**：
+```bash
+py -3 skills/mes-inspection-intake/scripts/commit.py \
+  --finding <你的 fixture> \
+  --out .scratch/mes-demo-surface/mes-data/inbox.json
+```
+（**跑前先清空** `--out` 指向的目录，见契约 §C.6 的追加语义。）
 
 ### 分镜
 
