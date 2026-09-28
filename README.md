@@ -14,67 +14,137 @@
 
 ## 快速开始
 
-> 本节命令**逐条取自 `docs/DELIVERY.md` §5**，未自行编写。DELIVERY 中标注为 `[未验证]` 的条目在此沿用同一标注。
+> **本节目标：全新克隆 → 照抄下面命令 → 跑出结果。** 命令为 **Git Bash** 语法，步骤顺序不能换。
 
-### 环境要求 `[来源: docs/DELIVERY.md §5.1；docs/local_tier_benchmark.json 的 meta]`
+### 第 0 步 · 环境要求 `[来源: docs/DELIVERY.md §5.1；docs/local_tier_benchmark.json 的 meta]`
 
-- **Windows**（本项目在 Windows 11 上开发与验证）
-- **Python 3.12**（实测 3.12.10）。本机默认 `python` 为 3.14，请显式使用 `py -3.12`
-- **NVIDIA GPU（必需）**：本地三层流水线需要 CUDA。实测环境为 **RTX 5060 Laptop GPU**
+- **Windows 11 + Git Bash**（下面命令均按 Git Bash 写；PowerShell / cmd 需自行改写）
+- **Python 3.12**（实测 3.12.10）。系统默认 `python` 可能是别的版本，**建环境时显式用 `py -3.12`**
+- **NVIDIA GPU（必需）**：Tier 0 / Tier 1 走 CUDA。实测环境为 **RTX 5060 Laptop GPU**
   （compute capability 12.0 / sm_120，显存总量 8150.6 MiB，驱动 591.91）
-- **权重不随仓库分发**（单文件超 GitHub 限制，已在 `.gitignore` 中排除）——
-  **需先下载**：先跑 `scripts/fetch_ms.sh`（推荐通道），再跑 `scripts/fetch_yolo.sh` 取 YOLO 权重。
-  下载完成后，本地三层流水线可**完全离线运行**。备用通道 `scripts/fetch.sh`（备用候选 `scripts/fetch_smol.sh`）
+- **磁盘约 7 GB**：权重 4.3 GB + CUDA 版 torch 约 2.5 GB
 - 联网**仅在下载权重与启用 Tier 2（云端）时需要**，后者需有效的 StepFun API Key
 
-### 安装（步骤 0 下载权重；步骤 1–2 依赖安装**必须分两步**）`[来源: docs/DELIVERY.md §5.2；步骤 0 取自 scripts/ 下脚本自身]`
+### 第 1 步 · 建虚拟环境（**必须先做——否则第 3 步无处可装**）
+
+```bash
+py -3.12 -m venv .venv
+source .venv/Scripts/activate      # 之后所有命令都在这个环境里跑
+python --version                   # 必须显示 3.12.x
+```
+
+> 本 README 后续一律写 `python` / `pip`，**前提是这一步已经 `activate`**。
+> 不想 activate 的话，把 `python` 换成 `./.venv/Scripts/python.exe`、`pip` 换成 `./.venv/Scripts/pip`，二者等价。
+> 🔴 **不要再回头用 `py -3.12` 跑后面的命令**——那会绕开 `.venv` 用系统解释器，
+> 包即使装好了也会 `ModuleNotFoundError`。
+
+### 第 2 步 · 下载权重（不入库，**必须先做**）
+
+```bash
+bash scripts/fetch_ms.sh      # Qwen3-VL-2B → models/Qwen3-VL-2B-Instruct/（约 4.3 GB）
+bash scripts/fetch_yolo.sh    # yolo11n.pt   → models/（约 5.6 MB）
+```
+
+> 权重单文件超 GitHub 100 MB 上限，已在 `.gitignore` 中排除，**克隆后 `models/` 是空的**。
+> 下载完成后本地三层流水线可**完全离线运行**。备用通道 `scripts/fetch.sh`（备用候选 `scripts/fetch_smol.sh`）。
+>
+> ⚠️ **跳过这一步不会立刻报错，只会降级**：缺权重时 Tier 0 记为「**本层未运行**」
+> （结果里的 `short_circuit` 为 `tier0_unavailable: …`，跑【①】时控制台也会打印一行「未运行」），
+> 而**不是**「画面里没有人」。两种情况下表面都是 `tier_calls` 全 0、`findings` 0，**含义却相反**——
+> 安全场景里把「装不上」读成「没问题」会放走真违规的人。
+>
+> ⚠️ **若你看到下面这条报错，就是漏了第 2 步**（它完全不提「模型文件缺失」，容易把人带偏）：
+> `huggingface_hub.errors.HFValidationError: Repo id must use alphanumeric chars, '-', '_' or '.' …`
+> ——`transformers` 在本地路径不存在时，会把该路径当成 HuggingFace repo id 去校验。
+> **解法不是改路径写法，是把权重下下来。**
+
+### 第 3 步 · 装依赖（**必须分两步，顺序不能换**）`[来源: docs/DELIVERY.md §5.2]`
 
 只跑 `pip install -r requirements.txt` 会装到 PyPI 的 **CPU 版 torch**，本地三层流水线用不上 GPU。
 
 ```bash
-# 步骤 0 · 下载权重（不入库，必须先做）
-bash scripts/fetch_ms.sh
-bash scripts/fetch_yolo.sh
+# 3a · 先装 CUDA 版 torch（必须指定 cu128 专用索引）
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
-# 步骤 1 · CUDA 版 torch（必须指定 cu128 专用索引）
-./.venv/Scripts/pip install torch torchvision \
-    --index-url https://download.pytorch.org/whl/cu128
+# 3b · 再装其余依赖（requirements.txt，共 8 项）
+pip install -r requirements.txt
 
-# 步骤 2 · 其余依赖（requirements.txt，共 8 项）
-./.venv/Scripts/pip install -r requirements.txt
+# 3c · 自检：两个值都要对
+python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+# 期望形如：2.11.0+cu128 True
 ```
 
-> 步骤 2 之后请确认 `torch.__version__` 仍带 **`+cu128`** 后缀；后缀消失说明被 CPU 版覆盖，重跑步骤 1。
+> `+cu128` 后缀消失、或 `False` ⇒ torch 被 CPU 版覆盖，**重跑 3a**。
 >
-> `[未验证]`：上面各条命令**未从零重跑**（虚拟环境与权重均已存在）；`py -3.12 -m venv .venv` 建环境命令同样 `[未验证]`。
+> `[核实程度]` **已在隔离的干净克隆上实测跑通**：第 1 步建环境；
+> 第 4 步的**服务启动、页面 200、`/photos` 接口**；第 5 步的 ①②③⑤
+> （② 四个 skill 全 PASS；③⑤ 退出码 0；① 在给定 `--photos` 时退出码 0、且未改写 `docs/local_tier_metrics.json`）。
+> **未在干净环境重跑**：第 2 步（4.3 GB 权重下载）、第 3 步（CUDA 版 torch 安装）、
+> 以及 ④（需 StepFun 凭据）——都要拉数 GB 或依赖 GPU/付费接口，本次未执行。
+> 这三项的命令沿用既有实测记录（`docs/DELIVERY.md` §5.1–§5.2、`docs/local_tier_benchmark.json` 的 `meta`）。
 
-### 配置 `[来源: docs/DELIVERY.md §5.3]`
+### 第 4 步 · 跑演示界面（**先跑这个**）
 
-在项目根目录创建 `.env`，需要三个变量（**本仓库不写入任何真实凭据**）：
+```bash
+python ui/server.py
+```
 
-| 变量名 | 用途 |
-|---|---|
-| `STEPFUN_API_KEY` | StepFun API 凭据 |
-| `STEPFUN_BASE_URL` | API 端点。国内站 `https://api.stepfun.com/v1`；国际站 `https://api.stepfun.ai/v1` |
-| `STEPFUN_MODEL` | 主力模型名（`step-5-preview`） |
+浏览器打开 <http://127.0.0.1:8770>，点左侧的**内置样片**，或直接把一张车间照片拖进去，等结果
+（**有人帧**约 14.35–25.2 s；**无人帧** 0.11–0.16 s 就返回——Tier 0 判定无人即短路，根本不进贵层）。
 
-> **不配 `.env` 也能跑本地三层流水线** —— 本次三张照片的实测即为 `cloud_authorized=False` 的纯本地运行。
-
-### 运行
-
-| # | 用途 | 命令 | 状态 |
-|---|---|---|---|
-| ① | 本地三层流水线 | `skills/safety-hazard-detection/scripts/local_tier_pipeline.py`（参数以脚本内 `argparse` 为准） | `[未验证]` |
-| ② | 合规校验（交付门禁） | `./.venv/Scripts/agentskills.exe validate skills/gauge-reading` | `[已实测]` 4/4 通过，退出码 0 |
-| ③ | 端到端最小通路 | `py -3.12 skills/evals/run_e2e.py`（`--offline` 跳过 API 调用） | `[未实测]` |
-| ④ | 四臂对照评测 | `py -3.12 skills/evals/run_comparison.py --arm B --runs 3 --out skills/evals/results/out-b.json` | `[未实测]` |
-| ⑤ | 逐层性能基准复现 | `py -3.12 skills/evals/bench_layers.py --layer <tier0\|tier0_5\|tier1>` | `[来源: docs/local_tier_benchmark.md]` |
-
-> ⚠️ **①未核实具体命令行参数**，故不给示例命令以免误导。
-> ⚠️ **③会写入 `skills/evals/results/`，曾覆盖过 `a4-baseline.json`**（决策日志 D-012）。运行前请先备份该目录。
-> 🔴 **④的 `--concurrency` 必须 ≤ 5**。脚本默认值为 8，但本账户实测并发上限为 5，超出会大量触发 429。
+> 启动时先预热（终端有 `[prewarm]` 日志）：Tier 0 冷启动约 4 s + Tier 1 权重加载约 20 s，
+> **这期间页面还没就绪**。（若样片目录为空，预热会跳过，服务立刻起来——此时首帧要现付冷启动。）
+> 这是**唯一不需要自备素材**的入口。它只调 `run_frame`，**不写任何实验产物**
+> （不碰 `docs/local_tier_*.json*`，也不碰 `skills/evals/results/`）；界面自己的台账写在 `ui/ui_runs.jsonl`，只追加。
+> 常用参数：`--port`（默认 8770）· `--no-prewarm`（跳过预热）· `--host`（默认 127.0.0.1，避免 Windows 防火墙弹窗）。
 >
-> `[来源: docs/DELIVERY.md §5.4、§5.5；D-010 / D-012 / D-017]`
+> ⚠️ **服务能起来 ≠ 能出结果**：权重没下（第 2 步没做）时，服务照常启动、页面照常打开，
+> 但点「开始检测」会失败。**第 2 步是硬前提。**
+>
+> ⚠️ 内置样片取自 `assets/samples/`。**若该目录为空**（页面左侧只见标题、没有可点的图），
+> 直接拖一张你自己的工业场景照片即可，走的是同一条链路。
+
+### 第 5 步 · 其余入口
+
+| # | 用途 | 命令 |
+|---|---|---|
+| ① | 本地三层流水线（**会写产物**） | `python skills/safety-hazard-detection/scripts/local_tier_pipeline.py --photos <你的图片目录>` |
+| ② | 合规校验（交付门禁） | `agentskills validate skills/gauge-reading`（4 个 skill 各跑一次；退出码 0 = 通过） |
+| ③ | 端到端最小通路 | `python skills/evals/run_e2e.py --offline` |
+| ④ | 四臂对照评测（**需 StepFun 凭据**） | `python skills/evals/run_comparison.py --arm B --runs 3 --concurrency 5 --out skills/evals/results/out-b.json` |
+| ⑤ | 逐层性能基准复现 | `python skills/evals/bench_layers.py --layer tier0_5 --photo <你的图片> --out-dir .scratch` |
+
+> ⚠️ **① 必须给 `--photos`**：实拍素材 `assets/real_photos/` 含可辨认的工人人脸、当事人未同意公开发布，
+> 故被 `.gitignore` 排除、**克隆后不存在**。不带参数时脚本会明确报错退出（退出码 1，不写任何文件）；
+> 给一个放着自己图片的目录即可跑通，放 3 张更接近下表的分层效果。
+>
+> **① 默认不覆盖 `docs/local_tier_metrics.json`**——那是本 README「分层效果」表的真值来源，
+> 且是在固定的三张实拍图上测的。要覆盖须显式加 `--force`。
+> 但**① 会向 `docs/local_tier_variance.jsonl` 追加一条**墙钟记录（该文件设计为只追加，
+> 新旧数值并列留存，不覆盖历史）；原始产物另存 `models/runs/<tag>-run*.json`。
+>
+> 🔴 **④ 的 `--concurrency` 必须 ≤ 5**。脚本默认值是 8，但本账户实测并发上限为 5，超出会大量触发 429。
+>
+> ③ 用 `--offline` 时产物前缀是 `offline-`，**写的是新文件、不覆盖任何已冻结的证据**；
+> 若去掉 `--offline`（需有效 StepFun 凭据），前缀变回 `a4-`，会**覆盖 `skills/evals/results/a4-baseline.json`**
+> ——该文件是冻结的 v1 证据（D-012 事故），故本 README 只给 `--offline` 形式。
+>
+> ④ 的 `--out` 写的是**新文件**（`out-b.json` 目前不存在），不覆盖任何既有证据；若该文件已存在，
+> 脚本会拒绝覆盖并提示加 `--force`。
+>
+> ⚠️ **⑤ 务必带 `--out-dir`**。`--layer` 与 `--photo` 都是必需的（`--photo` 不给会明确报错退出）。
+> 但 `--out-dir` 默认是脚本同目录 `skills/evals/`，会把**已入库的原始样本
+> `bench_raw_<layer>.json` 直接覆盖掉**——那是本 README 逐层基准表的真值来源之一。
+> 换一张图重测出的数与原样本**不可比**（`docs/local_tier_benchmark.md` 有言在先），
+> 覆盖等于让已发布的数字失去出处，故上表把 `--out-dir` 写进命令。
+> 想逐位复现原样本，需自备 1280×960 的车间照片——原图因隐私不入库。
+>
+> **需要 StepFun 凭据的只有 ④**；①②③（带 `--offline`）⑤ 全部离线。要跑 ④ 时在项目根建 `.env`
+> （**本仓库不写入任何真实凭据**）：`STEPFUN_API_KEY` · `STEPFUN_BASE_URL`
+> （国内站 `https://api.stepfun.com/v1`，国际站 `https://api.stepfun.ai/v1`）· `STEPFUN_MODEL`（`step-5-preview`）。
+> **不配 `.env` 也能跑 ①②③⑤** —— 本次三张照片的实测即为 `cloud_authorized=False` 的纯本地运行。
+>
+> `[来源: docs/DELIVERY.md §5.3–§5.5；D-010 / D-012 / D-017]`
 
 ## 三层架构与各层状态
 
@@ -82,9 +152,9 @@ bash scripts/fetch_yolo.sh
 
 | 层 | 组件 | 载体 | 职责 | 状态 |
 |---|---|---|---|---|
-| **Tier 0** | YOLO11n | 本地权重（不入库，见快速开始） | 人形定位与计数；**无人的帧直接短路** | **已实现** |
+| **Tier 0** | YOLO11n | 本地权重（不入库，见快速开始） | 人形定位与计数；**未检出人形框的帧直接短路**（≠「画面无人」——**检测器故障已与「画面无人」分开**，见 §局限） | **已实现** |
 | **Tier 0.5** | 颜色-几何启发式 | 纯代码，零模型依赖 | 着装颜色初筛 | **已实现** |
-| **Tier 1** | Qwen3-VL-2B | 本地权重（不入库，见快速开始） | 本地视觉判读，确认或推翻 Tier 0.5 | **已实现** |
+| **Tier 1** | Qwen3-VL-2B | 本地权重（不入库，见快速开始） | 本地视觉判读；**设计意图**是复核 Tier 0.5，**当前输出不参与判定链路**（见 `docs/DELIVERY.md` §8.2⑩） | ⚠️ **已调用，但不参与判定** |
 | **Tier 2** | StepFun `step-5-preview` | 云端 API | 多目标冲突 / 成文措辞 | **已实现；本次运行未启用云端授权** |
 
 > **Tier 0 不认识任何 PPE 类别。** COCO 版 yolo11n 没有「防尘帽 / 防静电服」类别，
@@ -132,7 +202,7 @@ bash scripts/fetch_yolo.sh
 
 **测量条件**：**每层独立进程**运行——同进程会让三层共占显存并互相污染加载耗时。
 环境：RTX 5060 Laptop GPU（sm_120）· torch 2.11.0+cu128 · Python 3.12.10 · Windows 11。
-复现：`py -3.12 skills/evals/bench_layers.py --layer <tier0|tier0_5|tier1>`；
+复现：`python skills/evals/bench_layers.py --layer <tier0|tier0_5|tier1> --photo <你的图片> --out-dir .scratch`；
 原始样本 `skills/evals/bench_raw_tier0.json` · `bench_raw_tier0_5.json` · `bench_raw_tier1.json`。
 
 **Tier 2 不列性能数字**：本轮云端调用 **0 次**，无实测依据。
@@ -201,6 +271,8 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 | 交付物 | 位置 |
 |---|---|
 | **4 个 skill**（本赛核心交付物） | `skills/inspection-orchestrator/` · `safety-hazard-detection/` · `gauge-reading/` · `inspection-report/` |
+| **可交互演示界面**（跑得起来的入口） | `ui/server.py` + `ui/index.html`（`python ui/server.py` → <http://127.0.0.1:8770>） |
+| **演示样片**（打码后，可公开） | `assets/samples/`（3 张，界面内置） |
 | **权重下载脚本**（不入库，跑前必做） | `scripts/fetch_ms.sh` · `scripts/fetch_yolo.sh`（备用 `scripts/fetch.sh` · `scripts/fetch_smol.sh`） |
 | **交付说明**（技术栈 + 部署 + 安全设计） | `docs/DELIVERY.md` |
 | **产品需求与实现状态** | `docs/PRD.md` |
@@ -223,8 +295,10 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 1. **未在 DGX Spark 上实测** —— 未申请到节点，本版本是笔记本上的同架构受限版（见上）。
 2. **不可检测项**：通道堵塞、设备渗漏、明火烟雾、未戴手套 / 口罩——Tier 0 与 Tier 0.5 均**无此判据**；
    本流水线**不做仪表读数**（读数由 `gauge-reading` 负责）。**表上一个 ❌，就是演示里一句不能说的话。**
-3. **Tier 0.5 对白色着装召回为 0**（白色掩膜覆盖率 11.7%、17 个噪声连通块）——
-   「没找到」不构成未佩戴 PPE 的证据，这是**能力边界，不是调参能解决的**。
+3. **Tier 0.5 对白色着装召回为 0**——
+   「没找到」不构成未佩戴 PPE 的证据。**成因是实现缺陷，不是设计约束**：白色区间被饱和度下限整体清零，
+   且站点参数只配了蓝色区间（技能自己的场景表却写着「蓝色**或白色**」）。
+   **但修复后把握仍全部低于 0.75 阈值，本层仍然不下结论。** 详见 `docs/local-tier-limitations.md` §1。
 4. **本轮没有下任何最终结论**：7 条 findings **全部为 `uncertain`**，置信度区间 **0.000–0.463**，全部低于 0.75 阈值。
 5. **精确人数不可宣称**：photo1 上 YOLO 报 6 人、Tier 1 VLM 报 5 人，未逐像素人工复核，无法裁决谁对。
 6. **测试素材是程序合成的**：四臂消融用的测试图是用 Pillow 画的示意图，
@@ -236,8 +310,14 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 ### 关于测试素材的声明
 
 **测试素材为真实车间照片；因涉及肖像权（画面含可辨认的工人人脸，当事人未同意公开发布），
-我们刻意不公开该素材**——照片仅在本地实验中用于验证链路，**公开仓库不含任何含人脸的素材**。
-本节第 6 条所述的合成示意图是另一类素材，可随仓库分发。
+我们刻意不公开未打码的原图**——照片仅在本地实验中用于验证链路。
+
+**仓库内图像仅含已打码样片与合成图；本地实验用未打码原图不入库。**
+（本节第 6 条所述的合成示意图属「合成图」那一类，可随仓库分发。）
+
+> 🔴 **截图含脸张数做不到逐张判定，请勿引用任何具体张数。**
+> 该目录按最坏情况整体处置：`ui/screenshots/` **整个目录不进仓库**，不做筛选式的部分入库。
+> 审计过程与依据见 `docs/agents/clone-preflight-findings.md` 硬伤 3 与第三部分。
 
 ## 真值来源声明
 
@@ -296,6 +376,12 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 │   ├── fetch_yolo.sh             #   YOLO 权重下载
 │   ├── fetch.sh                  #   备用通道
 │   └── fetch_smol.sh             #   备用候选
+├── ui/
+│   ├── server.py                 # 演示界面（零新依赖：标准库 http.server + 自包含 HTML）
+│   ├── index.html                # 单页前端
+│   └── ui_runs.jsonl             # 界面自己的运行台账（只追加；不含绝对路径）
+├── assets/
+│   └── samples/                  # 打码后的演示样片（界面内置图；公开安全）
 ├── docs/
 │   ├── DELIVERY.md               # 交付说明（技术栈 + 部署 + 安全设计 + 局限）
 │   ├── PRD.md                    # 产品需求与实现状态
@@ -315,8 +401,12 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 
 > **不入库内容**（已在 `.gitignore` 中排除，理由见该文件注释）：
 > ① 模型权重（单文件超 GitHub 限制）——用 `scripts/fetch_ms.sh` + `scripts/fetch_yolo.sh` 获取；
-> ② 含可辨认人脸的实拍素材（肖像权，当事人未同意公开发布）；
-> ③ `.env` 等凭据文件；④ `.venv/`、`.scratch/` 等本地环境与暂存区。
+> ② 含可辨认人脸的实拍素材 `assets/real_photos/`（肖像权，当事人未同意公开发布）——
+> 这是第 5 步【①】**必须自带 `--photos`** 的原因；
+> ③ `.env` 等凭据文件；④ `.venv/`、`.scratch/` 等本地环境与暂存区；
+> ⑤ `ui/screenshots/`（按最坏情况**整目录**不入库，不做筛选式部分入库——见 §关于测试素材的声明）。
+>
+> **随仓库分发**的是打码后的 `assets/samples/`——演示界面第 4 步用的就是它。
 
 ## 开发工作流
 

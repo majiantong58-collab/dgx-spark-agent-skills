@@ -1,7 +1,7 @@
 # NVIDIA 官方 Agent Skills 仓库侦察报告
 
 > 侦察时间：2026-09-27 · 方法：`git clone --depth 1` + GitHub API + 本地静态统计
-> 本地副本：`C:\Users\26270\Desktop\invda\.scratch\nvidia-skills`（浅克隆，可随时复查）
+> 本地副本：`<repo>\.scratch\nvidia-skills`（浅克隆，可随时复查；`<repo>` = 本仓库克隆目录）
 
 ---
 
@@ -280,10 +280,10 @@ BENCHMARK.md 的评测维度里，「Discoverability」定义为：
 
 ```bash
 # 本地副本
-ls C:/Users/26270/Desktop/invda/.scratch/nvidia-skills/skills | wc -l
+ls <repo>/.scratch/nvidia-skills/skills | wc -l
 
 # 负向条件在 description 中的分布
-cd C:/Users/26270/Desktop/invda/.scratch/nvidia-skills
+cd <repo>/.scratch/nvidia-skills
 find . -name SKILL.md -not -path "./.git*" -exec grep -H '^description:' {} \; \
   | grep -Ei 'do not use|not for |not intended|instead use|not suitable'
 ```

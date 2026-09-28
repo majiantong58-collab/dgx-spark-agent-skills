@@ -1,7 +1,7 @@
 # 交付说明文档 — 巡检 Agent Skills 套件
 
 > 第三届 NVIDIA DGX Spark 黑客松 · Agent Skills 开发挑战赛
-> 状态：§1–§4、§6、§8 已完成；§7 待实验结果回填
+> 状态：§1–§6、§8 已完成；**§7 未完成——实验被基础设施阻塞，不是零结果**（见 §7）
 > 场景：**电子厂洁净车间 · 着装合规**（v2）
 
 **标注约定**
@@ -15,7 +15,12 @@
 
 ## §1 项目简介
 
-官方 Agent Skills 规范要求 skill 的 `description` 写明「不适用于什么」，但**从未公开量化它对运行时误触发率的边际收益**。本项目用**四臂消融**补上这个空白：同一套 skill、四组 description 变体，测出负向条件带来的净收益 Δ2。
+官方 Agent Skills 规范要求 skill 的 `description` 写明「不适用于什么」，但**从未公开量化它对运行时误触发率的边际收益**。本项目**设计并预注册**了消融实验以补这个空白：同一套 skill、多组 description 变体，测负向条件带来的净收益 Δ2。
+
+> ⚠️ **本交付不提供 Δ2 数值。** 原四臂实验的 C 臂操作**未真正施加**，结果不可解释；
+> 重做版（五臂 · 690 次调用）**已预注册、执行器就绪，但未运行**。
+> 因此本节描述的是**实验设计**，不是已完成的结论。详见 §7 与
+> `skills/evals/ablation-v2/STATUS.md`。
 
 **电子厂洁净车间的着装合规检查**是**场景载体**，让方法不抽象、可演示；**量化方法本身才是本项目的贡献主体**。本项目**不主张**行业 know-how 优势，**不承诺**真实产线落地效果。
 
@@ -70,10 +75,10 @@
 
 | 层 | 载体 | 职责 | 结论权限 |
 |---|---|---|---|
-| **Tier 0** | YOLO11n（本地） | 人形定位与计数；**无人的帧直接短路** | 不下结论 |
-| **Tier 0.5** | 颜色-几何启发式 | 着装颜色初筛，给「有正面证据 / 无证据」 | 仅在**有正面证据**时下 `info` |
-| **Tier 1** | Qwen3-VL-2B（本地） | 视觉判读，确认或推翻 Tier 0.5 | 可下结论 |
-| **Tier 2** | StepFun `step-5-preview`（云端） | 多目标冲突 / 成文措辞 | 可下结论 |
+| **Tier 0** | YOLO11n（本地） | 人形定位与计数；**未检出人形框的帧直接短路**（≠「画面无人」，见 §8.2⑪） | 不下结论 |
+| **Tier 0.5** | 颜色-几何启发式 | 着装颜色初筛，给「有正面证据 / 无证据」（当前站点参数**仅配蓝色区间**，见 §8.2①） | 仅在 `conf ≥ 0.75` 时下 `info`。**未打码照片上 7 条全为 `uncertain`**（最高 0.4632）；**打码后有一条达 0.7525 → 输出过 `info`**（见 §4 末） |
+| **Tier 1** | Qwen3-VL-2B（本地） | 视觉判读。**设计意图**：确认或推翻 Tier 0.5。**当前实现**：输出只挂结果顶层，**不参与判定链路**（§8.2⑩） | **不下结论**（当前实现） |
+| **Tier 2** | StepFun `step-5-preview`（云端） | 多目标冲突 / 成文措辞 | 可下结论（本次未授权、未触发、未验证，见 §3.3） |
 
 ### 3.2 实测数据
 
@@ -88,11 +93,19 @@
 
 `[落盘] docs/local_tier_metrics.json`
 
-**分层收益的机制**：photo3 在 **Tier 0 即判定无人 → 直接短路**，既没有进 Tier 0.5，**也没有调用 Tier 1 的视觉模型**。这就是分层省下的成本——**不是把模型跑得更快，而是根本不跑**。
+**分层收益的机制**：photo3 在 **Tier 0 即未检出人形框 → 直接短路**，既没有进 Tier 0.5，**也没有调用 Tier 1 的视觉模型**。这就是分层省下的成本——**不是把模型跑得更快，而是根本不跑**。
 
-**墙钟时间（记录值，3 张照片）**：**0.14 – 28.34 s**（中位 9.30 s；合计 37.78 s）。
+> ✅ **该短路路径曾同时承载检测器故障，现已分开**（2026-09-28 修复）：
+> `_yolo_person_boxes(strict=True)` 在 `ultralytics` 未安装或权重缺失时抛
+> `DetectorUnavailable`；管线捕获后写**另一条** `short_circuit` 码
+> （`tier0_unavailable: …`，且 `tier_calls.tier0` 记 **0**，不记成「跑过」），
+> 界面显示「**未能运行**」并注明「这不代表画面里没有人」。
+> **「确实无人」与「检测器没跑起来」现已在数据层与界面层都能分开。**
+> `[来源: local_tier_pipeline.py:122-133；ui/index.html:482,859,891]`　详见 §8.2⑪。
+
+**墙钟时间（记录值，3 张照片）**：**0.11 – 25.20 s**；三张合计 **23.11 – 33.68 s**。
 > ⚠️ **墙钟时间会波动，不作为对外指标引用**；**对外请引用上表的 `tier_calls`**（确定性）。
-> `[落盘] docs/local_tier_metrics.json`
+> `[落盘] docs/local_tier_variance.jsonl`（**只追加台账**，三轮 v2 运行的区间；`docs/local_tier_metrics.json` **只记单次点测**，不给区间）
 
 ### 3.2.1 逐层基准（**唯一真值来源**）
 
@@ -196,16 +209,50 @@ severity = "info" if conf >= tier_budget.ACCEPT_CONFIDENCE else "uncertain"
 > 源码注释原话：「severity 与升级判据**共用同一个阈值**。为什么必须统一：若 severity 另立一套规则
 > （例如『找到就给 info』），就会出现**同一帧在两个环节得到相反结论**。」
 
-**Tier 0.5 只要没有正面证据，`severity` 一律 `uncertain`，绝不允许输出 `warning` / `critical`** —— 除非 Tier 1 确认。
-`[来源: local-tier-limitations.md:17-18]`
+**Tier 0.5 只要没有正面证据，`severity` 一律 `uncertain`，绝不允许输出 `warning` / `critical`。**
+`[来源: local-tier-limitations.md:34-44]`
 
-### 这不是性能问题，是能力边界
+> ⚠️ **源码注释中的「除非 Tier 1 确认」这一从句当前未实现。** findings 在
+> `local_tier_pipeline.py:185-203` 就已定稿，Tier 1 是在 `:219` **之后**才被调用，
+> 其输出只写进结果顶层 `tier1_answer`（`:246`），**不回写 `findings`**。
+> 详见 §8.2⑩。**该从句描述的是设计意图，不是当前行为。**
 
-启发式**看不到蓝色，只能说明它没看见蓝色——它本来就看不见白色着装**。
-实测白色掩膜覆盖率 **11.7%**、**17 个噪声连通块**（墙面、机柜、反光全在其中），
+### 这不是性能问题：白色召回为 0 是**实现缺陷**，修完仍不过线是**度量结构问题**
+
+启发式**看不到蓝色，只能说明它没看见蓝色——它在当前配置下看不见白色着装**。
+白色掩膜里混有大量噪声连通块（墙面、机柜、反光全在其中），
 对白色人员的**召回为 0**。
 
-**因此「没找到」不构成该人员未佩戴 PPE 的证据。** 这是设计约束，不是调参能解决的。
+**因此「没找到」不构成该人员未佩戴 PPE 的证据。**
+
+**但成因必须说清，否则会被误读成「设计如此」。这个 0 是缺陷，不是能力上限：**
+
+| 事实 | 依据 |
+|---|---|
+| 站点参数把**帽子和衣服双双收成「只有蓝色」一个区间** | `local_tier_pipeline.py:55` |
+| 注释写明「白色区间本身饱和度为 0，**不能被它误杀**」 | `ppe_color_probe.py:105` |
+| 而紧接其下的实现对**所有颜色区间的并集**统一施加 `sat_floor >= 60` | `ppe_color_probe.py:106-108` |
+| 白色区间是 `S ∈ [0, 45]`；`45 < 60` ⇒ **恒被清零，与图像内容无关** | `ppe_color_probe.py:36` |
+| ⇒ **存活率 0.0000**——这是**区间交集为空**的算术必然，**不依赖任何一次测量** | 推导 |
+| 实测白色像素饱和度为中位 **20–21**、90 分位 **37–38**（均 `<< 60`），与上式一致 | 实跑 |
+| 把白色区间加回去，输出与当前**逐位完全相同**（死代码的直接证据） | 实跑 |
+
+- **注释与实现在同一处直接矛盾**：注释声明白色豁免，实现未给任何豁免。
+- **量到的白色掩膜数字**（`0df3783c…jpg`，逐项复核，供他人复算）：
+
+  | 口径 | 像素占比（未清理） | 面积 ≥400 的连通块 |
+  |---|---|---|
+  | 代码里的白色区间（`ppe_color_probe.py:36`，`S∈[0,45]`） | **9.58%** | **24** |
+  | `probe_white_killed.py` 另设的白区间（`S∈[0,55]`） | **10.91%** | **22** |
+
+  白色像素饱和度：**中位 20–21、90 分位 37–38**（两种口径），阈值 **60**。
+  ⚠️ **早期文档写的「覆盖率 11.7% / 17 个连通块」在两种口径下都复算不出来**，
+  已按上表替换；**今后引用请连口径一起写。**
+- **后果**：车间里穿白色防护服的工人，系统从原理上看不见。
+- **但修复后并不改变结论**：把缺失颜色区间补回后，
+  **照片1** 把握范围 **0.08–0.46**；**含照片2 时为 0.08–0.56**（照片2 那位到 0.5575）。
+  **两种范围都全部低于 0.75 阈值**，故「本层不下结论」不变。
+  **这属于「修了也不够」，不属于「设计如此」。**
 
 ### 实测佐证（修复前 → 修复后）
 
@@ -225,14 +272,32 @@ severity = "info" if conf >= tier_budget.ACCEPT_CONFIDENCE else "uncertain"
 
 **7 条**全是 `uncertain`——即**这一轮没有下任何最终结论**。置信度区间 **0.000 – 0.463**，**全部低于 0.75 阈值**。
 
-`[落盘] models/pipeline_results.json`　`[已实测]` 统计方式：`json.load` → 递归收集所有含 `severity` 的记录 → `collections.Counter`。
+`[落盘] skills/evals/pipeline_results.json`　`[已实测]` 统计方式：`json.load` → 递归收集所有含 `severity` 的记录 → `collections.Counter`。
+（该文件为**旧 `main()` 最后一次写入、已停止更新**；当前等价产物为 `models/runs/<tag>-run<N>.json`。）
 
-**召回率必须随结论一起给**：photo1 上启发式对 6 人中 **3 人有正面证据，召回 3/6**。
+**正面证据率必须随结论一起给**（**这不是召回率**——本场景无 ground truth）：
+photo1 上启发式对 6 人中 **3 人有正面证据，3/6**。
 
 > ⚠️ **「有正面证据」不等于「下结论」**：photo1 的 `person_index 1` 虽然
 > `cap_found=True` 且 `coverall_found=True`，但 `confidence=0.4632 < 0.75`，因此**仍判为 `uncertain`**。
 > 这正是 §4 那条规则在起作用——**看到了但拿不准 ≠ 没问题**。
-`[来源: local-tier-limitations.md:19-22；models/pipeline_results.json]`
+>
+> ⚠️ **可达成性**：`conf = min(helmet_cov, vest_cov)` 取最弱一环
+> （`local_tier_pipeline.py:153`）。**在未打码的这批照片上**，实测头盔区最大覆盖 **0.4632**、
+> 背心区最大覆盖可达 **0.8116** —— 即**头盔项是绑住这一批的那个**，
+> 7 条 findings 因此全部为 `uncertain`，最高 0.4632 < 0.75。
+>
+> 🔴 **但必须说清：这条线是可越过的，不是结构上不可达。**
+> 在**打码后**的同一张照片上，实测把握达到 **0.7525 > 0.75**，
+> 系统**确实输出了一条 `info`**（该轮 5 条：4 × `uncertain` + 1 × `info`）。
+> 见 `docs/face-blur-rerun-ledger.md` §1.3。
+>
+> **这条比它看起来重要**：越过判定线的不是「穿戴更规范」，而是**一次隐私处理（人脸马赛克）**。
+> 即 **`info`（本层唯一可能下的结论）可以由一个与 PPE 状态无关的图像处理动作产生** ——
+> 这说明该把握值是**未标定的色块覆盖率代理量**，不是合规概率。
+> **演示与文案中不得把「达到判定线」读作「该系统认为此人合规」。**
+> 详见 §8.2②。
+`[来源: local-tier-limitations.md:19-22；skills/evals/pipeline_results.json]`
 
 ---
 
@@ -284,10 +349,14 @@ https://www.modelscope.cn/api/v1/models/Qwen/Qwen3-VL-2B-Instruct/repo?Revision=
 （需逐一下载 `config.json` / `model.safetensors` / `tokenizer.json` 等 13 个文件；
 其中 `model.safetensors` 约 4.26 GB，是体积主体。）
 
-> 📌 **下载脚本待补**：`fetch*.sh` 正在从 `models/`（被 gitignore）移入仓库正式路径，
-> **路径确定后在此处补齐命令**。
-> ⚠️ 现有脚本**含本机绝对路径**（`cd /c/Users/26270/Desktop/invda`），**不可直接复用**；
-> 移入仓库时须改为相对路径。
+> ✅ **下载脚本已入库**：`scripts/fetch_ms.sh`、`scripts/fetch_yolo.sh`（备用 `scripts/fetch.sh`、
+> 候选 `scripts/fetch_smol.sh`）。脚本用 `cd "$(dirname "$0")/.."` **自行定位仓库根**，
+> **不含本机绝对路径，可直接复用**。
+>
+> ```bash
+> bash scripts/fetch_ms.sh      # Qwen3-VL-2B → models/Qwen3-VL-2B-Instruct/
+> bash scripts/fetch_yolo.sh    # yolo11n.pt   → models/
+> ```
 
 ### 5.2 依赖安装
 
@@ -312,8 +381,9 @@ https://www.modelscope.cn/api/v1/models/Qwen/Qwen3-VL-2B-Instruct/repo?Revision=
 
 **依据**：`[已实测]` 索引 URL 返回 **HTTP 200**；`.venv` 实装
 `torch 2.11.0+cu128` / `torchvision 0.26.0+cu128`，与上述索引一致。
-`[未验证]`：上面两条命令**本人未从零重跑**（虚拟环境已存在）；
-`py -3.12 -m venv .venv` 建环境命令同样 `[未验证]`。
+`[未验证]`：上面两条命令**本人未从零重跑**（虚拟环境已存在）。
+建环境命令 `py -3.12 -m venv .venv` **必需且应先于上面两步执行**（否则 `.venv/Scripts/pip` 不存在），
+已在 README「快速开始 第 1 步」中列为独立步骤。
 `requirements.txt` 顶部已写明同一套两步流程。
 
 **依赖源提示（`[已实测]`）**：本项目开发机上配置的 **阿里云 PyPI 镜像已损坏**——
@@ -344,20 +414,35 @@ https://www.modelscope.cn/api/v1/models/Qwen/Qwen3-VL-2B-Instruct/repo?Revision=
 
 ### 5.4 如何运行
 
-**① 本地三层流水线 — `[未验证]`**
+**① 本地三层流水线 — `[已实测]`**
 
 入口脚本：`skills/safety-hazard-detection/scripts/local_tier_pipeline.py`
 `[来源: local-tier-limitations.md:4；local_tier_metrics.json 的 source 字段]`
 
-> ⚠️ **具体命令行参数本文档未核实**，故不给出示例命令以免误导。请以脚本内的 `argparse` 为准。
-> 📌 **复现脚本正在移入仓库，路径待定**——落地后在此处补齐。
+> ⚠️ **必须显式指定输入图片**：该脚本原读 `assets/real_photos/`（因肖像权不入库，克隆后不存在）。
+> 用 `--photos <目录>` 指定自备图片；不给会明确报错退出（退出码 1，**不写任何文件**）。
+> 默认按 `assets/real_photos/` → `assets/samples/` 取第一个有图的。
+>
+> ⚠️ **默认不覆盖 `docs/local_tier_metrics.json`**（README「分层效果」表的真值来源）；
+> 要覆盖须显式加 `--force`。
+> **但会向 `docs/local_tier_variance.jsonl` 追加一条**墙钟记录（该文件设计为只追加，不覆盖历史）。
+
+```bash
+.venv/Scripts/python.exe skills/safety-hazard-detection/scripts/local_tier_pipeline.py \
+    --photos <你的图片目录>
+```
 
 **①-b 逐层基准测试 — `[来源: docs/local_tier_benchmark.md:76-84]`**
+
+> ⚠️ **必须给 `--out-dir`**：默认写脚本同目录，会把**已入库的** `bench_raw_<layer>.json`
+> 真值来源直接覆盖掉；且换一张图重测的数与原样本**不可比**。
+> `--layer` 与 `--photo` 均为必填（`--photo` 不给会明确报错退出）。
 
 ```bash
 for L in tier0 tier0_5 tier1; do
   for I in 1 2 3; do
-    .venv/Scripts/python.exe models/bench_layers.py --layer $L > models/bench_runs/$L-$I.json
+    .venv/Scripts/python.exe skills/evals/bench_layers.py \
+        --layer $L --photo <你的图片> --out-dir .scratch > .scratch/bench_runs/$L-$I.json
   done
 done
 ```
@@ -367,8 +452,9 @@ done
 > **每层独立进程**——同进程会让三层共占显存并互相污染加载耗时。
 > 结果落盘于 `docs/local_tier_benchmark.json`（§3.2.1 的唯一真值来源）。
 
-> 🔴 **注意**：`models/` 已被 `.gitignore` 排除，**克隆仓库后 `models/bench_layers.py` 并不存在**。
-> 该脚本与 `fetch*.sh` 正在移入仓库正式路径；**路径确定后本节会更新**。目前请先按 §5.1 下载权重。
+> ✅ **脚本已入库**：`skills/evals/bench_layers.py`（原 `models/bench_layers.py` 的路径已作废）。
+> `models/` 已被 `.gitignore` 排除，**克隆后为空**——请先按 §5.1 下载权重。
+> 另注：`--layer` / `--photo` 是必填，`--help` 可用（中文 Windows 的 GBK 控制台已加护栏，见 §5.6）。
 
 **② 合规校验（交付门禁）— `[已实测]`**
 
@@ -387,12 +473,15 @@ done
 `[来源: skills/evals/check-compliance.md:11-19]`。
 **实测结果**：4 个 skill 全部输出 `Valid skill: skills\<name>`，**退出码 0**。运行后 `skills/*/SKILL.md` 的 md5 未变（该校验为只读）。
 
-**③ 端到端最小通路 — `[未实测]`**
+**③ 端到端最小通路 — `[已实测 --offline]`**
 
 ```bash
-py -3.12 skills/evals/run_e2e.py            # 真实调用 StepFun
-py -3.12 skills/evals/run_e2e.py --offline  # 不调 API，只跑结构自检
+.venv/Scripts/python.exe skills/evals/run_e2e.py            # 真实调用 StepFun
+.venv/Scripts/python.exe skills/evals/run_e2e.py --offline  # 不调 API，只跑结构自检
 ```
+
+> `--offline` 的产物前缀是 `offline-`（`offline-sample-report.md` / `offline-baseline.json`），
+> **是新文件、不覆盖**已冻结的 `a4-baseline.json`；去掉 `--offline` 才会用回 `a4-` 前缀并覆盖它（D-012）。
 
 `[来源: skills/README.md:21；run_e2e.py:190-191]`
 
@@ -400,8 +489,12 @@ py -3.12 skills/evals/run_e2e.py --offline  # 不调 API，只跑结构自检
 
 **④ 对照评测（四臂消融）— `[未实测]`**
 
+> 🔴 **这是 v1 执行器。** 现行重做版为**五臂 A/B/C/C′/D、46 用例 × 3 次 = 690 次调用**，
+> 入口为 `skills/evals/ablation-v2/run_ablation.py`。**重做版已预注册、执行器就绪，
+> 但因 API 账户配额耗尽未运行。** 详见 §7 与 `skills/evals/ablation-v2/STATUS.md`。
+
 ```bash
-py -3.12 skills/evals/run_comparison.py --arm B --runs 3 --out skills/evals/results/out-b.json
+.venv/Scripts/python.exe skills/evals/run_comparison.py --arm B --runs 3 --concurrency 5 --out skills/evals/results/out-b.json
 ```
 
 可用参数：`--arm {A,B,C,D}` · `--cases` · `--runs`（默认 3）· `--limit N`（冒烟）· `--out` · `--report` · `--concurrency` · `--force`（允许覆盖产物）
@@ -415,6 +508,7 @@ py -3.12 skills/evals/run_comparison.py --arm B --runs 3 --out skills/evals/resu
 | 现象 | 原因 | 解决 |
 |---|---|---|
 | 打印报告时抛 `UnicodeEncodeError` | 报告含 `−`(U+2212) 与 `⚠`，**Windows GBK 控制台**无法编码 | 加 `--out <file>` **写入文件**（走 UTF-8，不受影响） |
+| `bench_layers.py --help` 抛 `UnicodeEncodeError: 'gbk' codec can't encode character '⚠'` | 同上，但崩在 `parser.print_help()`——**`--out` 那个解法在这里无效**，`--help` 在解析参数之前就死了 | ✅ 已在 `main()` 开头加 `_console_gbk_safe()` 护栏（保留 GBK 编码、仅把错误策略改为 `replace`，与 `run_comparison.py::_print_markdown` 同一处置）。**中文 Windows 无需任何额外参数**，实测 `--help` 退出码 0 |
 | HTTP 401 | `STEPFUN_BASE_URL` 与 Key 所属站点不匹配 | 国内站用 `.com`，国际站用 `.ai` |
 | 返回空 `content` | `step-5-preview` 是推理模型，思维链与答案**共享 `max_tokens`** | 提高 `max_tokens`；且提示词避免让模型复述题面 |
 | 大量 429 | 并发超过账户上限 5 | 显式 `--concurrency 5`；**注意这是账户级限制，你的 Key 上限可能不同** |
@@ -433,12 +527,12 @@ py -3.12 skills/evals/run_comparison.py --arm B --runs 3 --out skills/evals/resu
 | 1 | 「权重已预置在 `models/`」 | 🔴 **本机成立，克隆后为空**——`models/` 被 gitignore | ✅ §5.1 已改为**下载说明**（含体积、目标路径、双源实测） |
 | 2 | 「`agentskills` 命令可用」 | 🔴 **全新环境不存在**——`skills-ref` 未在依赖清单 | ✅ **已加入 `requirements.txt`** |
 | 3 | 「pip 能正常装」 | 🟠 本机镜像损坏会卡住 | ✅ §5.2 加官方源回退 + §5.5 加行 |
-| 4 | 「`models/bench_layers.py` 存在」 | 🟠 克隆后不存在（同被 gitignore） | ⏳ §5.4 已加警告，**待脚本迁移** |
+| 4 | 「`models/bench_layers.py` 存在」 | 🟠 克隆后不存在（同被 gitignore） | ✅ **已迁移**至 `skills/evals/bench_layers.py` 并入库，§5.4 命令已更新 |
 | 5 | 「`./.venv/Scripts/` 路径」 | 🟡 Windows 布局；macOS/Linux 为 `.venv/bin/` | 已声明「本项目在 Windows 上验证」 |
 | 6 | 「`py -3.12` 可用」 | 🟡 Windows 专用启动器 | 已声明平台；非 Windows 用 `python3.12` |
 | 7 | 「并发上限 = 5」 | 🟡 **账户级**限制，随 Key 而异 | ✅ §5.5 已注明「你的 Key 上限可能不同」 |
 | 8 | 「磁盘够用」 | 🟡 实际 `models/` 占 **8.9 GB**（含两份 Qwen3-VL-2B：`-Instruct` 与 `-ModelScope`） | ✅ 运行**只需** `-Instruct` + `yolo11n.pt`（约 4.3 GB）；**另一份是下载源副本，可删** |
-| 9 | 流水线命令行参数 | 🟡 未核实 | 已标 `[未验证]`，待补 |
+| 9 | 流水线命令行参数 | 🟡 未核实 | ✅ 已补：新增 `--photos <目录>`（指定输入图片）与 `--force`（覆盖 metrics 守卫）；无图时明确报错退出、不写文件 |
 
 ---
 
@@ -453,7 +547,7 @@ skills/
 ├── gauge-reading/             # 窄触发：表盘 → 一个数
 ├── inspection-report/         # 窄触发：结论 → 报告
 │        每个技能 = SKILL.md + scripts/ + references/ + evals/
-└── evals/                     # 顶层四臂消融套件（A/B/C/D，40 条用例）
+└── evals/                     # 顶层消融套件（v1：四臂 A/B/C/D，40 条用例；重做版见 ablation-v2/）
 ```
 
 **单个 skill 的四件套结构**：
@@ -479,7 +573,55 @@ skills/
 
 ## §7 实验设计与结果
 
-> **待补** —— 等待四臂消融全量实验（480 次调用）结果回填。
+> 🔴 **未完成 —— 被基础设施阻塞，不是零结果，也不是有效应。**
+> **本交付不提供 Δ2 / Δ2′ 的任何数值。**
+
+### 7.1 当前状态
+
+| 事项 | 状态 |
+|---|---|
+| 预注册判读规则 | ✅ **已冻结**（`PREREGISTRATION.md` 22:42 落盘，**先于任何 API 调用**）+ 附注 1（22:52，跑前） |
+| 执行器 | ✅ 五臂 A/B/C/C′/D，`--selftest` **PASS** |
+| 用例集 | ✅ 24 正 + 22 负 = 46 条 |
+| **主实验** | ❌ **未运行。690 次调用一次都没发。** |
+| 原因 | **StepFun 账户配额耗尽（HTTP 402 `quota_exceeded`）**，**非实验差异** |
+| 判读状态 | **不可判读（基础设施阻塞）** |
+
+**规模与成本参考**：5 臂 × 46 用例 × 3 次 = **690 次调用**；预估 ≈ **140 万 tokens**。
+并发默认 **5**（本账户实测上限）。**纯云端 API，不占 GPU。**
+
+**配额排除的三个可能**（`ablation-v2/results/GATE-OUTCOME.md`）：
+`models.list` 正常且 `step-5-preview` 在架（key 有效）／换 `step-3`、`step-1-8k` **同样 402**（账户级非模型级）／
+探针 5 次全部 402（非瞬时抖动）。
+
+### 7.2 原四臂结果 `Δ2 = 0.000` **不可解释** —— 三个已知混淆
+
+原四臂实验（`skills/evals/results/`，**v1 描述**）得到 `Δ2 = FTR(C) − FTR(B) = 0.000`，
+四臂 FTR 全为 0。**该结果不可解释，不能读作「负向条件无效」：**
+
+| # | 混淆 | 说明 |
+|---|---|---|
+| **1（最严重）** | **C 臂的操作根本没施加成功** | 四个 `SKILL.md` **正文**都有一节逐条复述 description 里的 `不适用于：`。原 C 臂只从 description 删那句，**正文照常加载 ⇒ 边界信息仍然在上下文里**。代码依据：`skills/evals/run_comparison.py:183-212` 的 `skill_payload`。**C′ 臂**（本轮新增）才是真施加。 |
+| **2** | **主指标漏报** | A 臂（裸模型）实测**广义触发率 0.562**、编造 **36 个**不存在的技能名、幽灵技能调用 **76 次**；而「本技能口径」的 FTR **记成了 0.000**。**观察到了过度触发，指标没记。** |
+| **3** | **负例偏易** | 原 16 条负例里只有 **6 条**是真 near-miss。裸模型都不误触发的负例，测不出任何操作的效果。 |
+
+> **因此：「原四臂实验表明负向条件没有运行时收益」这一表述不成立。**
+> 不是「测了没有效应」，是**变量没施加成功**。
+
+### 7.3 如实记录的诚实边界（重做版）
+
+- **C′ 有个消不掉的耦合**：C′ 删掉的那段正文里**同时含兄弟技能名**，
+  故 C′ 相对 B **同时**少了两样东西——(a) 域排除条件（要测的）与 (b) 路由提示（搭便车的）。
+  **两个变量绑在一起，无法分离。**
+- **残留边界线索**：四个正文首段仍有「只做一件事：…不读数、不成文、不做趋势分析」这类
+  **正向范围陈述**，隐含边界信息，本轮**不删**。
+  **若重做后 Δ2′ 仍为 0，这是「零结果仍不可解释」的首要候选解释**，
+  届时**不得反过来声称「已证明 Not-for 无用」**。
+- **两条 orch 硬负例词面偏弱**（命中核心词 1 个 / 0 个），**保留不改**（改了就是动预注册）。
+  若 Δ2′ 的效应只体现在 hazard/report/gauge 上，**不得据 orch 的零差异声称「orch 的 Not-for 无用」**。
+
+**恢复方法**：配额充上后原样跑 `run_ablation.py --gate`，门禁通过后逐臂执行。
+完整命令与判读规则见 `skills/evals/ablation-v2/STATUS.md`。
 
 ---
 
@@ -493,47 +635,116 @@ skills/
 | **设备渗漏** | 同上——两类模型均无此判据 |
 | **明火烟雾** | 同上——两类模型均无此判据 |
 | **未戴手套 / 口罩** | COCO 版 yolo11n **没有 PPE 类别**；启发式只筛颜色，不辨具体装备 |
-| **精确人数** | photo1 上 **YOLO 报 6 人、Tier 1 VLM 报 5 人**，两者不一致，**未逐像素人工复核，无法裁决谁对**（YOLO 第 6 个框置信度仅 0.301）。**演示时以 VLM 为准，但不得宣称「精确计数」** |
+| **精确人数** | photo1 上 **YOLO 报 6 人、Tier 1 VLM 报 5 人**，两者不一致，**未逐像素人工复核，无法裁决谁对**（YOLO 第 6 个框置信度仅 0.301）。**系统内不存在裁决环节**——`tier1_answer` 是自由文本，从未被解析为计数与 YOLO 比对。**不得宣称「精确计数」，也不得「以 VLM 为准」**：实测模型自述的计数**随提示词措辞变化**（原提示词 5 人 / 编号提示词 6 人，均 `do_sample=False` 确定性复现） |
 | **仪表读数** | 读数由独立技能 `gauge-reading` 负责；本地三层流水线**不做读数** |
+| **白色着装的 PPE 状态** | Tier 0.5 当前**只配了蓝色区间**，对白色着装召回为 0——**「没找到白色帽子」不构成未佩戴的证据**（成因是缺陷，见 §8.2①） |
 
-`[来源: local-tier-limitations.md:54-58]`
+`[来源: local-tier-limitations.md:85-99、§6、§11]`
+
+> ⚠️ **本表只覆盖「检测不了某类对象」。另有一类限制不属于此表，单列于 §8.4：
+> 「故障与正常不可区分」——那不是能力边界，是可靠性缺口（**其中检测器故障一项已修复，见 §8.4**）。**
 
 ### 8.2 其他已知缺口
 
-**① Tier 0.5 对白色着装召回为 0**
-白色掩膜覆盖率 11.7%、17 个噪声连通块，对白色人员的**召回为 0**。
-**「没找到」不构成未佩戴 PPE 的证据**（详见 §4）。`[来源: local-tier-limitations.md:10-12]`
+**① Tier 0.5 对白色着装召回为 0 —— 成因是死代码，不是设计边界**
+白色掩膜里混有大量噪声连通块，对白色人员的**召回为 0**。
+**「没找到」不构成未佩戴 PPE 的证据**（详见 §4）。
+
+**但归因必须准确**：站点参数把帽子与衣服**双双收成「只有蓝色」一个区间**；
+`ppe_color_probe.py:105` 的注释写明「白色区间…不能被它误杀」，
+而 `:106-108` 对**所有区间的并集**统一施加 `sat_floor >= 60`，
+白色区间 `S ∈ [0,45]` ⇒ **恒被清零**。白色像素饱和度中位 21 / 90 分位 38 ⇒ **存活率 0.0000**；
+把白色区间加回去，输出**逐位完全相同**（死代码的直接证据）。
+**修复后把握仍在 0.08–0.46，全部低于阈值——「不下结论」不变，但这是「修了也不够」，不是「设计如此」。**
+`[来源: local-tier-limitations.md §1]`
 
 **② 接口无法承载 policy 定义的部分触发条件**
 - `next_tier(...)` 签名中**没有**「需要自然语言描述」这一形参——**policy 有定义、接口未承载**
 - `should_escalate_to_cloud(...)` 无法判定 Tier 1 → 2 的触发条件（签名只有 `current`/`confidence`/`budget`）；
   当前实现是**闸门**而非触发器，**未臆造规则**
-`[来源: local-tier-limitations.md:24-39]`
+`[来源: local-tier-limitations.md:55-70]`
 
 **③ `record_failure` 是累计计数，不是 policy 所说的「连续」失败**
 无 `record_success`，无法实现成功的重置语义。**实现与 policy 措辞存在偏差，已知悉。**
-`[来源: local-tier-limitations.md:41-45]`
+`[来源: local-tier-limitations.md:72-76]`
 
 **④ 「本地兜底率」当前无法计算**
 `BudgetState` 没有总任务数与本地解决数，因此 `local_fallback_rate` 输出 `None`，**不臆造数值**。
-`[来源: local-tier-limitations.md:47-52]`
+`[来源: local-tier-limitations.md:78-83]`
 
 **⑤ 测试素材是程序合成的**
 四臂消融用的测试图（`synthetic_workshop.png`）是**用 Pillow 画的示意图，不是真实车间照片**，
 仓库标注 `usable_as_accuracy_evidence: false`。可验证链路与 token 开销，**不能作为识别准确率的证据**。
 
-**⑥ Δ2 的置信区间与样本量限制**
-待 §7 结果回填后补。
+**⑥ Δ2 没有可报的数值 —— 不是「等待回填」**
+原四臂的 `Δ2 = 0.000` **不可解释**（C 臂操作未施加成功、主指标漏报、负例偏易，见 §7.2）；
+重做版 **690 次调用一次未发**（配额 402）。**判读状态＝不可判读（基础设施阻塞）。**
+**任何把 Δ2 = 0.000 说成「未观测到负向条件的运行时收益」的表述均不成立。**
+详见 §7 与 `skills/evals/ablation-v2/STATUS.md`。
 
 **⑦ 场景版本：v1 检测项仍在 taxonomy 中（遗留）**
 当前场景为 **v2：电子厂洁净车间 · 着装合规（防尘帽 / 防静电服）**。
 v1 的检测项（**安全帽 / 反光衣**）**仍保留在 taxonomy 中**，原因：**保留 v1 实验结果的对照基线**，
 不作删除。`escalation-policy.md` 中原有的工地假设尚未与 v2 场景统一——**已知悉，待统一**。
-`[来源: local-tier-limitations.md:64-65]`
+`[来源: local-tier-limitations.md:101-106]`
 
 **⑧ 未在 DGX Spark 上实测**（见 §3.4）。
 
 **⑨ 团队无行业背景、无专有数据**，全部使用公开数据；**不主张任何产线落地效果**。
+
+**⑩ Tier 1 的输出不参与判定链路（对照实验证实）**
+findings 在 `local_tier_pipeline.py:185-203` **就已定稿**；Tier 1 在 `:219` **之后**才被调用，
+输出只写进结果顶层 `tier1_answer`（`:246`），**不回写 `findings`**。
+全仓库读该字段的只有 `ui/index.html:932` 的引文块与 `.scratch/` 下的探针。
+**决定性对照**：把「模型说全部合规」与「模型说 3 号没戴帽」分别喂进去，
+**机器判定逐字段完全相同**。
+
+> **因此 §3.1 架构表中 Tier 1「确认或推翻 Tier 0.5」是**设计意图**，不是当前行为；
+> §4 的「除非 Tier 1 确认」同样未实现。该层目前是**描述者，不是判定者**——
+> 它被调用、产生成本，但**不改变任何一条结论**。**
+`[来源: local-tier-limitations.md §8]`
+
+**⑪ 检测器故障曾伪装成「画面里没有人」——✅ 已修复（2026-09-28）**
+`_yolo_person_boxes()` 在 `ultralytics` 未安装或**权重文件缺失**时**返回空表而不抛异常**
+⇒ 走短路分支 ⇒ 界面显示「跳过 · 上游无信号」。**当时整机检测挂掉与「画面里没人」不可区分。**
+
+**修复后**：探针新增 `DetectorUnavailable`，`strict=True` 时抛异常（`ppe_color_probe.py:218-244`）；
+管线以 `strict=True` 调用并捕获，失败时写**另一条** `short_circuit` 码 `tier0_unavailable: …`
+且 `tier_calls.tier0` **保持 0**（不记成「跑过」，`local_tier_pipeline.py:122-133`）；
+界面显示「**未能运行**」并注明「**这不代表画面里没有人**」（`ui/index.html:482,859,891`）。
+
+**本次实测验证**（CPU，阻断 `ultralytics` 导入，不加载模型）：
+`strict=False` 仍静默返回空表；`strict=True` **抛出 `DetectorUnavailable`**。
+⇒ **数据层与界面层现在都能分开这两件事。**
+
+> ⚠️ **仍存在的边界**：探针 CLI 的**默认**仍是宽松行为（`strict=False`）。
+> 这是刻意的（独立工具不应因缺依赖而崩），但**用默认值的调用方仍会看到静默空表**。
+`[来源: local-tier-limitations.md §9]`
+
+**⑫ Tier 1 的逐人输出「未验证接地」（n=1 扰动对照）**
+只抹掉编号图 **1 号框顶部 20%**，其余像素不变 → **1 号仍答「是」（未翻转），
+而 3 号、4 号从「是」翻成「否」**。**改动只发生在一个框内，结论漂到了别的框上。**
+`[来源: .scratch/prompt_num.log（基线，跑 2 次全「是」）／.scratch/grounding.log（扰动后）]`
+
+> **诚实边界**：n=1 帧、n=1 次扰动、扰动方式粗糙。
+> **只够说「不能假定它接地」，不够说「它不可能接地」。**
+
+**⑬ 实拍照片已打码，且打码改变了检测结果**
+演示用原图含可辨认人脸（当事人未同意公开），已产出打码版
+（`scripts/blur_faces.py` → `assets/real_photos/blurred/`）。**打码不是无操作的**：
+人员区域 **6 处 → 5 处**；有人把握 **0.4632 → 0.7525（越过 0.75 判定线）**；
+另一张 **1 处 → 2 处**（同一人被检出两个重叠框）。
+
+- **本文档全部照片级数字取自未打码原图**（`local_tier_pipeline.py:280` 的非递归 glob 排除 `blurred/`），
+  而原图**不随仓库分发** ⇒ **这些数字无法从可发布素材复现**。
+- 上表打码后的数字**尚未落盘**。**引用前必须先落盘。**
+- **打码改变了检测结果——这件事本身就是一条证据**：检测链路对头部区域的像素扰动敏感。
+`[来源: local-tier-limitations.md §11]`
+
+**⑭ 环境曾有自动装包污染**
+`.venv` 中曾出现 `pi_heif`（某次坏文件触发的自动安装），**不在 `requirements.txt` 内**。
+**提交前须确认已卸载**，否则评审 `pip freeze` 会看到清单外的包。
+`[已实测] ls .venv/Lib/site-packages/`
 
 ### 8.3 口径说明：**为什么早期文档里的数字与现在对不上**
 
@@ -550,3 +761,17 @@ v1 的检测项（**安全帽 / 反光衣**）**仍保留在 taxonomy 中**，�
 > **结论**：早前数字**本身没错，但口径、样本数与指标定义不同**——**不是两套系统**。
 > **今后一律以 `docs/local_tier_benchmark.json` / `.md` 为准**；本文档 §3.2.1 已全部改为引用该文件。
 > `[来源: docs/local_tier_benchmark.md §「与早前口头数字的差异」]`
+
+### 8.4 「故障与正常不可区分」——**不是能力边界，是可靠性缺口**（3 项中 **1 项已修复**）
+
+§8.2 ⑪ 与本节同属一类：**系统在失败时的对外表现与正常状态重叠**。
+单列一节，以免与 §8.1 的「检测不了某类对象」混淆——**前者不可修，后者可修。**
+
+| 缺口 | 对外表现 | 状态 |
+|---|---|---|
+| **检测器故障**（未装 `ultralytics` / 权重缺失） | ~~「跳过 · 上游无信号」——与「画面确实无人」同一句话~~ | ✅ **已修复 2026-09-28**：`strict=True` 抛 `DetectorUnavailable`，管线写 `tier0_unavailable` 码且 `tier_calls.tier0` 记 0，界面显示「**未能运行 / 这不代表画面里没有人**」。**中栏描述的是修复前的状态** |
+| **Tier 1 无裁决**（模型自述计数与检测器不一致） | 分歧不上屏、不告警，**只存在于原始文本里** | ❌ 未修复 |
+| **Tier 1 不接地** | 逐人「是/否」**无接地保证**，但输出格式与真实判定无法区分 | ❌ 未修复（且 n=1，**尚不足以定性**） |
+
+> **共同后果**：这三条都会让「系统看起来正常工作」。
+> **演示与文案中不得把「没有报错」当作「检测成功」的证据。**
