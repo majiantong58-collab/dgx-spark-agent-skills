@@ -353,7 +353,7 @@ Python was not found; run without arguments to install from the Microsoft Store,
 | 用什么 | 值 |
 |---|---|
 | **统一用** | **`py -3`**（2026-09-28 实测 3.14.4 可用） |
-| 备选 | `C:/Users/26270/Desktop/invda/.venv/Scripts/python.exe`（3.12.10） |
+| 备选 | `<仓库根>/.venv/Scripts/python.exe`（3.12.10） |
 
 **镜 8 的落单命令同理**：
 ```bash

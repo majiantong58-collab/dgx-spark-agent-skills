@@ -433,7 +433,9 @@ python -m http.server 8000
 > 故上方「先 activate 再用 `python`」的流程在此不适用。（2026-09-28 Windows 11 + Git Bash 实测。）
 
 合规 fixture 随仓库分发，**打开页面即可看到落单**：计数 `共 97 条`（库内 96 + 本次 1），首行出现示例异常单。
-全部为**自造示例数据**，不含客户名或第三方数据。自带 `docs/mes-demo/verify_host_page.py` 自检 14 项。
+全部为**自造示例数据**，不含客户名或第三方数据。自带 `docs/mes-demo/verify_host_page.py` 自检 21 项
+（含三条跨技能集成断言：用真 `query.py` 的 `--wo`/`--dev`/`--check` 直接查本页）。
+本页按契约 §A.4/§A.5 提供工单与设备台账数据 ⇒ `mes-record-query` / `mes-closed-loop` **无需 `--proto`** 即可查到数据。
 `mes-data/` 下的数据是**真产出物**（由 `skills/mes-inspection-intake/scripts/commit.py` 从
 `docs/mes-demo/evals/finding-demo.json` 生成，可逐字节复现），非手写件——见该目录 README。
 
