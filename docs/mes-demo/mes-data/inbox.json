@@ -1,0 +1,24 @@
+{
+  "schema_version": "1",
+  "produced_by": "mes-inspection-intake",
+  "produced_at": "2026-09-28T14:14:57+08:00",
+  "records": [
+    {
+      "kind": "quality-exception",
+      "no": "QA-20260106-100",
+      "rel": "XJ20260106100",
+      "dept": "生产部",
+      "desc": "洁净间 2 号工位 1 名人员未穿防静电服",
+      "iso": false,
+      "finder": "巡检 Agent",
+      "time": "09:30",
+      "date": "2026-01-06",
+      "provenance": {
+        "source_skill": "safety-hazard-detection",
+        "confidence": 0.86,
+        "evidence_ref": "mes-data/evidence/20260106-0930-01.jpg",
+        "disclaimer": "本报告由 AI 辅助生成，结论基于图像证据自动判定，需经人工复核确认。本报告不作为处罚、停机或联锁动作的唯一依据。"
+      }
+    }
+  ]
+}

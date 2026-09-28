@@ -1,0 +1,22 @@
+{
+  "task_id": "demo-0001",
+  "site": "洁净间 3 号工位",
+  "captured_at": "2026-08-13T14:32:00+08:00",
+  "routes": [{"skill": "safety-hazard-detection", "reason": "人员 PPE 违规", "tier": 0}],
+  "findings": [
+    {
+      "kind": "hazard",
+      "code": "PPE-NO-SUIT",
+      "label": "洁净间 3 号工位 1 名人员未穿防静电服",
+      "severity": "high",
+      "confidence": 0.86,
+      "tier": 0,
+      "evidence_ref": "mes-data/evidence/20260813-1432-01.jpg",
+      "uncertain": false,
+      "source": "safety-hazard-detection",
+      "requires_human_review": true
+    }
+  ],
+  "partial": false,
+  "disclaimers": ["本报告由 AI 辅助生成，结论基于图像证据自动判定，需经人工复核确认。本报告不作为处罚、停机或联锁动作的唯一依据。"]
+}

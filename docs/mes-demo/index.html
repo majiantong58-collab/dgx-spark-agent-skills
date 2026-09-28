@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MES 桥 · 最小可复现宿主页（示例数据）</title>
+<!--
+  最小可复现宿主页 —— 按 docs/agents/mes-bridge-contract.md v1.13 实现，不复制任何第三方原型代码。
+  目的：让克隆本仓库的人只凭本仓库即可跑通「起 http.server → 打开页面 → 落单出现在列表里」。
+  全部数据为自造示例，不含任何客户名或第三方数据。
+  实现要点对照：§A.1 落点 / §A.3 状态徽标 / §B.1 addExcRow / §B.2 excRowHtml / §B.4 幂等
+                §C.5 iso 显示语义 / §D 安全 / §E.1 查询回写窗口 / §F 失败可见性
+-->
+<style>
+  :root { --bg:#f6f7f9; --fg:#1f2328; --line:#d8dbe0; --muted:#6b7280; --surface:#fff; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px/1.55 "Microsoft YaHei","PingFang SC",system-ui,sans-serif; color:var(--fg); background:var(--bg); }
+  header { background:var(--surface); border-bottom:1px solid var(--line); padding:12px 20px; }
+  h1 { margin:0 0 8px; font-size:16px; font-weight:600; }
+  .tag { margin-left:8px; font-size:12px; font-weight:400; color:var(--muted); border:1px solid var(--line); border-radius:3px; padding:1px 6px; }
+  nav { display:flex; gap:6px; }
+  nav a { padding:4px 12px; border-radius:4px; text-decoration:none; color:var(--fg); border:1px solid transparent; }
+  nav a[aria-current="true"] { background:#eef2f7; border-color:var(--line); font-weight:600; }
+  main { padding:16px 20px 40px; }
+  .mview[hidden] { display:none; }
+  .bar { display:flex; align-items:center; gap:16px; margin-bottom:8px; flex-wrap:wrap; }
+  [data-count] { font-weight:600; }
+  .stats { color:var(--muted); font-size:13px; }
+  button { font:inherit; padding:3px 12px; border:1px solid var(--line); background:var(--surface); border-radius:4px; cursor:pointer; }
+  button:hover { background:#eef2f7; }
+  table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { background:#fafbfc; font-weight:600; white-space:nowrap; }
+  tr.new-row td { background:#fff8e1; }
+  tr.skeleton td { color:var(--muted); text-align:center; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:12px; white-space:nowrap; }
+  .badge-warning    { background:#fff3cd; color:#7a5b00; }
+  .badge-info       { background:#e3f0fb; color:#0b4a78; }
+  .badge-quarantine { background:#f0e6fb; color:#5b2d8e; }
+  .badge-success    { background:#e2f5e8; color:#1b5e20; }
+  .badge-neutral    { background:#eceef1; color:#4a5056; }
+  .pagination { margin-top:10px; display:flex; gap:18px; color:var(--muted); font-size:13px; }
+  .pagination b { color:var(--fg); }
+  #mesBridgeBanner { margin:14px 20px 0; padding:10px 14px; border-radius:4px; font-size:13px; }
+  #mesBridgeBanner[hidden] { display:none; }
+  #mesBridgeBanner ul { margin:6px 0 0; padding-left:20px; }
+  .bridge-banner.err  { background:#b3261e; color:#fff; }   /* §F 错误横幅：rgb(179,38,30) 为测试台既有可观测约定 */
+  .bridge-banner.warn { background:#fff3cd; color:#7a5b00; }
+</style>
+</head>
+<body>
+<header>
+  <h1>物料品质异常单 · 最小可复现宿主页<span class="tag">示例数据 · 非真实产线</span></h1>
+  <nav>
+    <a href="#view=qm-quality-exception" data-nav="qm-quality-exception">物料品质异常单</a>
+    <a href="#view=demo-home" data-nav="demo-home">示例首页</a>
+  </nav>
+</header>
+
+<div id="mesBridgeBanner" hidden></div>
+
+<main>
+  <!-- §A.1 唯一落点 -->
+  <section class="mview" data-view="qm-quality-exception">
+    <div class="bar">
+      <span data-count data-total="96">共 96 条</span>
+      <span class="stats" data-exc-stats></span>
+      <button type="button" data-q>查询</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>异常单号</th><th>关联检验单</th><th>责任部门</th><th>异常现象</th>
+          <th>隔离标识</th><th>发现人</th><th>发现时间</th><th>发现日期</th><th>状态</th>
+        </tr>
+      </thead>
+      <!-- data-created 是计数增量的真源；data-total = base(96) + data-created -->
+      <tbody data-body data-created="0"></tbody>
+    </table>
+    <div class="pagination">
+      <span>共 <b>96</b> 条</span>
+      <span class="pg-pages">第 <b>1</b> / <b>12</b> 页</span>
+    </div>
+  </section>
+
+  <section class="mview" data-view="demo-home" hidden>
+    <p>示例首页。切走再切回「物料品质异常单」用于验证 §B.4 幂等：<code>viewready</code> 每次切回都会重触发。</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── 契约常量 ───────────────────────────────────────────────────────────────
+  var EXPECTED_SCHEMA = '1';                 // §C schema_version
+  var VIEW = 'qm-quality-exception';         // §A.1 DOM 落点 data-view
+  var KIND = 'quality-exception';            // §C records[].kind —— 与 VIEW 差 qm- 前缀，勿混用
+  var PAGE_SIZE = 8;                         // [团队自定] 分页页大小；取值使 96→12 页、97→13 页可观测
+  var BASE_SEED = 96;                        // §B.1 base 惰性初始化值
+  var QUERY_WINDOW_MS = 600;                 // §E.1 查询回写窗口
+  var DEPTS = ['供应商', '生产部', '设备部', '采购部'];  // §A.1 部门枚举
+  var ISO_QUARANTINED = '已隔离', ISO_CLEAR = '未隔离', ISO_RELEASED = '已解除';
+
+  // §A.3 状态 → badge 映射（真源形态：status → {badge class, 中文}）
+  var EXC_STATE = {
+    found:    { cls: 'badge-warning',    text: '待处理' },
+    handling: { cls: 'badge-info',       text: '处理中' },
+    recheck:  { cls: 'badge-quarantine', text: '复验中' },
+    closed:   { cls: 'badge-success',    text: '已关闭' }
+  };
+
+  // ── §D 安全 ────────────────────────────────────────────────────────────────
+  // 本宿主页的 esc 比被替换实现更严：连引号一并转义。
+  // 契约 §D 要求「两侧都要堵」；此处不复制「esc 只转义 & < >」这一既有缺口。
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  // §D loader 侧义务：进 DOM 前统一做引号剔除（半角引号是本项目唯一需要的形态）
+  function stripQuotes(v) {
+    return String(v == null ? '' : v).replace(/["']/g, '');
+  }
+
+  // ── DOM 取用 ───────────────────────────────────────────────────────────────
+  function excSection() { return document.querySelector('.mview[data-view="' + VIEW + '"]'); }
+  function excBody(sec) { return (sec || excSection()).querySelector('tbody[data-body]'); }
+
+  // ── §B.2 excRowHtml(o)：八字段 no/rel/dept/desc/iso/finder/time/date ─────────
+  // iso 入参按契约取「显示串」：仅当 === '未隔离' 时显示未隔离，其余显示已隔离。
+  // （映射责任在 loader —— 直传布尔 false 会被显示成「已隔离」，此处忠实保留该行为以便观测。）
+  function excRowHtml(o) {
+    o = o || {};
+    var isoUn = String(o.iso == null ? '' : o.iso) === ISO_CLEAR;
+    var st = EXC_STATE.found;   // 注入行状态写死 found（§B.2 注）
+    return '<tr data-no="' + esc(o.no) + '" data-rel="' + esc(o.rel) + '"'
+         + ' data-dept="' + esc(o.dept) + '" data-status="found"'
+         + ' data-date="' + esc(o.date) + '">'
+         + '<td>' + esc(o.no) + '</td>'
+         + '<td>' + esc(o.rel) + '</td>'
+         + '<td>' + esc(o.dept) + '</td>'
+         + '<td class="cell-desc">' + esc(o.desc) + '</td>'
+         + '<td class="cell-iso"><span class="badge ' + (isoUn ? 'badge-neutral' : 'badge-quarantine') + '">'
+         + (isoUn ? ISO_CLEAR : ISO_QUARANTINED) + '</span></td>'
+         + '<td>' + esc(o.finder) + '</td>'
+         + '<td>' + esc(o.time) + '</td>'
+         + '<td>' + esc(o.date) + '</td>'
+         + '<td class="cell-status"><span class="badge ' + st.cls + '">' + st.text + '</span></td>'
+         + '</tr>';
+  }
+
+  // ── §B.1 计数真源：data-total = base + data-created（不是行数） ──────────────
+  function createdCount(tb) { return parseInt(tb.getAttribute('data-created'), 10) || 0; }
+  function excBase(tb) {
+    if (tb.__base == null) { tb.__base = BASE_SEED; }   // 惰性初始化
+    return tb.__base;
+  }
+  function excTotal(tb) { return excBase(tb) + createdCount(tb); }
+
+  // 本页统计（按当前渲染行聚合，不参与 data-total）
+  function refreshExcStats(tb) {
+    var box = tb.closest('.mview').querySelector('[data-exc-stats]');
+    if (!box) { return; }
+    var tally = {};
+    Array.prototype.forEach.call(tb.rows, function (r) {
+      var s = r.getAttribute('data-status');
+      tally[s] = (tally[s] || 0) + 1;
+    });
+    box.textContent = Object.keys(EXC_STATE).map(function (k) {
+      return EXC_STATE[k].text + ' ' + (tally[k] || 0);
+    }).join(' · ');
+  }
+
+  // 页头「共 N 条」与分页双处同刷，同源于 excTotal
+  function refreshExcTotals(tb) {
+    var sec = tb.closest('.mview'), total = excTotal(tb);
+    var cnt = sec.querySelector('[data-count]');
+    if (cnt) { cnt.setAttribute('data-total', String(total)); cnt.textContent = '共 ' + total + ' 条'; }
+    var pgb = sec.querySelector('.pagination span b');
+    if (pgb) { pgb.textContent = String(total); }
+    var pages = sec.querySelector('.pagination .pg-pages b');
+    if (pages) { pages.textContent = String(Math.ceil(total / PAGE_SIZE)); }
+    return total;
+  }
+
+  // ── §B.1 addExcRow(sec, o)：插入 + data-created+1 + 刷新计数，一次完成 ───────
+  function addExcRow(sec, o) {
+    var tb = excBody(sec);
+    if (!tb) { return null; }
+    tb.insertAdjacentHTML('afterbegin', excRowHtml(o));
+    tb.setAttribute('data-created', String(createdCount(tb) + 1));
+    refreshExcStats(tb);
+    refreshExcTotals(tb);
+    return tb.rows[0] || null;
+  }
+
+  // ── setExcRow(sec, no, status)：状态推进（重设 badge 与隔离列） ─────────────
+  // 契约 §A.3 注：隔离列由本函数派生 —— closed → 已解除，其余一律 已隔离。
+  function setExcRow(sec, no, status) {
+    var tb = excBody(sec), st = EXC_STATE[status];
+    if (!tb || !st) { return false; }
+    var tr = null;
+    Array.prototype.forEach.call(tb.rows, function (r) {
+      if (r.getAttribute('data-no') === no) { tr = r; }
+    });
+    if (!tr) { return false; }
+    tr.setAttribute('data-status', status);
+    var sc = tr.querySelector('.cell-status .badge');
+    if (sc) { sc.className = 'badge ' + st.cls; sc.textContent = st.text; }
+    var ic = tr.querySelector('.cell-iso .badge');
+    if (ic) {
+      var done = status === 'closed';
+      ic.className = 'badge ' + (done ? 'badge-success' : 'badge-quarantine');
+      ic.textContent = done ? ISO_RELEASED : ISO_QUARANTINED;
+    }
+    refreshExcStats(tb);
+    return true;
+  }
+
+  // ── 全局导出（契约 §B.1 唯一授权入口） ─────────────────────────────────────
+  // 契约的实质要求是「宿主把 addExcRow 暴露为一个全局」；命名空间名由宿主自定（§B.1）。
+  // 本页取 MESHOST（本仓库约定名）。
+  window.MESHOST = window.MESHOST || {};
+  window.MESHOST.exc = { addExcRow: addExcRow, excRowHtml: excRowHtml, setExcRow: setExcRow };
+
+  // ── 示例种子行 ─────────────────────────────────────────────────────────────
+  // 直接插 DOM、**不经 addExcRow** ⇒ data-created 保持 0、data-total 保持 96。
+  // 这同时是「计数确实走契约公式、不是数行数」的现场反证：种子行本就在库里，属 base。
+  var SEED = [
+    { no: 'QA-20260105-001', rel: 'XJ20260105001', dept: '生产部', desc: '洁净间 1 号工位 1 名人员未穿防静电服', iso: ISO_CLEAR, finder: '巡检 Agent', time: '09:12', date: '2026-01-05', status: 'found' },
+    { no: 'QA-20260105-002', rel: 'XJ20260105002', dept: '生产部', desc: '装配区 1 名人员未佩戴防静电手环', iso: ISO_QUARANTINED, finder: '巡检 Agent', time: '10:40', date: '2026-01-05', status: 'handling' },
+    { no: 'QA-20260105-003', rel: 'XJ20260105003', dept: '生产部', desc: '测试区 1 名人员未按规定路线进入洁净区', iso: ISO_QUARANTINED, finder: '巡检 Agent', time: '13:05', date: '2026-01-05', status: 'recheck' },
+    { no: 'QA-20260105-004', rel: 'XJ20260105004', dept: '生产部', desc: '包装区 1 名人员静电鞋未做班前检测', iso: ISO_QUARANTINED, finder: '巡检 Agent', time: '15:30', date: '2026-01-05', status: 'closed' }
+  ];
+
+  function seedRows() {
+    var tb = excBody(), sec = excSection();
+    var html = SEED.map(function (s) { return excRowHtml(s); }).join('');
+    tb.insertAdjacentHTML('afterbegin', html);      // 整块插到最前，块内保持 SEED 顺序
+    SEED.forEach(function (s) { setExcRow(sec, s.no, s.status); });
+    refreshExcStats(tb);
+    refreshExcTotals(tb);                           // 96 = base，未因种子行变化
+  }
+
+  // ── §F 失败可见性 ──────────────────────────────────────────────────────────
+  function banner(level, lines) {
+    var el = document.getElementById('mesBridgeBanner');
+    if (!el) { return; }
+    el.className = 'bridge-banner ' + level;
+    el.textContent = (level === 'err' ? '桥接失败：' : '桥接告警：') + lines.join(' ');
+    el.hidden = false;
+  }
+
+  // ── §E.1 「查询」回写窗口：600ms 后整体覆盖 tbody ───────────────────────────
+  var queryBusyUntil = 0;
+  function runQuery() {
+    var tb = excBody(), orig = tb.innerHTML;
+    tb.innerHTML = '<tr class="skeleton"><td colspan="9">查询中…</td></tr>';
+    queryBusyUntil = Date.now() + QUERY_WINDOW_MS;
+    setTimeout(function () { tb.innerHTML = orig; }, QUERY_WINDOW_MS);
+  }
+
+  // ── loader：读 mes-data/inbox.json → addExcRow（§B.1/§B.4/§C.5/§D/§F） ─────
+  var injectedNos = Object.create(null);   // §B.4 会话内幂等闸
+  var INBOX = 'mes-data/inbox.json';       // 相对页面；§D 只出现相对路径，不泄绝对路径
+
+  function mapRecord(r) {
+    // §B.2 / §C.5：JSON 侧布尔 → 呈现侧中文，负映射责任在 loader。
+    // §C.5 默认 false ⇒ 非 true 一律按未隔离（不静默升级为「已隔离」）。
+    return {
+      no:     stripQuotes(r.no),
+      rel:    stripQuotes(r.rel),
+      dept:   String(r.dept == null ? '' : r.dept),   // dept 必须原值参与枚举判定
+      desc:   stripQuotes(r.desc),
+      iso:    r.iso === true ? ISO_QUARANTINED : ISO_CLEAR,
+      finder: stripQuotes(r.finder),
+      time:   stripQuotes(r.time),
+      date:   stripQuotes(r.date)
+    };
+  }
+
+  function applyInbox(data) {
+    var sec = excSection();
+    if (String(data.schema_version) !== EXPECTED_SCHEMA) {          // §F 版本不认识
+      banner('err', ['mes-data/inbox.json 的 schema_version 期望 "' + EXPECTED_SCHEMA
+                   + '"，实际 "' + (data.schema_version == null ? '(缺失)' : String(data.schema_version)) + '"。']);
+      return;
+    }
+    var recs = Array.isArray(data.records) ? data.records : [];
+    if (!recs.length) {                                             // §F 空数组：合法，不报错
+      if (window.console) { console.info('[mes-bridge] ' + INBOX + ' records 为空：无新单据（合法）'); }
+      return;
+    }
+    var skipped = [], unknownKind = 0, dup = 0, done = 0;
+    recs.forEach(function (r) {
+      if (r.kind !== KIND) { unknownKind++; return; }               // §F 未知 kind：跳过并计数
+      var o = mapRecord(r);
+      if (DEPTS.indexOf(o.dept) < 0) { skipped.push(o.no + '（dept=' + o.dept + '）'); return; }  // §F 不静默丢弃
+      if (injectedNos[o.no]) { dup++; return; }                     // §B.4 同一 no 只注入一次
+      if (addExcRow(sec, o)) { injectedNos[o.no] = true; done++; }
+    });
+    var lines = [];
+    if (skipped.length) { lines.push('已跳过 ' + skipped.length + ' 条 dept 不在枚举内（' + DEPTS.join('/') + '）：' + skipped.join('、')); }
+    if (unknownKind) { lines.push('已跳过 ' + unknownKind + ' 条未知 kind（本版只处理 ' + KIND + '）。'); }
+    if (lines.length) { banner('warn', lines); }
+    if (window.console) {
+      console.info('[mes-bridge] 注入 ' + done + ' 条，跳过 ' + (skipped.length + unknownKind) + ' 条，重复忽略 ' + dup + ' 条；data-total='
+                   + excSection().querySelector('[data-count]').getAttribute('data-total'));
+    }
+  }
+
+  function injectFromInbox() {
+    if (Date.now() < queryBusyUntil) {                              // §E.1 让开回写窗口
+      setTimeout(injectFromInbox, QUERY_WINDOW_MS);
+      return;
+    }
+    fetch(INBOX, { cache: 'no-store' }).then(function (res) {
+      if (res.status === 404) { return null; }                      // §F 不存在：静默
+      if (!res.ok) { throw new Error('HTTP ' + res.status); }
+      return res.text();
+    }).then(function (text) {
+      if (text === null) { return; }
+      var data;
+      try { data = JSON.parse(text); }
+      catch (e) { banner('err', ['解析 ' + INBOX + ' 失败：' + e.message + '。']); return; }   // §F 带文件名
+      applyInbox(data);
+    }).catch(function (e) {
+      banner('err', ['读取 ' + INBOX + ' 失败：' + e.message + '。']);
+    });
+  }
+
+  // ── 路由：hashchange → 派发 viewready（§B.4 的触发源） ──────────────────────
+  function route() {
+    var m = /(?:^|[#&])view=([\w-]+)/.exec(location.hash || '');
+    var want = m ? m[1] : VIEW;
+    var found = false;
+    Array.prototype.forEach.call(document.querySelectorAll('.mview'), function (s) {
+      var on = s.getAttribute('data-view') === want;
+      s.hidden = !on;
+      if (on) { found = true; }
+    });
+    if (!found) { return; }
+    Array.prototype.forEach.call(document.querySelectorAll('nav a[data-nav]'), function (a) {
+      a.setAttribute('aria-current', a.getAttribute('data-nav') === want ? 'true' : 'false');
+    });
+    document.dispatchEvent(new CustomEvent('viewready', { bubbles: true, detail: { view: want } }));
+  }
+
+  document.addEventListener('viewready', function (e) {
+    if (e.detail && e.detail.view === VIEW) { injectFromInbox(); }
+  });
+  window.addEventListener('hashchange', route);
+
+  document.addEventListener('DOMContentLoaded', function () {
+    seedRows();
+    var q = document.querySelector('[data-q]');   // 查询入口约定名，§E.1 v1.13
+    if (q) { q.addEventListener('click', runQuery); }
+    route();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "schema_version": "1",
+  "produced_by": "mes-inspection-intake",
+  "produced_at": "2026-09-28T14:14:57+08:00",
+  "records": [
+    {
+      "no": "XJ20260106100",
+      "date": "2026-01-06",
+      "time": "09:30",
+      "obj": "洁净间 2 号工位",
+      "finding": "洁净间 2 号工位 1 名人员未穿防静电服",
+      "source_skill": "safety-hazard-detection",
+      "confidence": 0.86,
+      "related_exception": "QA-20260106-100"
+    }
+  ]
+}
