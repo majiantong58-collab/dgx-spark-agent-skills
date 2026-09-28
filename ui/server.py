@@ -147,8 +147,16 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        # 必须关连接，否则**单线程服务会被一条空闲的 keep-alive 连接整个卡死**：
+        # HTTP/1.1 默认保持连接，handle_one_request 响应完会阻塞在 rfile.readline()
+        # 等这条连接的下一个请求。浏览器很容易留着这样一条（预连接、刷新、第二个标签页），
+        # 于是服务停在那里，所有新请求全排队。2026-09-28 实测复现（A 通 → B 开空闲连接
+        # → C 超时 → D 关掉即恢复），修前表现：页面已加载完仍点不动、curl 也超时。
+        # 关连接不影响那三条设计约束（不装包 / 单线程 / 只调 run_frame）。
+        self.send_header("Connection", "close")
         self.end_headers()
         self.wfile.write(body)
+        self.close_connection = True
 
     def _json(self, obj: dict, code: int = 200) -> None:
         self._send(
