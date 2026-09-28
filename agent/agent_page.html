@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>MES 助手 · Agent</title>
+<style>
+  :root{--paper:#E9E6DF;--ink:#0A0A0A;--lemon:#FFE24B;--gray:#D9D9D9;--gray-ink:#3D3D3D;
+    --sans:"Microsoft YaHei","PingFang SC","Segoe UI",system-ui,sans-serif;
+    --disp:Impact,"Arial Black","Franklin Gothic Heavy",var(--sans);
+    --mono:Consolas,"Cascadia Mono","DejaVu Sans Mono","Courier New",monospace}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{display:grid;grid-template-columns:1fr 470px;height:100vh;background:var(--paper);
+       font-family:var(--sans);color:var(--ink)}
+  #mes{border:0;width:100%;height:100%;background:#fff;border-right:3px solid var(--ink)}
+  #side{display:flex;flex-direction:column;min-width:0}
+  #hd{background:var(--ink);color:var(--paper);padding:14px 18px}
+  #hd .t{font-family:var(--disp);font-size:26px;letter-spacing:.01em;line-height:1}
+  #hd .s{font-family:var(--mono);font-size:12px;color:#A9A49B;margin-top:6px}
+  #hd .s b{color:var(--lemon)}
+  #log{flex:1;overflow:auto;padding:16px 18px}
+  .m{margin-bottom:14px}
+  .m .who{font-family:var(--mono);font-size:11px;font-weight:900;letter-spacing:.08em;
+          color:var(--gray-ink);margin-bottom:4px}
+  .m .bd{border:3px solid var(--ink);background:#fff;padding:11px 13px;font-size:14px;
+         line-height:1.6;white-space:pre-wrap;word-break:break-word}
+  .m.me .bd{background:var(--lemon)}
+  .m .bd code{font-family:var(--mono);background:#EFEDE7;padding:1px 4px;font-size:12.5px}
+  #steps{margin:-6px 0 14px}
+  #steps summary{font-family:var(--mono);font-size:11.5px;font-weight:700;cursor:pointer;
+                 color:var(--gray-ink)}
+  #steps .st{font-family:var(--mono);font-size:11.5px;border:2px solid var(--ink);
+             border-left-width:5px;border-left-color:var(--lemon);
+             padding:6px 10px;margin-top:6px;background:#fff;
+             white-space:pre-wrap;word-break:break-all}
+  #foot{border-top:3px solid var(--ink);padding:12px 18px;background:#fff}
+  #q{width:100%;border:3px solid var(--ink);padding:10px 12px;font-family:var(--sans);
+     font-size:14px;resize:vertical;min-height:58px}
+  #row{display:flex;gap:10px;margin-top:10px;align-items:center}
+  button{font-family:var(--mono);font-size:13px;font-weight:900;border:3px solid var(--ink);
+         background:var(--lemon);padding:9px 18px;cursor:pointer;box-shadow:5px 5px 0 var(--ink)}
+  button:active{transform:translate(2px,2px);box-shadow:3px 3px 0 var(--ink)}
+  button:disabled{background:var(--gray);cursor:wait;box-shadow:5px 5px 0 var(--gray-ink)}
+  #hint{font-family:var(--mono);font-size:11.5px;color:var(--gray-ink)}
+  #quick{font-family:var(--mono);font-size:11.5px;color:var(--gray-ink);margin-top:10px;
+         line-height:1.9}
+  #quick a{color:#1B3BFF;cursor:pointer;text-decoration:underline;margin-right:10px}
+</style>
+</head>
+<body>
+<iframe id="mes" src="__MES_URL__"></iframe>
+<div id="side">
+  <div id="hd">
+    <div class="t">MES 助手</div>
+    <div class="s">真循环智能体 · 挂在 MES 旁边 · <b>原型一行未改</b></div>
+  </div>
+  <div id="log">
+    <div class="m ai"><div class="who">助手</div><div class="bd">问我 MES 里的事。
+比如：查某张异常单、某条工单、某台设备；按部门或状态列单子；落单前查重。
+
+我会自己决定查什么、查几步，然后把走过的步骤摊开给你看。</div></div>
+  </div>
+  <div id="foot">
+    <textarea id="q" placeholder="例如：生产部现在有几条待处理的异常单？"></textarea>
+    <div id="row"><button id="go">问</button><span id="hint"></span></div>
+    <div id="quick">
+      试一下：
+      <a>生产部有几条待处理的？</a>
+      <a>FT-01 是什么设备？</a>
+      <a>查一下 QA-20260813-002</a>
+      <a>洁净间有人没戴防尘帽，帮我落一张单</a>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var go = document.getElementById('go');
+  var q = document.getElementById('q');
+  var log = document.getElementById('log');
+  var hint = document.getElementById('hint');
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function add(who, text, cls) {
+    var d = document.createElement('div');
+    d.className = 'm ' + (cls || 'ai');
+    d.innerHTML = '<div class="who">' + esc(who) + '</div><div class="bd">' + esc(text) + '</div>';
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+    return d;
+  }
+
+  function addSteps(calls, rounds, stopped) {
+    var det = document.createElement('details');
+    det.id = 'steps';
+    var head = document.createElement('summary');
+    head.textContent = '走了 ' + rounds + ' 轮 · 调了 ' + calls.length + ' 次工具 · 结束原因 '
+      + stopped + '（点开看每一步）';
+    det.appendChild(head);
+    calls.forEach(function (c, i) {
+      var s = document.createElement('div');
+      s.className = 'st';
+      var first = String(c.out || '').split('\n')[0].slice(0, 160);
+      s.textContent = (i + 1) + '. ' + (c.ok ? '✓' : '✗') + ' ' + c.tool
+        + '(' + JSON.stringify(c.args) + ')\n   ' + first;
+      det.appendChild(s);
+    });
+    log.appendChild(det);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function ask() {
+    var t = q.value.trim();
+    if (!t) { return; }
+    add('你', t, 'me');
+    q.value = '';
+    go.disabled = true;
+    hint.textContent = '思考中…（一次推理要十几秒，它可能在走好几步）';
+    fetch('/ask', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ question: t })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.error) {
+          add('助手', '出错了：' + d.error);
+        } else {
+          add('助手', d.answer || '(空)');
+          addSteps(d.calls || [], d.rounds || 0, d.stopped || '?');
+        }
+      })
+      .catch(function (e) { add('助手', '请求失败：' + e.message); })
+      .finally(function () { go.disabled = false; hint.textContent = ''; });
+  }
+
+  go.addEventListener('click', ask);
+  q.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { ask(); }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#quick a'), function (a) {
+    a.addEventListener('click', function () { q.value = a.textContent; q.focus(); });
+  });
+})();
+</script>
+</body>
+</html>

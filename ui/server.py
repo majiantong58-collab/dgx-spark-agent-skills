@@ -131,7 +131,11 @@ def append_run_ledger(rec: dict[str, Any]) -> None:
     写失败不阻断本次响应（响应已经发完了），但必须在控制台喊出来，不静默。
     """
     try:
-        with LEDGER.open("a", encoding="utf-8") as fh:
+        # 🔴 newline="\n" 不能省：Windows 上文本模式会把 \n 翻译成 os.linesep（\r\n），
+        # 于是每次跑一帧都往这个仓库文件里塞一行 CRLF，而本仓约定是 LF
+        # （.gitattributes: * text=auto eol=lf）。2026-09-28 实测：329 行里恰好只有
+        # 最后一行带 CR，就是本函数写的那行。同类坑见 docs/agents/verification-lessons.md §4。
+        with LEDGER.open("a", encoding="utf-8", newline="\n") as fh:
             fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
     except OSError as exc:
         print(f"[ui] !! 台账写入失败（本次结果仍然有效，但没落盘）：{exc}", file=sys.stderr)
