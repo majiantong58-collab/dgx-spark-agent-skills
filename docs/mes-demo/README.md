@@ -1,7 +1,7 @@
 # MES 桥 · 最小可复现宿主页（示例数据）
 
 **这是什么**：一份**独立可跑**的最小 MES 宿主页，按
-[`docs/agents/mes-bridge-contract.md`](../agents/mes-bridge-contract.md) **v1.13 实现**——
+[`docs/agents/mes-bridge-contract.md`](../agents/mes-bridge-contract.md) **v1.14 实现**——
 不是从任何外部原型剪来的代码，全部 DOM 与 API 都是照契约重写的。
 
 **为什么要有它**：MES 桥此前只能跑在一份**不在本仓库**的外部原型上，
@@ -70,15 +70,43 @@ py -3.14 skills/mes-inspection-intake/scripts/commit.py \
 
 **来源与可复现证据**（§C.6 认可的判别式）：
 
-| 判别式 | 本项目实测 |
-|---|---|
-| `produced_at ↔ mtime` | **同秒**（Δ = 0.990s < 1s）——不是倒填的老件 |
-| 同 fixture 重跑 | `inbox.json` **830B** / `xj-records.json` **475B**，**逐字节相同，仅 `produced_at` 不同** |
-| `no` ↔ `rel` 序号 | 一致：`QA-20260106-100` ↔ `XJ20260106100` |
+| 判别式 | 本项目实测 | 与环境有关？ |
+|---|---|---|
+| 同 fixture 重跑 | `inbox.json` **806B** / `xj-records.json` **458B**，**逐字节相同，仅 `produced_at` 不同** | **无关** ← 以这条为准 |
+| `no` ↔ `rel` 序号 | 一致：`QA-20260106-100` ↔ `XJ20260106100` | 无关 |
+| `produced_at ↔ mtime` | 本机刚产出时同秒（Δ<1s） | ⚠️ **有关**，见下 |
+
+> 🔴 **`produced_at ↔ mtime` 不能当判据用**（把它留在这里是为了说清为什么）：
+> **git 不保留 mtime** —— 任何 clone / checkout 都会把 mtime 刷成「检出时刻」，
+> `cp` 复制同理。⇒ **在评委机器上 Δ 必然很大，而那不是缺陷，是刚被检出。**
+> 一条在评委机器上必然报警的门，与一条永远红的门同类：都会被训练成「看见红也不当回事」。
+>
+> ⇒ 该值在本页自检里只作**信息性输出**（`INFO T15`，**不计 PASS/FAIL、不影响退出码**）。
+> **来源结论只认「复现」**——那条与 git、与 mtime 都无关。
+>
+> （操作须知仍成立：**冻结/发布流程里不要用 `cp` 搬运产物**，要重跑 `commit.py`。
+> 但那该写在文档里，不该靠一条会红的断言来传达。）
 
 > ⚠️ `commit.py` 是**追加**语义（§C.4「追加，不去重」）。**重跑前必须清空 `mes-data/`**，
 > 否则两条累积 → `data-total` = 98，破 §B.4 的 97。
 > 本页生成的 `xj-records.json` 是 §C.2 要求的 `rel` 指涉对象（XJ 巡检记录），一并分发。
+
+## 配套技能可直接查询本页（**不需要 `--proto`**）
+
+`mes-record-query` / `mes-closed-loop` 原先只认一个**不在本仓库**的原型 ⇒ 装完跑不起来。
+本页补齐了 §A.4 / §A.5 两个结构后，技能默认解析到本仓库内宿主页即可查到数据：
+
+```bash
+py -3.14 skills/mes-record-query/scripts/query.py --wo  MO-20260106-002   # → 生产中 / 1800 台 / SMT-2 线
+py -3.14 skills/mes-record-query/scripts/query.py --dev FT-01            # → 飞针测试机 · FTA-300 / 在用
+py -3.14 skills/mes-record-query/scripts/query.py --check MO-20260106-002 # → 已占用 —— 不可用
+```
+
+（`--proto` > `MES_PROTO` > **仓库内本页**；三者皆无才回头问用户。上面三条 `T14` 每轮都会真跑。）
+
+> ⚠️ **已知消费方缺口（不在本页职责内，已上报）**：`st` 若被写成枚举外的值，
+> `query.py` **不会报错**，会原样打印 `状态：bogus` 并 `EXIT=0` —— 对 agent 是**静默答错**。
+> 本页的自检 `T12` 把这条兜住了（改坏 `st` ⇒ `T12`+`T14` 变红），但那是在宿主侧兜的。
 
 ## 契约覆盖
 
@@ -92,7 +120,9 @@ py -3.14 skills/mes-inspection-intake/scripts/commit.py \
 | §B.4 | loader 幂等闸 `injectedNos`：同一 `no` 一次会话内最多注入一次 |
 | §C.5 | `iso` 负映射在 loader：`true`→「已隔离」，**其余一律「未隔离」**（按 §C.5 默认 `false`） |
 | §D | 两侧都堵：loader 侧 `stripQuotes()` 引号剔除 + 本页 `esc()` 连引号一并转义 |
-| §E.1 | 「查询」触发元素标为 **`[data-q]`**（v1.13 约定名），复现 600ms 回写窗口；loader 落在窗口内时**让开**再注入 |
+| §A.4 | 工单：脚本数组 `var WORKORDERS`（5 条）+ 状态映射 `var WO_ST`（7 态，中文与 badge）；`line: null` 表示未派线（**不用空串冒充**）；另按契约**可选**项渲染成 `tr[data-wo]` + `data-colid` |
+| §A.5 | 设备台账：**静态标注行** `<tr data-dcm-eq-row data-st="…">`（6 条，覆盖 在用/维修中/停用/已报废）；前 6 列＝设备编号·名称型号·所属工位·车间产线·接口类型·状态 |
+| §E.1 | 「查询」触发元素标为 **`[data-q]`**（约定名），复现 600ms 回写窗口；loader 落在窗口内时**让开**再注入 |
 | §F | 版本不认识 / 解析失败 → 红色横幅；`dept` 不在枚举 → 跳过并列入横幅；未知 `kind` → 跳过并计数；空数组 → 只记 console；**文件不存在 → 静默** |
 
 **对照契约自测**（可选，需 playwright；本仓库 `.venv` 未装，故用系统 python）：
@@ -101,7 +131,17 @@ py -3.14 skills/mes-inspection-intake/scripts/commit.py \
 py -3.14 docs/mes-demo/verify_host_page.py     # Windows 下需 PYTHONIOENCODING=utf-8
 ```
 
-14 项断言，含五条**为证伪而设**的：
+**21 项断言**（另有 1 条 `INFO T15` 为信息性输出，**不计判定**），含五条**为证伪而设**的、
+三条**跨技能集成**断言（T12/T13/T14），以及**四条字节卫生断言**（CR0/CR1/CR1b/CR2）：
+
+- `CR0`：**本目录全部文件按字节扫，不得含 `\r`**（产物与页面文件一律 LF）。
+  （产出侧根因已由 R2-S 修掉：`intake_core.py` 的 `write_text` 走文本模式 ⇒ 显式 `newline="\n"`；
+  产物由 830B/475B 变为 **806B/458B**，差值 **24 / 17 恰好等于原 CRLF 的 CR 计数**。）
+  🔴 **必须 `read_bytes`** —— 文本模式会把 `\r\n` 归一成 `\n`，**正好把要抓的东西抹掉**：
+  工具自己消掉了自己要检查的东西（与「还原时刷 mtime、把要验的证据毁掉」同族）。
+  该断言经**四向变异自证**：`CR1` 造出 CRLF **必须报**；`CR1b` 纯 LF **不得误报**；
+  `CR2` 换回文本模式读后同一份 CR 样本**必须变哑** —— 否则 `CR1` 证明不了信号来自这条断言。
+  真文件回归亦实测：把 `index.html` 整份改成 CRLF（448 个 CR）⇒ **只有 `CR0` 变红**；
 
 - `T11`：**按分发的 `inbox.json` 原样加载**（不碰 fixture），且**期望值全部从产物现推**
   ——它是唯一覆盖「评委 clone 下来直接打开」那条路径的断言。
@@ -115,7 +155,11 @@ py -3.14 docs/mes-demo/verify_host_page.py     # Windows 下需 PYTHONIOENCODING
   少了它，「改名/重构把全局打坏」会**静默通过整轮自检**；
 - `T10`：**在「查询」600ms 窗口内触发注入，该行必须仍在**
   —— 若 loader 硬插进窗口，回写会把它整体抹掉，于是 `data-total` 涨了 1、**行却没了**；
-  这是「界面看着没事、其实丢了」的典型形态，靠计数根本发现不了。
+  这是「界面看着没事、其实丢了」的典型形态，靠计数根本发现不了；
+- `T12`/`T13`：**调用真消费者的解析器**（`skills/mes-record-query/scripts/query_core.py`）来读本页，
+  而不是自己重写一份正则 —— 否则「按我自己的理解解析成功」证明不了「消费者读得懂」；
+- `T14`：**真的去跑** `query.py --wo/--dev/--check`，且**不带 `--proto`**，
+  走的就是「装完直接问」那条路径。
 
 > **本自检自身经过变异验证**（每条断言都要有抓错能力，抓不到即证明它空转）：
 >
@@ -124,7 +168,8 @@ py -3.14 docs/mes-demo/verify_host_page.py     # Windows 下需 PYTHONIOENCODING
 > | `window.MESHOST` 改名 | **只有 `T9` 变红**，其余照跑照过，无 traceback |
 > | `[data-q]` 改回旧名 | **只有 `T10` 变红**（骨架行=0：点击不再触发查询） |
 > | 拆掉 §E.1 让开窗口那行 | **只有 `T10` 变红**，且复现了真故障：`total=97` 但首行是种子行（注入行被抹掉） |
-> | 把**分发的** `inbox.json` 的 `dept` 改成越界值 | **只有 `T11` 变红**，其余 13 条全绿——这正是 T11 补的那个洞 |
+> | 把**分发的** `inbox.json` 的 `dept` 改成越界值 | **只有 `T11` 变红**，其余全绿——这正是 T11 补的那个洞 |
+> | 工单 `st` 改成枚举外的 `bogus` | **`T12` + `T14` 变红**（`非法 st=['bogus']`、`缺状态=['running']`），干净 FAIL 无 traceback |
 
 ---
 
@@ -150,5 +195,5 @@ py -3.14 docs/mes-demo/verify_host_page.py     # Windows 下需 PYTHONIOENCODING
 
 ## 相关
 
-- 契约真源：[`docs/agents/mes-bridge-contract.md`](../agents/mes-bridge-contract.md)（v1.13）
+- 契约真源：[`docs/agents/mes-bridge-contract.md`](../agents/mes-bridge-contract.md)（v1.14）
 - 桥的契约测试：[`skills/evals/contract_bridge_loader.py`](../../skills/evals/contract_bridge_loader.py)（针对被替换的原型；本页自带 `verify_host_page.py`）

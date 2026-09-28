@@ -36,7 +36,8 @@ description: >-
 ## 前置问题（信息不全时必须先问，禁止猜测）
 
 1. **有没有 MES 语境？** 没有 → **不触发本技能**，改交 `inspection-orchestrator`（或已指明类型时直接交识别子技能）。
-2. **原型在哪？** `run` 必须给 `--proto`（index.html 或所在目录）。**本技能不假定MES 工作区路径，无默认值**。
+2. **宿主页在哪？** 缺省序：`--proto` > `MES_PROTO` 环境变量 > 仓库内 `docs/mes-demo/index.html`。
+   **有默认值不等于可以猜**——装到别处解析不到时**退回「问用户」**，不找一个像的顶上。
 3. **mes-data 落在哪？** 由调用方给 `--out-dir`；本技能不自行假定。
 4. **发现类型可触发吗？** 🔴 契约 §C.3/v1.7：演示、文案、夹具**一律只用「人员违规」**——
    通道堵塞 / 设备渗漏 / 仪表读数三类**上游当前产不出结论**。喂进来即报错，不猜测、不降级。
@@ -47,7 +48,7 @@ description: >-
 ```bash
 python skills/mes-closed-loop/scripts/loop.py route --utterance "<用户原话>" [--frame <真实帧>]
 python skills/mes-closed-loop/scripts/loop.py run \
-    --finding <识别产物.json> --out-dir <mes-data> --proto <原型 index.html 或目录> [--candidate QA-…]
+    --finding <识别产物.json> --out-dir <mes-data> [--proto <宿主页 index.html 或目录>] [--candidate QA-…]
 ```
 
 `route` 判触发 + 出**路由日志**；`run` 真跑链路并逐条打印**消费证明**。

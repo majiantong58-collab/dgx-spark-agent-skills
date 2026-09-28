@@ -36,6 +36,14 @@ RE_EXC = re.compile(r"QA-\d{8}-\d{3}")
 RE_WO = re.compile(r"MO-\d{8}-\d{3}|MO-\d{4}-\d{2}-\d{4}")
 RE_DEV = re.compile(r"[A-Z]{2,4}-\d{2,4}")
 
+# --- 契约枚举（真源：§A.1 异常单 / §A.4 工单 / §A.5 设备）---
+# 🔴 枚举外即宿主违约。**消费方必须出信号**——照单全收并用「原型枚举值」背书，
+# 等于把一次静默的错误答案伪装成正常结果。
+WO_STATES = ("created", "pending", "running", "paused", "done", "closed", "cancelled")
+EQ_STATES = ("在用", "维修中", "停用", "已报废")
+EXC_STATUS = ("found", "handling", "recheck", "closed")
+EXC_DEPTS = ("供应商", "生产部", "设备部", "采购部")
+
 # 选择器格式校验：选择器 → (正则, 人话示例)
 SELECTORS = {
     "wo": (RE_WO, "工单号形如 MO-20260812-006"),
@@ -129,9 +137,9 @@ def parse_wo_state(text: str) -> dict:
 
 
 def parse_workorders(text: str) -> dict:
-    """解析 WORKORDERS（:11354）。返回 {no: {…}}。"""
+    """解析 WORKORDERS（§A.4）。返回 {no: {…，line: 行号}}。"""
     rows = {}
-    for line in text.splitlines():
+    for lineno, line in enumerate(text.splitlines(), 1):
         if "no: '" not in line or "st: '" not in line:
             continue
         no = _js_str(line, "no")
@@ -139,6 +147,7 @@ def parse_workorders(text: str) -> dict:
             continue
         rows[no] = {
             "no": no,
+            "lineno": lineno,   # 键名刻意不叫 line：line 是「产线」字段，别撞
             "qty": _js_num(line, "qty"),
             "ps": _js_str(line, "ps"),
             "pe": _js_str(line, "pe"),
@@ -166,10 +175,18 @@ def _plain(html: str) -> str:
 
 
 def parse_exceptions(text: str) -> list:
-    """解析 qm-quality-exception 行（:2255 起）。"""
+    """解析 qm-quality-exception 行（§A.1）。
+
+    🔴 **只认 `data-no` 形如 `QA-…` 的行**：全页还有 IQC / OQC / CS / FAI / FT 等
+    **别的单证**，它们同样带 `data-no`/`data-status`/`data-dept`，但枚举是各自的
+    （IQC: pending/done/testing/concession；OQC: pass/isolated；CS: reviewing/approve/passed…）。
+    不加这层过滤，既会把别人的行当异常单返回，也会把它们的合法状态误报成枚举越界。
+    """
     rows = []
     for m in RE_EXC_BLOCK.finditer(text):
         attrs, body = m.group("attrs"), m.group("body")
+        if not RE_EXC.fullmatch(_attr(attrs, "data-no")):
+            continue
         tds = [_plain(t.group("v")) for t in RE_TD.finditer(body)]
         title = re.search(r'title="([^"]*)"', body)
         rows.append({
@@ -253,10 +270,63 @@ def load_mes_data(data_dir: Path, read_log: dict) -> dict:
 # 四类查询
 # --------------------------------------------------------------------------
 
+def _line_of(text: str, pos: int) -> int:
+    return text.count("\n", 0, pos) + 1
+
+
+def audit_enums(text: str) -> list:
+    """扫全宿主页，列出**所有**契约枚举越界处。返回 [{kind, value, no, where}]。
+
+    为什么全扫而不只查被问的那条：**宿主违约应在任何一次运行里都看得见**，
+    否则同一个坏值只在被问到的时候才暴露，等于埋雷。
+    """
+    bad = []
+    for no, row in parse_workorders(text).items():
+        if row["st"] not in WO_STATES:
+            bad.append({"kind": "工单状态 st", "value": row["st"], "no": no,
+                        "where": f"原型:{row['lineno']}"})
+    for attr, allowed, kind in (("data-status", EXC_STATUS, "异常单状态 data-status"),
+                                ("data-dept", EXC_DEPTS, "异常单部门 data-dept")):
+        for m in RE_EXC_BLOCK.finditer(text):
+            no = _attr(m.group("attrs"), "data-no")
+            if not RE_EXC.fullmatch(no):      # 只审 §A.1 管辖的 QA- 行（见 parse_exceptions）
+                continue
+            val = _attr(m.group("attrs"), attr)
+            if val not in allowed:
+                bad.append({"kind": kind, "value": val, "no": no,
+                            "where": f"原型:{_line_of(text, m.start())}"})
+    for m in RE_EQ_BLOCK.finditer(text):
+        val = _attr(m.group("attrs"), "data-st")
+        if val not in EQ_STATES:
+            bad.append({"kind": "设备状态 data-st", "value": val, "no": "",
+                        "where": f"原型:{_line_of(text, m.start())}"})
+    return bad
+
+
+def format_violations(bad: list) -> list:
+    """把越界清单印成人话，前缀 ⚠️（**绝不可与正常结果混淆**）。"""
+    out = [f"⚠️ 宿主违约：契约枚举越界 {len(bad)} 处 —— 下列值不在契约允许集合内，"
+           f"消费方不为其背书"]
+    for b in bad:
+        who = f" {b['no']}" if b["no"] else ""
+        out.append(f"⚠️   {b['where']} {b['kind']}: {b['value']!r}（{who.strip() or '—'}）")
+    return out
+
+
+def _guard(kind: str, value, allowed, who: str, where: str) -> None:
+    """被问的那条自身越界 → **硬失败**（退出码 1），因为给出去的答案会是错的。"""
+    if value not in allowed:
+        raise QueryError(
+            f"{who} 的 {kind} 枚举越界：{value!r} 不在契约允许的 {'/'.join(allowed)} 内"
+            f"（{where}）。宿主违约，本技能不为其背书的结论——请修宿主或核对契约。"
+        )
+
+
 def query_workorder(text: str, no: str) -> list:
     row = parse_workorders(text).get(no)
     if not row:
         return [f"工单 {no}：原型内未找到（WORKORDERS 只有原型种子行；ERP 同步来的新单不在本库）"]
+    _guard("状态 st", row["st"], WO_STATES, f"工单 {no}", f"原型:{row['lineno']}")
     label, _badge = parse_wo_state(text).get(row["st"], (row["st"], ""))
     return [
         f"工单 {row['no']}",
@@ -272,6 +342,7 @@ def query_equipment(text: str, code: str) -> list:
     for row in parse_equipment(text):
         if row["code"] != code:
             continue
+        _guard("状态 data-st", row["st"], EQ_STATES, f"设备 {code}", "§A.5 设备台账行")
         return [
             f"设备 {row['code']}",
             f"  名称 / 型号：{row['name']}",
@@ -292,6 +363,8 @@ def query_exceptions(text: str, exc_no: str, dept: str, status: str) -> list:
         if not mine:
             out.append(f"异常单 {exc_no}：原型 qm-quality-exception 内未找到（原型共 {len(rows)} 行）")
         for r in mine:
+            _guard("状态 data-status", r["status"], EXC_STATUS, f"异常单 {r['no']}", "§A.1 异常单行")
+            _guard("部门 data-dept", r["dept"], EXC_DEPTS, f"异常单 {r['no']}", "§A.1 异常单行")
             out += [
                 f"异常单 {r['no']}",
                 f"  关联单：{r['rel']}",

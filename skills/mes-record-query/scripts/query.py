@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -50,7 +51,8 @@ def build_parser():
     parser.add_argument(
         "--proto",
         default=None,
-        help="MES 原型位置：index.html 文件或其所在目录（**必填**；本技能不假定MES 工作区路径）",
+        help="MES 宿主页位置：index.html 文件或其所在目录。缺省序：--proto > MES_PROTO 环境变量 > "
+             "仓库内 docs/mes-demo/index.html；三者皆无则报错要求显式传入（不猜路径）",
     )
     parser.add_argument(
         "--data-dir",
@@ -74,15 +76,40 @@ def build_parser():
     return parser
 
 
+def host_page():
+    """仓库内最小宿主页（已知回退，**不是猜测**）。
+
+    装到别处（如 `~/.claude/skills/`）时解析不到 → 返回 None，退回「问用户」。
+    """
+    cand = REPO / "docs" / "mes-demo" / "index.html"
+    return cand if cand.is_file() else None
+
+
 def resolve_proto(raw):
-    """--proto 可给文件或目录（目录内取 index.html）。路径不明就报错问，不猜默认值。"""
+    """--proto 可给文件或目录（目录内取 index.html）。
+
+    🔴 缺省序：`--proto` > `MES_PROTO` 环境变量 > 仓库内宿主页 `docs/mes-demo/index.html`。
+    **三者皆无即报错问，不猜路径**——有默认值不等于可以猜：默认值是**已知的**回退，
+    不是「随便找个像的」。
+    """
+    source = "--proto"
     if not raw:
-        raise core.QueryError("缺少 --proto：请告知 MES 原型 index.html 的位置（本技能不猜默认路径）")
+        raw = os.environ.get("MES_PROTO")
+        source = "MES_PROTO 环境变量"
+    if not raw:
+        cand = host_page()
+        if cand is None:
+            raise core.QueryError(
+                "缺少 --proto：本技能未随仓库内宿主页安装（docs/mes-demo/index.html 不存在），"
+                "请显式告知 MES 宿主页 index.html 的位置（本技能不猜默认路径）"
+            )
+        raw, source = str(cand), "仓库内默认宿主页"
     path = Path(raw)
     if path.is_dir():
         path = path / "index.html"
     if not path.is_file():
-        raise core.QueryError(f"--proto 指向的原型文件不存在：{path.name}")
+        raise core.QueryError(f"{source} 指向的原型文件不存在：{path.name}")
+    print(f"[query] 宿主页：{path.name}（来源：{source}）")
     return path
 
 
@@ -125,6 +152,11 @@ def main(argv=None):
         print(f"[query] 已读 {len(read_log)} 个文件：{', '.join(sorted(p.name for p in read_log))}")
         for line in lines:
             print(f"[query] {line}")
+        # 宿主违约全页审计：**任何一次运行都要看得见**，不只在被问到那条时才暴露
+        violations = core.audit_enums(text)
+        if violations:
+            for line in core.format_violations(violations):
+                print(f"[query] {line}")
         if drift:
             for name, before, after in drift:
                 print(f"[query] !! 只读自证失败：{name} sha256 {before} → {after}", file=sys.stderr)

@@ -18,7 +18,7 @@ description: >-
 **只查不写。** 本技能回答「MES 里现在有什么」，是 `mes-inspection-intake`（**写**）的对偶：
 落单前先用本技能查重，落单后用本技能回查。**要落新单，请用 `mes-inspection-intake`。**
 
-契约：`docs/agents/mes-bridge-contract.md`（§A.1 行属性与枚举 / §C.1 单号规则 / §C:133 mes-data 位置）。
+契约：`docs/agents/mes-bridge-contract.md`（§A.1 异常单 / §A.4 工单 / §A.5 设备台账 —— 三处枚举均为**硬约束**，越界即宿主违约 / §C.1 单号规则 / §C:133 mes-data 位置）。
 单号与部门的口径真源在 `skills/mes-business-rules/`，**本技能只读它、不另立规则**。
 
 > 🔴 **`[团队自定]` 声明**：本技能查到的是**原型种子数据**（演示库），不是真实产线数据。
@@ -26,9 +26,11 @@ description: >-
 
 ## 前置问题（信息不全时必须先问，禁止猜测）
 
-1. **原型在哪？** 必须由调用方给 `--proto`（index.html 或所在目录）。
-   🔴 **本技能不假定MES 工作区路径，也没有默认值**——路径不明就停下来问，
-   报错话术即「请告知 MES 原型 index.html 的位置（本技能不猜默认路径）」。
+1. **宿主页在哪？** 缺省序：`--proto`（index.html 或所在目录）> `MES_PROTO` 环境变量 >
+   仓库内宿主页 `docs/mes-demo/index.html`。
+   🔴 **有默认值不等于可以猜**——默认值是**已知的**回退（随仓库发布的最小宿主页），不是「随便找个像的」。
+   装到别处（如 `~/.claude/skills/`）时默认解析不到 → **退回「问用户」**：
+   「请告知 MES 宿主页 index.html 的位置（本技能不猜默认路径）」。每次运行都会印出实际来源。
 2. **mes-data 在哪？** 默认取 `<原型目录>/mes-data`（**契约 §C:133 明文规定的相对位置**，非猜测）；
    调用方可用 `--data-dir` 覆盖。**查重时若 mes-data 缺失，必须当失败处理**——只查一处会漏号。
 3. **要查哪一类？** `--wo` / `--dev` / `--exc` / `--check` 四选一，不给就报错问。
@@ -57,7 +59,7 @@ description: >-
 
 ```bash
 python skills/mes-record-query/scripts/query.py \
-    --proto <原型 index.html 或其目录> [--data-dir <mes-data>] \
+    [--proto <宿主页 index.html 或其目录>] [--data-dir <mes-data>] \
     (--wo MO-20260812-006 | --dev FT-01 | --exc [QA-…] | --check QA-20260928-101)
 ```
 

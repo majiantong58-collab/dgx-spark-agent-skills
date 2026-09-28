@@ -324,6 +324,21 @@ def build_envelope(existing, records, produced_at):
     }
 
 
+def assert_lf(path):
+    """🔴 断言产物内**不得含 `\\r`**（契约 §C.6 的来源证明要求跨平台逐字节可复现）。
+
+    **按字节读**，不经文本模式——文本模式会把 `\\r\\n` 归一成 `\\n`，正好把要抓的东西抹掉。
+    """
+    data = Path(path).read_bytes()
+    cr = data.count(bytes([13]))          # 13 == CR；用 bytes([13]) 免掉转义层数带来的歧义
+    if cr:
+        raise IntakeError(
+            f"产物含 CR：{Path(path).name} 有 {cr} 个 CR —— "
+            f"违反契约 §C.6「除 produced_at 外逐字节相同」（跨平台不可复现）。"
+            f"写文件须显式 newline=LF。"
+        )
+
+
 def commit_findings(finding_path, out_path, date_override=None, dept_override=None, now=None):
     """把发现落成 inbox.json（+ 同目录 XJ 记录）。返回 {progress: [...]}, 失败抛 IntakeError。
 
@@ -375,16 +390,24 @@ def commit_findings(finding_path, out_path, date_override=None, dept_override=No
         quote_hits += hits + xj_hits
 
     produced_at = now.isoformat(timespec="seconds")
+    # 🔴 newline="\n"：文本模式默认按 os.linesep 翻译，Windows 上会把 \n 写成 \r\n。
+    # 契约 §C.6 的来源证明是「同 fixture 重跑 ⇒ 除 produced_at 外**逐字节相同**」——
+    # 若换行随平台变，这条主张跨平台即假。故显式钉死 LF。
     out_path.write_text(
         json.dumps(build_envelope(envelope, records, produced_at), ensure_ascii=False, indent=2)
         + "\n",
         encoding="utf-8",
+        newline="\n",
     )
     xj_path.write_text(
         json.dumps(build_envelope(xj_envelope, xj_records, produced_at), ensure_ascii=False, indent=2)
         + "\n",
         encoding="utf-8",
+        newline="\n",
     )
+    # 写完立刻按**字节**复验，不留「本该 LF 却写成 CRLF」的静默窗口
+    for _p in (out_path, xj_path):
+        assert_lf(_p)
 
     progress = [
         f"日期口径：{date_str}（{when_source}）",

@@ -7,7 +7,7 @@
 
 | 来源 | 内容 | 由谁给 |
 |---|---|---|
-| 原型 `index.html` | 工单 / 设备台账 / 异常单的**静态种子行** | `--proto`（调用方指定，**无默认值**） |
+| 宿主页 `index.html` | 工单 / 设备台账 / 异常单的种子数据 | 缺省序 `--proto` > `MES_PROTO` > 仓库内 `docs/mes-demo/index.html`；皆无则**报错问，不猜** |
 | `<mes-data>/*.json` | 我们自己的产出入 `inbox.json` / `xj-records.json` | 默认 `<原型目录>/mes-data`（契约 §C:133） |
 
 🔴 **只查原型会漏**：`inbox.json` 里由 `mes-inspection-intake` 生成的新单**不在**原型 HTML 里，

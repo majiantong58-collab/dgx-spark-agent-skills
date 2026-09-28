@@ -1,4 +1,4 @@
-"""宿主页自检 —— 对 docs/mes-demo/index.html 跑一遍 mes-bridge-contract.md v1.13 的可观测面。
+"""宿主页自检 —— 对 docs/mes-demo/index.html 跑一遍 mes-bridge-contract.md v1.14 的可观测面。
 
 用法（需 playwright；本仓库 .venv 未装，故用系统 python）：
     py -3.14 docs/mes-demo/verify_host_page.py
@@ -18,7 +18,9 @@ import functools
 import http.server
 import json
 import os
+import subprocess
 import sys
+import tempfile
 import threading
 from pathlib import Path
 
@@ -100,13 +102,73 @@ class Page:
 
 
 def write_inbox(data):
+    # 显式写字节：文本模式在 Windows 上会把 \n 翻成 \r\n，让测试自己制造出 CRLF
     INBOX.parent.mkdir(parents=True, exist_ok=True)
-    INBOX.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    INBOX.write_bytes(json.dumps(data, ensure_ascii=False).encode("utf-8") + b"\n")
 
 
 def clear_inbox():
     if INBOX.exists():
         INBOX.unlink()
+
+
+def _cr_bytes(p):
+    """按**字节**数 CR。"""
+    return Path(p).read_bytes().count(b"\r")
+
+
+def _cr_text(p):
+    """**故意错误**的对照实现：文本模式读 —— universal newlines 会把 `\\r\\n` 归一成 `\\n`。
+
+    只用于变异自证 D2：它证明「按字节读」这个选择**确实承载了信号**，
+    而不是断言碰巧对任何文件都报/都不报。
+    """
+    return Path(p).read_text(encoding="utf-8").count("\r")
+
+
+def scan_cr(paths, counter=_cr_bytes):
+    """返回 [(路径, CR 个数), …]，只列命中的。"""
+    hits = []
+    for p in paths:
+        n = counter(p)
+        if n:
+            hits.append((str(p), n))
+    return hits
+
+
+def demo_files(demo_dir):
+    """本目录下全部文件（跳过 __pycache__）。"""
+    return [p for p in sorted(Path(demo_dir).rglob("*"))
+            if p.is_file() and "__pycache__" not in p.parts]
+
+
+def selftest_cr(paths, tmp_root, check):
+    """双向变异自证：这条断言**既不漏报、也不误报**，且信号确实来自它。
+
+    口径与 R2-S 的同族：D0 基线不报 → D1 造出 CR 必须报 → D1b 纯 LF 不得误报
+    → D2 放松断言后同一份 CR 必须**变哑**（否则 D1 证明不了信号来源）。
+    """
+    base = scan_cr(paths)
+    check("CR0", "变异 D0 基线：docs/mes-demo/ 全目录按字节扫 CR = 0", not base,
+          f"扫 {len(paths)} 个文件；命中：{base or '无'}")
+
+    tmp = Path(tmp_root)
+    tmp.mkdir(parents=True, exist_ok=True)
+    crlf, lf = tmp / "crlf.json", tmp / "lf.json"
+    crlf.write_bytes(b'{\r\n  "a": 1\r\n}\r\n')      # 3 个 CR
+    lf.write_bytes(b'{\n  "a": 1\n}\n')
+
+    h1 = scan_cr([crlf])
+    check("CR1", "变异 D1：含 CRLF 的样本**必须被报出**", len(h1) == 1 and h1[0][1] == 3,
+          f"命中 {h1}（期望 3 个 CR）")
+
+    h2 = scan_cr([lf])
+    check("CR1b", "变异 D1b：纯 LF 样本**不得误报**（防「见文件就报」的假阳性）", not h2,
+          f"命中 {h2 or '无'}（期望无）")
+
+    h3 = scan_cr([crlf], counter=_cr_text)
+    check("CR2", "变异 D2：改用文本模式读后，同一份 CR 样本**必须变哑**（证明信号来自按字节读）",
+          not h3, f"文本模式命中 {h3 or '无'}（期望无 ⇒ CR1 的信号确由按字节读带来）")
 
 
 def snapshot_inbox():
@@ -150,6 +212,21 @@ def main():
         results.append((cid, title, "PASS" if ok else "FAIL", detail))
         print(f"{'PASS' if ok else 'FAIL'}  {cid:<4} {title}" + (f"\n            {detail}" if detail else ""))
 
+    def note(cid, title, detail=""):
+        """信息性输出：**不计入 PASS/FAIL、不影响退出码**。
+
+        用于那些「在评委机器上必然如此、因而不能判」的观察 —— 判红等于给每个评委发一条
+        无意义的红灯，最终把红训练成背景噪音。
+        """
+        print(f"INFO  {cid:<4} {title}" + (f"\n            {detail}" if detail else ""))
+
+    # ── 字节卫生（**最先跑**，无需浏览器）：产物与页面文件不得含 CR ────────────────
+    # 🔴 必须 read_bytes：文本模式会把 `\r\n` 归一成 `\n`，**正好把要抓的东西抹掉** ——
+    # 工具自己消掉了自己要检查的东西，与「还原时刷 mtime 把要验的证据毁掉」同族。
+    # CR0 就是那条真断言，D1/D1b/D2 是它的双向变异自证（漏报 / 误报 / 信号来源）。
+    with tempfile.TemporaryDirectory() as _td:
+        selftest_cr(demo_files(DEMO), _td, check)
+
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
@@ -164,6 +241,29 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
         try:
+            # ── T15（**信息性，不判红**）：§C.6 的 mtime 侧证据 ──────────────────────
+            # 🔴 为什么**不能**判红：**git 不保留 mtime**。任何 clone / checkout 都会把 mtime
+            # 刷成「检出时刻」⇒ 评委机器上 Δ 必然很大，**而那不是缺陷，是刚被检出**。
+            # 一条在评委机器上必然报警的门，与一条永远红的门同类 —— 都会被训练成「看见红也不当回事」。
+            # ⇒ 这里只报实测值 + 成因；**来源结论以「复现」为准**（同 fixture 重跑逐字节相同，
+            #    那条与环境无关）。本机刚由 commit.py 产出时 Δ<1s，可用来确认产出正常。
+            import datetime as _dt
+            _delta = []
+            for _n in ("inbox.json", "xj-records.json"):
+                _f = INBOX.parent / _n
+                if not _f.is_file():
+                    _delta.append(f"{_n}: 不存在")
+                    continue
+                _p = json.loads(_f.read_text(encoding="utf-8"))
+                _d = abs(_dt.datetime.fromisoformat(_p["produced_at"]).timestamp() - _f.stat().st_mtime)
+                _delta.append(f"{_n}: Δ={_d:.1f}s")
+            note("T15", "§C.6 mtime 侧证据（信息性；Δ 大**不代表**手写件，勿据此判红）",
+                 "；".join(_delta)
+                 + "。成因：clone / checkout / cp 都会把 mtime 刷成该动作的时刻，"
+                   "而 git **不保留** mtime ⇒ 评委机器上 Δ 必然很大。"
+                   "本机刚跑完 commit.py 时应 Δ<1s。**来源结论请以「复现」为准**"
+                   "（同 fixture 重跑，除 produced_at 外逐字节相同）——那条与环境无关。")
+
             # ── T11：**按分发的原样**加载（不碰 fixture）—— 期望值全部从产物现推 ──────
             # 必须先跑：它是唯一一条覆盖「评委 clone 下来直接打开」那条路径的断言。
             # 其余各条都自带 fixture，所以分发的 inbox.json 若坏了（dept 越界 / 版本不对），
@@ -367,6 +467,75 @@ def main():
                   and s10["total"] == "97" and s10["rowNos"][0] == "QA-20260106-501",
                   f"[data-q]={probe['n']} 骨架行={probe['skel']} total={s10['total']} 首行={s10['rowNos'][0]}")
             p.close()
+
+            # ── T12/T13/T14：§A.4 工单 / §A.5 设备台账 / 真 CLI 集成 ───────────────
+            # T12/T13 刻意**调用真消费者的解析器**（skills/mes-record-query/scripts/query_core.py），
+            # 而不是自己重写一份正则 —— 否则「我按自己的理解解析成功」证明不了「消费者读得懂」。
+            scripts = REPO / "skills" / "mes-record-query" / "scripts"
+            if not (scripts / "query_core.py").is_file():
+                check("T12", "§A.4 工单数据合规", False, f"找不到消费者解析器：{scripts / 'query_core.py'}")
+                check("T13", "§A.5 设备台账合规", False, "同上（消费者缺席，无法验证）")
+                check("T14", "真 query.py 集成（无 --proto）", False, "同上")
+            else:
+                sys.path.insert(0, str(scripts))
+                import query_core                                     # noqa: E402
+                html = (DEMO / "index.html").read_text(encoding="utf-8")
+                wo_st = query_core.parse_wo_state(html)
+                wos = query_core.parse_workorders(html)
+                bad_st = sorted({w["st"] for w in wos.values() if w["st"] not in wo_st})
+                bad_line = sorted(no for no, w in wos.items() if w["line"] == "")   # 空串冒充未派线
+                bad_no = sorted(no for no in wos if not query_core.RE_WO.fullmatch(no))
+                # 消费者的 _js_num 返回的是**字符串**（`"2400"`），不是 int —— 按它的真实返回值判
+                bad_qty = sorted(no for no, w in wos.items()
+                                 if not str(w["qty"] or "").isdigit() or int(w["qty"]) <= 0)
+                # 状态覆盖：running / pending / done 各至少一条
+                need = {"running", "pending", "done"}
+                missing = sorted(need - {w["st"] for w in wos.values()})
+                check("T12", "§A.4 工单：消费者解析得到；st 全在 WO_ST 内；line 未用空串冒充；状态覆盖齐",
+                      len(wos) >= 3 and not bad_st and not bad_line and not bad_no and not bad_qty and not missing,
+                      f"解析 {len(wos)} 条 / WO_ST {len(wo_st)} 态；非法 st={bad_st or '无'}；"
+                      f"空串 line={bad_line or '无'}；号不合式={bad_no or '无'}；数量异常={bad_qty or '无'}；缺状态={missing or '无'}")
+
+                eq = query_core.parse_equipment(html)
+                EQ_ST = {"在用", "维修中", "停用", "已报废"}
+                bad_eq = [(r["code"], r["st"]) for r in eq if r["st"] not in EQ_ST]
+                thin = [r["code"] for r in eq if "?" in (r["name"], r["station"], r["ws_line"], r["iface"], r["st_show"])]
+                check("T13", "§A.5 设备台账：消费者解析得到 ≥5 行、data-st 合法、前 6 列齐",
+                      len(eq) >= 5 and not bad_eq and not thin
+                      and len({r["st"] for r in eq}) >= 2,
+                      f"解析 {len(eq)} 行 / 状态 {sorted({r['st'] for r in eq})}；"
+                      f"非法 data-st={bad_eq or '无'}；列不全={thin or '无'}")
+
+                # 真 CLI：**不带 --proto**，走「仓库内默认宿主页」这条解析路径
+                cli_env = {k: v for k, v in os.environ.items() if k != "MES_PROTO"}
+                cli_env["PYTHONIOENCODING"] = "utf-8"
+                qpy = str(scripts / "query.py")
+
+                def run_q(*args):
+                    r = subprocess.run([sys.executable, qpy, *args], capture_output=True, text=True,
+                                       encoding="utf-8", errors="replace", env=cli_env, cwd=str(REPO))
+                    return r.returncode, (r.stdout or "") + (r.stderr or "")
+
+                wo_no = sorted(wos)[0]
+                # 挑一条**非 done** 的工单来验状态回落（done 之外才有「非终态」意义），没有就用第一条
+                cnt_no = next((n for n, w in sorted(wos.items()) if w["st"] != "done"), wo_no)
+                rc1, out1 = run_q("--wo", cnt_no)
+                rc2, out2 = run_q("--dev", eq[0]["code"])
+                rc3, out3 = run_q("--check", wo_no)
+                # 状态非法时**不要**在这里 KeyError —— 那会让已经抓到的 T12 被一个 traceback 打断。
+                # 取不到期望值就让 T14 干净地 FAIL，讲清「无法比对」。
+                st_key = wos[cnt_no]["st"]
+                want_cn = wo_st[st_key][0] if st_key in wo_st else None
+                check("T14", "真 query.py 无 --proto 三连：--wo / --dev / --check 均 EXIT=0 且答对",
+                      rc1 == 0 and want_cn is not None and want_cn in out1
+                      and rc2 == 0 and eq[0]["name"] in out2
+                      and rc3 == 0 and "已占用" in out3,
+                      f"--wo rc={rc1} 期望状态={want_cn!r}（st={st_key!r}）；"
+                      f"--dev rc={rc2} 期望设备={eq[0]['name']!r}；--check rc={rc3} 含已占用={'已占用' in out3}")
+        except Exception as exc:        # noqa: BLE001
+            # 断言期任何未预期异常都不该让整轮变成 traceback：那样后面的断言不跑、汇总也不打，
+            # 看起来像「崩溃」而不是「某条失败」，正好掩盖已经抓到的错。记 FAIL 后照常汇总。
+            check("EXC", "自检执行中断（未预期异常）", False, f"{type(exc).__name__}: {exc}")
         finally:
             browser.close()
             srv.shutdown()

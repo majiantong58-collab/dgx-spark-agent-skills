@@ -17,6 +17,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+# 本技能的产物须可复现（契约 §C.6）：import 顺手写的 __pycache__ 是**非产物噪声**，
+# 会污染「同 fixture 重跑 ⇒ 逐字节相同」的比对面。关掉字节码落盘。
+sys.dont_write_bytecode = True
+
 import intake_core as core  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[3]

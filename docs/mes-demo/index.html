@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MES 桥 · 最小可复现宿主页（示例数据）</title>
 <!--
-  最小可复现宿主页 —— 按 docs/agents/mes-bridge-contract.md v1.13 实现，不复制任何第三方原型代码。
+  最小可复现宿主页 —— 按 docs/agents/mes-bridge-contract.md v1.14 实现，不复制任何第三方原型代码。
   目的：让克隆本仓库的人只凭本仓库即可跑通「起 http.server → 打开页面 → 落单出现在列表里」。
   全部数据为自造示例，不含任何客户名或第三方数据。
   实现要点对照：§A.1 落点 / §A.3 状态徽标 / §B.1 addExcRow / §B.2 excRowHtml / §B.4 幂等
@@ -53,6 +53,8 @@
   <h1>物料品质异常单 · 最小可复现宿主页<span class="tag">示例数据 · 非真实产线</span></h1>
   <nav>
     <a href="#view=qm-quality-exception" data-nav="qm-quality-exception">物料品质异常单</a>
+    <a href="#view=mes-workorder" data-nav="mes-workorder">工单</a>
+    <a href="#view=dcm-equipment-ledger" data-nav="dcm-equipment-ledger">设备台账</a>
     <a href="#view=demo-home" data-nav="demo-home">示例首页</a>
   </nav>
 </header>
@@ -83,6 +85,47 @@
     </div>
   </section>
 
+  <!-- §A.4 工单：静态 DOM 是空的，行由 JS 从 WORKORDERS 渲染（与参考实现同形） -->
+  <section class="mview" data-view="mes-workorder" hidden>
+    <p class="stats">工单数据源：脚本数组 <code>WORKORDERS</code>（§A.4）· 示例数据</p>
+    <table>
+      <thead>
+        <tr><th>工单号</th><th>数量</th><th>计划开始</th><th>计划结束</th><th>产线</th><th>状态</th></tr>
+      </thead>
+      <tbody data-wo-body></tbody>
+    </table>
+  </section>
+
+  <!-- §A.5 设备台账：静态标注行；data-dcm-eq-row 必须紧跟 <tr （消费者按此正则匹配） -->
+  <section class="mview" data-view="dcm-equipment-ledger" hidden>
+    <p class="stats">设备台账数据源：静态标注行 <code>tr[data-dcm-eq-row]</code>（§A.5）· 示例数据</p>
+    <table>
+      <thead>
+        <tr><th>设备编号</th><th>名称·型号</th><th>所属工位</th><th>车间·产线</th><th>接口类型</th><th>状态</th></tr>
+      </thead>
+      <tbody>
+        <tr data-dcm-eq-row data-st="在用">
+          <td>FT-01</td><td>飞针测试机 · FTA-300</td><td>测试工位 1</td><td>一号车间 · SMT-2 线</td><td>RS-232</td><td>在用</td>
+        </tr>
+        <tr data-dcm-eq-row data-st="在用">
+          <td>FT-02</td><td>飞针测试机 · FTA-300</td><td>测试工位 2</td><td>一号车间 · SMT-2 线</td><td>RS-232</td><td>在用</td>
+        </tr>
+        <tr data-dcm-eq-row data-st="在用">
+          <td>AOI-01</td><td>自动光学检测机 · AOI-880</td><td>检测工位 1</td><td>一号车间 · SMT-1 线</td><td>以太网</td><td>在用</td>
+        </tr>
+        <tr data-dcm-eq-row data-st="维修中">
+          <td>AOI-02</td><td>自动光学检测机 · AOI-880</td><td>检测工位 2</td><td>一号车间 · SMT-1 线</td><td>以太网</td><td>维修中</td>
+        </tr>
+        <tr data-dcm-eq-row data-st="停用">
+          <td>ICT-01</td><td>在线测试机 · ICT-500</td><td>测试工位 3</td><td>二号车间 · DIP-1 线</td><td>GPIB</td><td>停用</td>
+        </tr>
+        <tr data-dcm-eq-row data-st="已报废">
+          <td>ICT-02</td><td>在线测试机 · ICT-500</td><td>测试工位 4</td><td>二号车间 · DIP-1 线</td><td>GPIB</td><td>已报废</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
   <section class="mview" data-view="demo-home" hidden>
     <p>示例首页。切走再切回「物料品质异常单」用于验证 §B.4 幂等：<code>viewready</code> 每次切回都会重触发。</p>
   </section>
@@ -109,6 +152,46 @@
     recheck:  { cls: 'badge-quarantine', text: '复验中' },
     closed:   { cls: 'badge-success',    text: '已关闭' }
   };
+
+  // ── §A.4 工单：状态映射 + 脚本数据数组 ──────────────────────────────────────
+  // 消费者（mes-record-query）按源码文本解析这两个结构，故：键名与单引号形式是接口的一部分。
+  var WO_ST = {
+    created:   ['已创建', 'badge-neutral'],
+    pending:   ['待开工', 'badge-warning'],
+    running:   ['生产中', 'badge-info'],
+    paused:    ['已暂停', 'badge-quarantine'],
+    done:      ['已完工', 'badge-success'],
+    closed:    ['已关闭', 'badge-success'],
+    cancelled: ['已取消', 'badge-neutral']
+  };
+
+  // 一行一条：`no: '…'` 与 `st: '…'` 必须在同一行（消费方按行解析）。
+  // line: null 表示未派线 —— 契约明令不得用空串冒充。
+  var WORKORDERS = [
+    { no: 'MO-20260105-001', qty: 2400, ps: '2026-01-05 08:00', pe: '2026-01-05 20:00', st: 'done',    sync: '2026-01-05 20:12', line: 'SMT-1 线', reason: '' },
+    { no: 'MO-20260106-002', qty: 1800, ps: '2026-01-06 08:00', pe: '2026-01-06 20:00', st: 'running', sync: '2026-01-06 08:05', line: 'SMT-2 线', reason: '' },
+    { no: 'MO-20260106-003', qty: 960,  ps: '2026-01-06 13:00', pe: '2026-01-07 01:00', st: 'pending', sync: '2026-01-06 13:02', line: null,      reason: '' },
+    { no: 'MO-20260107-004', qty: 1200, ps: '2026-01-07 08:00', pe: '2026-01-07 20:00', st: 'paused',  sync: '2026-01-07 09:30', line: 'SMT-1 线', reason: '物料待检' },
+    { no: 'MO-20260107-005', qty: 300,  ps: '2026-01-07 13:00', pe: '2026-01-07 17:00', st: 'created', sync: '2026-01-07 13:01', line: null,      reason: '' }
+  ];
+
+  // 渲染成表（契约 §A.4「渲染行」为可选）：行为 tr[data-wo]，单元格带 data-colid。
+  // colid 取值契约未定，本页取字段名 —— 属 [团队自定]。
+  function renderWorkOrders() {
+    var tb = document.querySelector('[data-wo-body]');
+    if (!tb) { return; }
+    tb.innerHTML = WORKORDERS.map(function (w) {
+      var st = WO_ST[w.st] || ['（未知状态）', 'badge-neutral'];
+      return '<tr data-wo="' + esc(w.no) + '">'
+           + '<td data-colid="no">' + esc(w.no) + '</td>'
+           + '<td data-colid="qty">' + esc(w.qty) + '</td>'
+           + '<td data-colid="ps">' + esc(w.ps) + '</td>'
+           + '<td data-colid="pe">' + esc(w.pe) + '</td>'
+           + '<td data-colid="line">' + (w.line == null ? '未派线' : esc(w.line)) + '</td>'
+           + '<td data-colid="st"><span class="badge ' + st[1] + '">' + st[0] + '</span></td>'
+           + '</tr>';
+    }).join('');
+  }
 
   // ── §D 安全 ────────────────────────────────────────────────────────────────
   // 本宿主页的 esc 比被替换实现更严：连引号一并转义。
@@ -354,7 +437,8 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     seedRows();
-    var q = document.querySelector('[data-q]');   // 查询入口约定名，§E.1 v1.13
+    renderWorkOrders();
+    var q = document.querySelector('[data-q]');   // 查询入口约定名，§E.1
     if (q) { q.addEventListener('click', runQuery); }
     route();
   });

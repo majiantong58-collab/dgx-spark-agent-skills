@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -59,17 +60,42 @@ def build_parser():
     x = sub.add_parser("run", help="跑闭环：识别产物 → 规则 → 落单 → 回执 → 成文")
     x.add_argument("--finding", required=True, help="识别层产物 JSON（orchestrator 信封，含 findings[]）")
     x.add_argument("--out-dir", required=True, help="mes-data 目录（intake 在此落 inbox.json / xj-records.json）")
-    x.add_argument("--proto", required=True, help="MES 原型 index.html 或所在目录（**必填，不猜路径**）")
+    x.add_argument("--proto", default=None,
+                   help="MES 宿主页 index.html 或所在目录。缺省序：--proto > MES_PROTO 环境变量 > "
+                        "仓库内 docs/mes-demo/index.html；三者皆无则报错要求显式传入（不猜路径）")
     x.add_argument("--candidate", default=None, help="可选：落单前先查重的候选号；已占用则不落单")
     return parser
 
 
+def host_page():
+    """仓库内最小宿主页（已知回退，**不是猜测**）。装到别处则解析不到 → None。"""
+    cand = REPO / "docs" / "mes-demo" / "index.html"
+    return cand if cand.is_file() else None
+
+
 def resolve_proto(raw):
+    """缺省序：`--proto` > `MES_PROTO` 环境变量 > 仓库内宿主页 `docs/mes-demo/index.html`。
+
+    🔴 **三者皆无即报错问，不猜路径**——默认值是**已知的**回退，不是「随便找个像的」。
+    """
+    source = "--proto"
+    if not raw:
+        raw = os.environ.get("MES_PROTO")
+        source = "MES_PROTO 环境变量"
+    if not raw:
+        cand = host_page()
+        if cand is None:
+            raise core.LoopError(
+                "缺少 --proto：本技能未随仓库内宿主页安装（docs/mes-demo/index.html 不存在），"
+                "请显式告知 MES 宿主页 index.html 的位置（本技能不猜默认路径）"
+            )
+        raw, source = str(cand), "仓库内默认宿主页"
     path = Path(raw)
     if path.is_dir():
         path = path / "index.html"
     if not path.is_file():
-        raise core.LoopError(f"--proto 指向的原型文件不存在：{path.name}")
+        raise core.LoopError(f"{source} 指向的原型文件不存在：{path.name}")
+    print(f"[loop] 宿主页：{path.name}（来源：{source}）")
     return path
 
 
