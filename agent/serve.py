@@ -37,6 +37,8 @@ import mes_agent  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 MES_URL = "http://127.0.0.1:8790/index.html"   # 由 main() 覆盖
+# 与 mes_agent.py 同一个缺省序：请求里指定 > ANTHROPIC_MODEL > 兜底名
+DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL") or "claude-haiku-4-5-20251001"
 
 
 def redact(text) -> str:
@@ -96,7 +98,15 @@ class Handler(BaseHTTPRequestHandler):
                        "text/html; charset=utf-8")
             return
         if route == "/health":
-            self._json({"ok": True, "mes_url": MES_URL})
+            # 自报用的是哪个模型与端点 —— 「模型自己说它是什么」不可信（它答的是系统提示），
+            # 配置才是真源。模型名不含凭据，可以外露；token 一律不外露。
+            self._json({
+                "ok": True,
+                "mes_url": MES_URL,
+                "model": DEFAULT_MODEL,
+                "endpoint_host": (os.environ.get("ANTHROPIC_BASE_URL") or "").split("//")[-1].split("/")[0] or None,
+                "model_is_local": False,
+            })
             return
         self._json({"error": "没有这个路径"}, 404)
 
