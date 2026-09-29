@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""MES Agent —— 一个真循环的智能体，挂在威马 MES 上。
+"""MES Agent —— 一个真循环的智能体，挂在 AgileMoM MES 上。
 
 它和「skill」的区别
 -------------------
@@ -59,7 +59,7 @@ for _s in (sys.stdout, sys.stderr):
 
 MAX_ROUNDS = 8  # 预算闸：循环不可能无限转（没有这个闸，一个坏工具就能烧到底）
 
-SYSTEM = """你是威马 MES 的品质助手，接在一条「巡检 Agent → MES 落单」的链路上。
+SYSTEM = """你是 AgileMoM MES 的品质助手，接在一条「巡检 Agent → MES 落单」的链路上。
 
 铁律（违反比答不出来更糟）：
 1. **只讲查得到的事实**。你手上有工具，查了再说。查不到就说"没查到"，绝不推测数据。
