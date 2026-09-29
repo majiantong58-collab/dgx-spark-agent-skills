@@ -4,6 +4,10 @@
 
 ## 项目简介
 
+> **问题**：车间着装合规靠人工巡检，而贵层视觉模型一次推理 9–10 秒、云端按次计费——全程跑贵层既慢又贵。
+> **做法**：三层分级路由——便宜层先判，无人帧 0.1 秒级直接短路、绝不调用贵层；识别结果经 MES 桥自动落单，旁边挂一个只做清单里事的 Agent 助手。
+> **结果**：无人帧 Tier 1 零调用；加载 skill 后触发准确率 0.550 → 0.975、幻觉 19 → 0（四臂消融 480 次调用，成本 12.34 元）。
+
 一套**跑在笔记本上的本地三层视觉巡检系统**，交付 **8 个 Agent Skills**，分两组：
 
 - **巡检组（4 个）** —— 1 编排 + 3 窄触发子技能，场景是**电子厂洁净车间的着装合规检查**（防尘帽 / 防静电服）。
@@ -14,6 +18,15 @@
   见下方「**MES 桥**」一节；接口真源是 `docs/agents/mes-bridge-contract.md`。
 
 > 完整立意、场景定义与全部决策见 `docs/agents/decision-log.md`；交付说明见 `docs/DELIVERY.md`。
+
+## 结果速览（一屏看完，细节见对应章节）
+
+| 关键问题 | 答案 | 详情 |
+|---|---|---|
+| skill 有没有用（加载 vs 不加载） | 触发准确率 0.550 → **0.975** · 结论正确率 0.167 → **1.000** · 幻觉 19 → **0** · 幽灵技能调用 76 → **0** | §核心实验结果 |
+| 分层有没有省（三张实拍照片） | 无人帧 Tier 1 调用 **0** 次（Tier 0 短路）· 有人帧 1 次 · Tier 2 调用 **0** 次（未授权，如实声明） | §三层架构 |
+| MES 闭环 | 识别结果自动落单（计数 96 → 97）· 助手 5 个工具清单化、清单外直说做不了 | §MES 桥 · §MES 助手 |
+| 诚实性 | 未在 DGX Spark 实测 · 7 条 findings 全部不下结论 · 每个数字可回溯落盘文件 | §诚实的局限 · §真值来源声明 |
 
 ## 快速开始
 
@@ -69,7 +82,7 @@ bash scripts/fetch_yolo.sh    # yolo11n.pt   → models/（约 5.6 MB）
 # 3a · 先装 CUDA 版 torch（必须指定 cu128 专用索引）
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
 
-# 3b · 再装其余依赖（requirements.txt，共 8 项）
+# 3b · 再装其余依赖（requirements.txt，共 9 项）
 pip install -r requirements.txt
 
 # 3c · 自检：两个值都要对
@@ -81,7 +94,7 @@ python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
 >
 > `[核实程度]` **已在隔离的干净克隆上实测跑通**：第 1 步建环境；
 > 第 4 步的**服务启动、页面 200、`/photos` 接口**；第 5 步的 ①②③⑤
-> （② 四个 skill 全 PASS；③⑤ 退出码 0；① 在给定 `--photos` 时退出码 0、且未改写 `docs/local_tier_metrics.json`）。
+> （② 干净克隆上跑了 4 个 skill 全 PASS（8/8 完整记录见 `docs/SUBMISSION-CHECKLIST.md`）；③⑤ 退出码 0；① 在给定 `--photos` 时退出码 0、且未改写 `docs/local_tier_metrics.json`）。
 > **未在干净环境重跑**：第 2 步（4.3 GB 权重下载）、第 3 步（CUDA 版 torch 安装）、
 > 以及 ④（需 StepFun 凭据）——都要拉数 GB 或依赖 GPU/付费接口，本次未执行。
 > 这三项的命令沿用既有实测记录（`docs/DELIVERY.md` §5.1–§5.2、`docs/local_tier_benchmark.json` 的 `meta`）。
@@ -93,9 +106,9 @@ python ui/server.py
 ```
 
 浏览器打开 <http://127.0.0.1:8770>，点左侧的**内置样片**，或直接把一张车间照片拖进去，等结果
-（**有人帧**约 14.35–25.2 s；**无人帧** 0.11–0.16 s 就返回——Tier 0 判定无人即短路，根本不进贵层）。
+（**有人帧**十几秒、**无人帧** 0.1 秒量级就返回——Tier 0 未检出人形框即短路，根本不进贵层；区间与批次区分见 §三层架构）。
 
-> 启动时先预热（终端有 `[prewarm]` 日志）：Tier 0 冷启动约 4 s + Tier 1 权重加载约 20 s，
+> 启动时先预热（终端有 `[prewarm]` 日志）：Tier 0 冷启动 [3.976, 4.147] s、Tier 1 冷启动 [19.362, 20.638] s（后者含解释器启动与首次推理，其中仅权重加载约 3.11 s），
 > **这期间页面还没就绪**。（若样片目录为空，预热会跳过，服务立刻起来——此时首帧要现付冷启动。）
 > 这是**唯一不需要自备素材**的入口。它只调 `run_frame`，**不写任何实验产物**
 > （不碰 `docs/local_tier_*.json*`，也不碰 `skills/evals/results/`）；界面自己的台账写在 `ui/ui_runs.jsonl`，只追加。
@@ -151,14 +164,24 @@ python ui/server.py
 
 ## 三层架构与各层状态
 
-请求自下而上逐层升级，**每层都可以短路**——便宜层能定案，就不进贵层。
+请求自下而上逐层升级，**层与层之间可以短路**——便宜层能定案，就不进贵层（本轮实测的短路在 Tier 0：未检出人形框即终止，见分层效果表）。
+
+```mermaid
+flowchart TD
+  P[车间照片] --> T0["Tier 0 · YOLO11n 人形检测（本地）"]
+  T0 -- "未检出人形框 → 终止" --> S[短路：0.1 秒级 · 贵层 0 次调用]
+  T0 -- "检出人形框" --> T05["Tier 0.5 · 颜色启发式初筛（纯代码）"]
+  T05 -- "把握达线 · 不下结论" --> R["疑似项 → 交人工复核"]
+  T05 -- "调用复核" --> T1["Tier 1 · Qwen3-VL-2B 本地判读（输出不参与判定）"]
+  T1 -. "未授权 · 调用 0 次" .-> T2["Tier 2 · StepFun 云端"]
+```
 
 | 层 | 组件 | 载体 | 职责 | 状态 |
 |---|---|---|---|---|
 | **Tier 0** | YOLO11n | 本地权重（不入库，见快速开始） | 人形定位与计数；**未检出人形框的帧直接短路**（≠「画面无人」——**检测器故障已与「画面无人」分开**，见 §局限） | **已实现** |
 | **Tier 0.5** | 颜色-几何启发式 | 纯代码，零模型依赖 | 着装颜色初筛 | **已实现** |
 | **Tier 1** | Qwen3-VL-2B | 本地权重（不入库，见快速开始） | 本地视觉判读；**设计意图**是复核 Tier 0.5，**当前输出不参与判定链路**（见 `docs/DELIVERY.md` §8.2⑩） | ⚠️ **已调用，但不参与判定** |
-| **Tier 2** | StepFun `step-5-preview` | 云端 API | 多目标冲突 / 成文措辞 | **已实现；本次运行未启用云端授权** |
+| **Tier 2** | StepFun `step-5-preview` | 云端 API | 多目标冲突 / 成文措辞 | **代码已实现；通路未验证（本次未授权、调用 0 次）** |
 
 > **Tier 0 不认识任何 PPE 类别。** COCO 版 yolo11n 没有「防尘帽 / 防静电服」类别，
 > 它的职责**仅为**人形定位与计数，**不作为 PPE 判定依据**。`[来源: docs/local-tier-limitations.md]`
@@ -181,16 +204,16 @@ python ui/server.py
 - **冷启动** ＝ 从**进程启动**（模块 import 时刻）到该层**首次产出结果**，含解释器启动、import、
   CUDA 初始化、模型加载、首次推理。
 - **稳态** ＝ 模型已加载后的单次调用。
-  两者差几个数量级（如 Tier 0：冷启动约 4 s 对稳态约 15 ms），**合成一个数即失去意义**。
+  两者差几个数量级（如 Tier 0：冷启动 [3.976, 4.147] s 对稳态 [14.29, 51.42] ms），**合成一个数即失去意义**。
 
 **波动与已知异常（有多少报多少，不掩盖）**：
 
 - 🔴 **Tier 0 的稳态区间是双峰的，且可解释**：每个进程内**第 1 次稳态调用恒为 ~43–51 ms**，
-  第 2 次起落到 **~14–16 ms**，三个进程各自复现。这是**进程内首次调用仍受 CUDA 分配器 / 图预热影响的
+  第 2 次起落到 **~14–17 ms**，三个进程各自复现。这是**进程内首次调用仍受 CUDA 分配器 / 图预热影响的
   系统性现象，不是随机离群**。上表区间**已包含该效应、未剔除**——因为它会真实地出现在每个新进程的第一次调用上。
   **若只关心完全预热后的值，参考区间为 [14.29, 17.41] ms。**
 - Tier 0.5 极稳：15 个样本全落在 [16.12, 18.58]，无预热效应（纯 CPU 无状态）。
-- Tier 1 稳态极差 1556.69 ms（相对波动约 17%）；生成长度固定 180 tokens（`max_new_tokens=200`），
+- Tier 1 稳态极差 1556.69 ms（相对波动 15.8% 对均值 / 17.2% 对区间下限）；生成长度固定 180 tokens（`max_new_tokens=200`），
   故波动来自推理本身而非输出长度差异。
 
 **显存（MiB，`1024^2` 字节）——一条诚实的警示**：
@@ -225,9 +248,13 @@ python ui/server.py
 | photo3 | 1 | **0** | **0** | 0 | 0 | **`no_person`：未进入 Tier 0.5，未调用 Tier 1** |
 | **合计** | **3** | **2** | **2** | **0** | **7** | — |
 
-photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而是根本不跑**。
-墙钟时间上，无人帧与走完全程的帧**相差约两个数量级**（单次点测 0.11–0.16 s 对 14.35–25.2 s）。
-> ⚠️ **墙钟时间会波动，不作为对外指标引用**；三次重跑合计 **23.11 / 23.67 / 33.68 s**。
+photo3 在 Tier 0 未检出人形框即短路——**不是把模型跑得更快，而是根本不跑**。
+墙钟时间上，无人帧与走完全程的帧**相差约两个数量级**（三批重跑区间：无人 0.11–0.16 s 对有人 14.35–25.20 s）。
+
+> **批次说明**：本表（`docs/local_tier_metrics.json`）测于**未打码**的三张实拍图；界面内置的**打码样片**
+> 对应 `docs/local_tier_metrics_blurred.json`（墙钟单次点测 24.73 / 8.36 / 0.17 s）。
+> **两批 `tier_calls` 完全一致**——打码只改像素，不改变分层行为；墙钟因批次不同**不可互套**。
+> ⚠️ **墙钟时间会波动，不作为对外指标引用**；本轮 v2a 三次重跑合计 **23.11 / 23.67 / 33.68 s**（台账另记两条不同配置的运行，不与 v2a 并列）。
 > `[来源: docs/local_tier_variance.jsonl]`
 
 ### Tier 2 本次未调用——原因需说清 `[来源: docs/local_tier_metrics.json 的 note 字段]`
@@ -235,7 +262,7 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 `tier2_used: false`，全轮 Tier 2 调用 **0 次**。但原因**不是**「路由器判断不需要」，
 而是**本次运行 Tier 2 未获授权**（`cloud_authorized=False`），`route.enforce_safety_boundary` 会将其**压回本地**。
 
-> **本次运行未启用云端授权，Tier 2 通路未被触发、也未被验证。因此本次数据不能用于说明「云端按需触发」的效率。**
+> **本次运行未启用云端授权，Tier 2 通路未被触发、也未被验证。因此本次数据不能说明云端路径的效率。**
 
 ### 关于「适配 DGX Spark」
 
@@ -268,157 +295,6 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 > Δ2 是同一 skill 内部的 description 变体对照。**两者不可等同、不可相加，也不能把 Δ2 当作 Skill Lift 报出去。**
 >
 > `[来源: skills/evals/results/report.md；skills/evals/results/variance-log.md]`
-
-## 交付物指引
-
-| 交付物 | 位置 |
-|---|---|
-| **4 个巡检 skill**（本赛核心交付物） | `skills/inspection-orchestrator/` · `safety-hazard-detection/` · `gauge-reading/` · `inspection-report/` |
-| **4 个 MES skill**（把发现落成业务动作） | `skills/mes-business-rules/` · `mes-inspection-intake/` · `mes-record-query/` · `mes-closed-loop/` |
-| **MES 助手**（5 工具清单化 · 清单外直说做不了） | `agent/`（`serve.py` 8791 + `mes_agent.py` + `mes_tools.py` + `agent_page.html`） |
-| **自建 43 视图 MES 原型**（脱敏后，可公开） | `docs/mes-demo/prototype.html` |
-| **可交互演示界面**（跑得起来的入口） | `ui/server.py` + `ui/index.html`（`python ui/server.py` → <http://127.0.0.1:8770>） |
-| **演示样片**（打码后，可公开） | `assets/samples/`（3 张，界面内置） |
-| **权重下载脚本**（不入库，跑前必做） | `scripts/fetch_ms.sh` · `scripts/fetch_yolo.sh`（备用 `scripts/fetch.sh` · `scripts/fetch_smol.sh`） |
-| **交付说明**（技术栈 + 部署 + 安全设计） | `docs/DELIVERY.md` |
-| **产品需求与实现状态** | `docs/PRD.md` |
-| **逐层性能基准**（冷启动 / 稳态 / 显存，机器可读） | `docs/local_tier_benchmark.json` · `docs/local_tier_benchmark.md` |
-| **逐层基准复现脚本 + 原始样本** | `skills/evals/bench_layers.py` · `skills/evals/bench_raw_tier0.json` · `bench_raw_tier0_5.json` · `bench_raw_tier1.json` |
-| **逐层调用次数**（`tier_calls`，机器可读） | `docs/local_tier_metrics.json` |
-| **墙钟方差证据**（三次重跑） | `docs/local_tier_variance.jsonl` |
-| **流水线逐帧结果**（三张照片的完整 findings） | `skills/evals/pipeline_results.json` |
-| **四臂评测结果** | `skills/evals/results/{A,B,C,D}.json`、`report.md`、`diagnostics.json`、`variance-log.md` |
-| **评测设计 / 指标定义 / 合规门禁** | `skills/evals/comparison-design.md` · `metrics.json` · `check-compliance.md` |
-| **能力边界说明** | `docs/local-tier-limitations.md` |
-| **演示视频脚本** | `docs/demo-script.md`（**脚本已就绪；视频成片未落盘入库**） |
-| **赛事征文草稿** | `docs/article-draft.md` |
-| **决策日志 / ADR** | `docs/agents/decision-log.md` · `docs/adr/` |
-
-## 诚实的局限
-
-本节只列结论，**完整清单与依据见 `docs/DELIVERY.md` §8**。
-
-1. **未在 DGX Spark 上实测** —— 未申请到节点，本版本是笔记本上的同架构受限版（见上）。
-2. **不可检测项**：通道堵塞、设备渗漏、明火烟雾、未戴手套 / 口罩——Tier 0 与 Tier 0.5 均**无此判据**；
-   本流水线**不做仪表读数**（读数由 `gauge-reading` 负责）。**表上一个 ❌，就是演示里一句不能说的话。**
-3. **Tier 0.5 对白色着装召回为 0**——
-   「没找到」不构成未佩戴 PPE 的证据。**成因是实现缺陷，不是设计约束**：白色区间被饱和度下限整体清零，
-   且站点参数只配了蓝色区间（技能自己的场景表却写着「蓝色**或白色**」）。
-   **但修复后把握仍全部低于 0.75 阈值，本层仍然不下结论。** 详见 `docs/local-tier-limitations.md` §1。
-4. **本轮没有下任何最终结论**：7 条 findings **全部为 `uncertain`**，置信度区间 **0.000–0.463**，全部低于 0.75 阈值。
-5. **精确人数不可宣称**：photo1 上 YOLO 报 6 人、Tier 1 VLM 报 5 人，未逐像素人工复核，无法裁决谁对。
-6. **测试素材是程序合成的**：四臂消融用的测试图是用 Pillow 画的示意图，
-   仓库标注 `usable_as_accuracy_evidence: false`，**不能作为识别准确率的证据**。
-7. **Tier 1 显存未完全回落**（推理后 +37.3 MiB，疑为分配器缓存，非必然泄漏）——**长跑前建议加监控**。
-8. **零结果如实呈现**：Δ2 = 0.000（见上），本样本未观测到 Not-for 段的边际收益。
-9. **团队无行业背景、无专有数据**，全部使用公开数据；**不主张任何生产环境下的落地效果**。
-
-### 关于测试素材的声明
-
-**测试素材为真实车间照片；因涉及肖像权（画面含可辨认的工人人脸，当事人未同意公开发布），
-我们刻意不公开未打码的原图**——照片仅在本地实验中用于验证链路。
-
-**仓库内图像仅含已打码样片与合成图；本地实验用未打码原图不入库。**
-（本节第 6 条所述的合成示意图属「合成图」那一类，可随仓库分发。）
-
-> 🔴 **截图含脸张数做不到逐张判定，请勿引用任何具体张数。**
-> 该目录按最坏情况整体处置：`ui/screenshots/` **整个目录不进仓库**，不做筛选式的部分入库。
-> 审计过程与依据见 `docs/agents/clone-preflight-findings.md` 硬伤 3 与第三部分。
-
-## 真值来源声明
-
-**本 README 中出现的每一个性能 / 评测数字，均可回溯到下列已落盘文件。未落盘的数字一律未写入。**
-评委可按此清单逐项核查：
-
-| 数字类别 | 落盘文件 |
-|---|---|
-| 逐层冷启动 / 稳态延迟 / 显存 / 吞吐条件 | `docs/local_tier_benchmark.json`（原始样本 `skills/evals/bench_raw_tier0.json` 等） |
-| 逐层调用次数、Tier 2 授权状态、短路原因 | `docs/local_tier_metrics.json` |
-| 墙钟时间（三次重跑区间） | `docs/local_tier_variance.jsonl` |
-| 四臂 13 项指标、Δ1 / Δ2、敏感性分析、硬门禁判定 | `skills/evals/results/report.md`、`diagnostics.json` |
-| 逐臂逐次原始结果 | `skills/evals/results/{A,B,C,D}.json` |
-| token / 成本 / 方差 | `skills/evals/results/variance-log.md` |
-| findings 条数与 severity 计数、置信度区间 | `skills/evals/pipeline_results.json`（统计方法见 `docs/DELIVERY.md` §4） |
-| 用例构成（40 = 正向 21 / 负向 16 / 空结论 3） | `skills/README.md` §6、各 skill 的 `evals/cases.jsonl` |
-| 依赖清单（8 项） | `requirements.txt` |
-| 环境（Python 3.12.10、RTX 5060 Laptop、torch 2.11.0+cu128） | `docs/local_tier_benchmark.json` 的 `meta`、`docs/DELIVERY.md` §5.1 |
-
-**口径纪律**（引用时请一并遵守）：
-
-- **墙钟时间只给区间，不给单点**——同配置重跑的数值不得互相套用。
-- **冷启动与稳态分列，不合成一个数**——两者口径不同，混合后失去意义。
-- **延迟一律报 `[min, max]` 区间**，不得用「约」掩盖波动，也不得隐去已知异常
-  （如 Tier 0 每进程首次调用的 ~43–51 ms）。
-- **逐层延迟 / 显存只引 `docs/local_tier_benchmark.json`；各层调用次数只引 `docs/local_tier_metrics.json`**
-  ——两文件各管一摊，**不得交叉引用数字**，且二者**不属于同一轮测量**。
-- **加速比只说「相差约两个数量级」**，不报单点倍数。
-- **Δ2 只在「本技能口径」下作为主结论**；广义口径数字单列，两者不可相减。
-- 未在真值来源文件中落盘的数值，本 README 一律未引用。
-
-## 竞赛信息
-
-- **截止日期**: 2026年9月29日 23:59
-- **总决赛**: 2026年10月15日（苏州金鸡湖）
-- **奖品**: 冠军获得华硕 Ascent GX10 + StepPlan Max（价值6666元）
-
-## 项目结构
-
-```
-.
-├── skills/                       # ← 本赛核心交付物
-│   ├── inspection-orchestrator/  #   编排：决定调谁、定层级
-│   ├── safety-hazard-detection/  #   窄触发：图像 → 隐患标签（含本地三层流水线）
-│   ├── gauge-reading/            #   窄触发：表盘 → 一个数
-│   ├── inspection-report/        #   窄触发：结论 → 报告
-│   └── evals/                    #   顶层四臂消融套件（A/B/C/D，40 条用例）
-│       ├── run_comparison.py     #     评测执行器（--concurrency 必须 ≤ 5）
-│       ├── run_e2e.py            #     端到端最小通路 + token 采集
-│       ├── bench_layers.py       #     逐层性能基准复现脚本
-│       ├── bench_raw_tier*.json  #     基准原始样本
-│       ├── pipeline_results.json #     三张照片的完整 findings
-│       └── results/              #     逐臂结果 JSON + 报告（随仓库提交）
-├── scripts/
-│   ├── fetch_ms.sh               #   权重下载（推荐通道，ModelScope）
-│   ├── fetch_yolo.sh             #   YOLO 权重下载
-│   ├── fetch.sh                  #   备用通道
-│   └── fetch_smol.sh             #   备用候选
-├── ui/
-│   ├── server.py                 # 演示界面（零新依赖：标准库 http.server + 自包含 HTML）
-│   ├── index.html                # 单页前端
-│   └── ui_runs.jsonl             # 界面自己的运行台账（只追加；不含绝对路径）
-├── assets/
-│   └── samples/                  # 打码后的演示样片（界面内置图；公开安全）
-├── agent/                        # MES 助手（外挂在 MES 页旁，标准库，8791）
-│   ├── serve.py                  #   HTTP 外壳 + 同源反代（主题跟 MES 同步）
-│   ├── mes_agent.py              #   真循环：问一句 → 自己查 → 答回来
-│   ├── mes_tools.py              #   5 个工具：4 读 1 写（落单是唯一会写的）
-│   └── agent_page.html           #   左 MES · 右聊天的单页
-├── docs/
-│   ├── DELIVERY.md               # 交付说明（技术栈 + 部署 + 安全设计 + 局限）
-│   ├── PRD.md                    # 产品需求与实现状态
-│   ├── local-tier-limitations.md # 能力边界说明
-│   ├── local_tier_benchmark.json # 逐层性能基准（机器可读，唯一真值来源）
-│   ├── local_tier_benchmark.md   # 逐层性能基准（人读）
-│   ├── local_tier_metrics.json   # 逐层调用次数（机器可读）
-│   ├── local_tier_variance.jsonl # 墙钟方差证据
-│   ├── demo-script.md            # 演示视频脚本
-│   ├── article-draft.md          # 赛事征文草稿
-│   ├── agents/                   # 决策日志、情报、团队分工（含 mes-bridge-contract.md 契约真源）
-│   ├── mes-demo/                 # MES 桥宿主页 index.html + 自建 43 视图原型 prototype.html（↗ 见下节，均脱敏）
-│   └── adr/                      # Architecture Decision Records
-├── requirements.txt              # 依赖清单（8 项，需两步安装）
-├── CONTEXT.md                    # 项目上下文和背景
-└── CLAUDE.md                     # Claude Code 配置
-```
-
-> **不入库内容**（已在 `.gitignore` 中排除，理由见该文件注释）：
-> ① 模型权重（单文件超 GitHub 限制）——用 `scripts/fetch_ms.sh` + `scripts/fetch_yolo.sh` 获取；
-> ② 含可辨认人脸的实拍素材 `assets/real_photos/`（肖像权，当事人未同意公开发布）——
-> 这是第 5 步【①】**必须自带 `--photos`** 的原因；
-> ③ `.env` 等凭据文件；④ `.venv/`、`.scratch/` 等本地环境与暂存区；
-> ⑤ `ui/screenshots/`（按最坏情况**整目录**不入库，不做筛选式部分入库——见 §关于测试素材的声明）。
->
-> **随仓库分发**的是打码后的 `assets/samples/`——演示界面第 4 步用的就是它。
 
 ## MES 桥 · 最小可复现宿主页 → `docs/mes-demo/`
 
@@ -481,6 +357,161 @@ py -3 agent/serve.py --mes-origin http://127.0.0.1:8000 \
 - `帮我改一下这张单的状态` —— 清单外，它会拒绝
 
 每次回答都**连同走过的工具调用轨迹**一起返回：它说查过，就是真调了工具，不是背答案。
+
+## 交付物指引
+
+| 交付物 | 位置 |
+|---|---|
+| **4 个巡检 skill**（本赛核心交付物） | `skills/inspection-orchestrator/` · `safety-hazard-detection/` · `gauge-reading/` · `inspection-report/` |
+| **4 个 MES skill**（把发现落成业务动作） | `skills/mes-business-rules/` · `mes-inspection-intake/` · `mes-record-query/` · `mes-closed-loop/` |
+| **MES 助手**（5 工具清单化 · 清单外直说做不了） | `agent/`（`serve.py` 8791 + `mes_agent.py` + `mes_tools.py` + `agent_page.html`） |
+| **自建 43 视图 MES 原型**（脱敏后，可公开） | `docs/mes-demo/prototype.html` |
+| **可交互演示界面**（跑得起来的入口） | `ui/server.py` + `ui/index.html`（`python ui/server.py` → <http://127.0.0.1:8770>） |
+| **演示样片**（打码后，可公开） | `assets/samples/`（3 张，界面内置） |
+| **权重下载脚本**（不入库，跑前必做） | `scripts/fetch_ms.sh` · `scripts/fetch_yolo.sh`（备用 `scripts/fetch.sh` · `scripts/fetch_smol.sh`） |
+| **交付说明**（技术栈 + 部署 + 安全设计） | `docs/DELIVERY.md` |
+| **产品需求与实现状态** | `docs/PRD.md` |
+| **逐层性能基准**（冷启动 / 稳态 / 显存，机器可读） | `docs/local_tier_benchmark.json` · `docs/local_tier_benchmark.md` |
+| **逐层基准复现脚本 + 原始样本** | `skills/evals/bench_layers.py` · `skills/evals/bench_raw_tier0.json` · `bench_raw_tier0_5.json` · `bench_raw_tier1.json` |
+| **逐层调用次数**（`tier_calls`，机器可读） | `docs/local_tier_metrics.json` |
+| **打码批逐层调用次数**（内置样片对应） | `docs/local_tier_metrics_blurred.json` · `docs/face-blur-rerun-ledger.md` |
+| **墙钟方差证据**（三次重跑） | `docs/local_tier_variance.jsonl` |
+| **流水线逐帧结果**（三张照片的完整 findings） | `skills/evals/pipeline_results.json` |
+| **四臂评测结果** | `skills/evals/results/{A,B,C,D}.json`、`report.md`、`diagnostics.json`、`variance-log.md` |
+| **评测设计 / 指标定义 / 合规门禁** | `skills/evals/comparison-design.md` · `metrics.json` · `check-compliance.md` |
+| **能力边界说明** | `docs/local-tier-limitations.md` |
+| **演示视频脚本** | `docs/demo-script.md`（**脚本已就绪；视频成片未落盘入库**） |
+| **赛事征文草稿** | `docs/article-draft.md` |
+| **决策日志 / ADR** | `docs/agents/decision-log.md` · `docs/adr/` |
+
+## 诚实的局限
+
+本节只列结论，**完整清单与依据见 `docs/DELIVERY.md` §8**。
+
+1. **未在 DGX Spark 上实测** —— 未申请到节点，本版本是笔记本上的同架构受限版（见上）。
+2. **不可检测项**：通道堵塞、设备渗漏、明火烟雾、未戴手套 / 口罩——Tier 0 与 Tier 0.5 均**无此判据**；
+   本流水线**不做仪表读数**（读数由 `gauge-reading` 负责）。**表上一个 ❌，就是演示里一句不能说的话。**
+3. **Tier 0.5 对白色着装召回为 0**——
+   「没找到」不构成未佩戴 PPE 的证据。**成因是实现缺陷，不是设计约束**：白色区间被饱和度下限整体清零，
+   且站点参数只配了蓝色区间（技能自己的场景表却写着「蓝色**或白色**」）。
+   **但修复后把握仍全部低于 0.75 阈值，本层仍然不下结论。** 详见 `docs/local-tier-limitations.md` §1。
+4. **本轮没有下任何最终结论**：7 条 findings **全部为 `uncertain`**，置信度区间 **0.000–0.463**，全部低于 0.75 阈值。
+5. **精确人数不可宣称**：photo1 上 YOLO 报 6 人、Tier 1 VLM 报 5 人，未逐像素人工复核，无法裁决谁对。
+6. **测试素材是程序合成的**：四臂消融用的测试图是用 Pillow 画的示意图，
+   仓库标注 `usable_as_accuracy_evidence: false`，**不能作为识别准确率的证据**。
+7. **Tier 1 显存未完全回落**（推理后 +37.3 MiB，疑为分配器缓存，非必然泄漏）——**长跑前建议加监控**。
+8. **零结果如实呈现**：Δ2 = 0.000（见上），本样本未观测到 Not-for 段的边际收益。
+9. **团队无行业背景、无专有数据**，全部使用公开数据；**不主张任何生产环境下的落地效果**。
+
+### 关于测试素材的声明
+
+**测试素材为真实车间照片；因涉及肖像权（画面含可辨认的工人人脸，当事人未同意公开发布），
+我们刻意不公开未打码的原图**——照片仅在本地实验中用于验证链路。
+
+**仓库内图像仅含已打码样片与合成图；本地实验用未打码原图不入库。**
+（本节第 6 条所述的合成示意图属「合成图」那一类，可随仓库分发。）
+
+> 🔴 **截图含脸张数做不到逐张判定，请勿引用任何具体张数。**
+> 该目录按最坏情况整体处置：`ui/screenshots/` **整个目录不进仓库**，不做筛选式的部分入库。
+> 审计过程与依据见 `docs/agents/clone-preflight-findings.md` 硬伤 3 与第三部分。
+
+## 真值来源声明
+
+**本 README 中出现的每一个性能 / 评测数字，均可回溯到下列已落盘文件。未落盘的数字一律未写入。**
+评委可按此清单逐项核查：
+
+| 数字类别 | 落盘文件 |
+|---|---|
+| 逐层冷启动 / 稳态延迟 / 显存 / 吞吐条件 | `docs/local_tier_benchmark.json` + 人读版 `.md`（含预热后参考区间与 token 说明；原始样本 `skills/evals/bench_raw_tier0.json` 等） |
+| 逐层调用次数、Tier 2 授权状态、短路原因 | `docs/local_tier_metrics.json`（打码批另见 `docs/local_tier_metrics_blurred.json` + `docs/face-blur-rerun-ledger.md`） |
+| 墙钟时间（三次重跑区间） | `docs/local_tier_variance.jsonl` |
+| 四臂 13 项指标、Δ1 / Δ2、敏感性分析、硬门禁判定 | `skills/evals/results/report.md`、`diagnostics.json` |
+| 逐臂逐次原始结果 | `skills/evals/results/{A,B,C,D}.json` |
+| token / 成本 / 方差 | `skills/evals/results/variance-log.md` |
+| findings 条数与 severity 计数、置信度区间 | `skills/evals/pipeline_results.json`（统计方法见 `docs/DELIVERY.md` §4） |
+| 用例构成（40 = 正向 21 / 负向 16 / 空结论 3） | `skills/README.md` §6、各 skill 的 `evals/cases.jsonl` |
+| 依赖清单（9 项） | `requirements.txt` |
+| 环境（Python 3.12.10、RTX 5060 Laptop、torch 2.11.0+cu128） | `docs/local_tier_benchmark.json` 的 `meta`、`docs/DELIVERY.md` §5.1 |
+
+**口径纪律**（引用时请一并遵守）：
+
+- **墙钟时间只给区间，不给单点**——同配置重跑的数值不得互相套用。
+- **冷启动与稳态分列，不合成一个数**——两者口径不同，混合后失去意义。
+- **延迟一律报 `[min, max]` 区间**，不得用「约」掩盖波动，也不得隐去已知异常
+  （如 Tier 0 每进程首次调用的 ~43–51 ms）。
+- **逐层延迟 / 显存只引 `docs/local_tier_benchmark.json`；各层调用次数只引 `docs/local_tier_metrics.json`**
+  ——两文件各管一摊，**不得交叉引用数字**，且二者**不属于同一轮测量**。
+- **加速比只说「相差约两个数量级」**，不报单点倍数。
+- **Δ2 只在「本技能口径」下作为主结论**；广义口径数字单列，两者不可相减。
+- 未在真值来源文件中落盘的数值，本 README 一律未引用。
+
+## 竞赛信息
+
+- **截止日期**: 2026年9月29日 23:59
+- **总决赛**: 2026年10月15日（苏州金鸡湖）
+
+## 项目结构
+
+```
+.
+├── skills/                       # ← 本赛核心交付物
+│   ├── inspection-orchestrator/  #   编排：决定调谁、定层级
+│   ├── safety-hazard-detection/  #   窄触发：图像 → 隐患标签（含本地三层流水线）
+│   ├── gauge-reading/            #   窄触发：表盘 → 一个数
+│   ├── inspection-report/        #   窄触发：结论 → 报告
+│   ├── mes-business-rules/       #   业务规则：部门与隔离判定
+│   ├── mes-inspection-intake/    #   落单：发现 → MES 异常单
+│   ├── mes-record-query/         #   查单：异常单 / 工单 / 设备台账
+│   ├── mes-closed-loop/          #   闭环：回执确认与闭环编排
+│   └── evals/                    #   顶层四臂消融套件（A/B/C/D，40 条用例）
+│       ├── run_comparison.py     #     评测执行器（--concurrency 必须 ≤ 5）
+│       ├── run_e2e.py            #     端到端最小通路 + token 采集
+│       ├── bench_layers.py       #     逐层性能基准复现脚本
+│       ├── bench_raw_tier*.json  #     基准原始样本
+│       ├── pipeline_results.json #     三张照片的完整 findings
+│       └── results/              #     逐臂结果 JSON + 报告（随仓库提交）
+├── scripts/
+│   ├── fetch_ms.sh               #   权重下载（推荐通道，ModelScope）
+│   ├── fetch_yolo.sh             #   YOLO 权重下载
+│   ├── fetch.sh                  #   备用通道
+│   └── fetch_smol.sh             #   备用候选
+├── ui/
+│   ├── server.py                 # 演示界面（零新依赖：标准库 http.server + 自包含 HTML）
+│   ├── index.html                # 单页前端
+│   └── ui_runs.jsonl             # 界面自己的运行台账（只追加；不含绝对路径）
+├── assets/
+│   └── samples/                  # 打码后的演示样片（界面内置图；公开安全）
+├── agent/                        # MES 助手（外挂在 MES 页旁，标准库，8791）
+│   ├── serve.py                  #   HTTP 外壳 + 同源反代（主题跟 MES 同步）
+│   ├── mes_agent.py              #   真循环：问一句 → 自己查 → 答回来
+│   ├── mes_tools.py              #   5 个工具：4 读 1 写（落单是唯一会写的）
+│   └── agent_page.html           #   左 MES · 右聊天的单页
+├── docs/
+│   ├── DELIVERY.md               # 交付说明（技术栈 + 部署 + 安全设计 + 局限）
+│   ├── PRD.md                    # 产品需求与实现状态
+│   ├── local-tier-limitations.md # 能力边界说明
+│   ├── local_tier_benchmark.json # 逐层性能基准（机器可读，唯一真值来源）
+│   ├── local_tier_benchmark.md   # 逐层性能基准（人读）
+│   ├── local_tier_metrics.json   # 逐层调用次数（机器可读）
+│   ├── local_tier_variance.jsonl # 墙钟方差证据
+│   ├── demo-script.md            # 演示视频脚本
+│   ├── article-draft.md          # 赛事征文草稿
+│   ├── agents/                   # 决策日志、情报、团队分工（含 mes-bridge-contract.md 契约真源）
+│   ├── mes-demo/                 # MES 桥宿主页 index.html + 自建 43 视图原型 prototype.html（↗ 见下节，均脱敏）
+│   └── adr/                      # Architecture Decision Records
+├── requirements.txt              # 依赖清单（9 项，需两步安装）
+├── CONTEXT.md                    # 项目上下文和背景
+└── CLAUDE.md                     # Claude Code 配置
+```
+
+> **不入库内容**（已在 `.gitignore` 中排除，理由见该文件注释）：
+> ① 模型权重（单文件超 GitHub 限制）——用 `scripts/fetch_ms.sh` + `scripts/fetch_yolo.sh` 获取；
+> ② 含可辨认人脸的实拍素材 `assets/real_photos/`（肖像权，当事人未同意公开发布）——
+> 这是第 5 步【①】**必须自带 `--photos`** 的原因；
+> ③ `.env` 等凭据文件；④ `.venv/`、`.scratch/` 等本地环境与暂存区；
+> ⑤ `ui/screenshots/`（按最坏情况**整目录**不入库，不做筛选式部分入库——见 §关于测试素材的声明）。
+>
+> **随仓库分发**的是打码后的 `assets/samples/`——演示界面第 4 步用的就是它。
 
 ## 开发工作流
 
