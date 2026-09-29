@@ -411,7 +411,7 @@ py -3 agent/serve.py --mes-origin http://127.0.0.1:8000 \
 | **评测设计 / 指标定义 / 合规门禁** | `skills/evals/comparison-design.md` · `metrics.json` · `check-compliance.md` |
 | **能力边界说明** | `docs/local-tier-limitations.md` |
 | **演示视频** | B 站（URL 随提交附上；视频成片不入库） |
-| **赛事征文草稿** | `docs/article-draft.md` |
+| **赛事征文（发布版）** | `docs/article.md` |
 | **决策日志 / ADR** | `docs/agents/decision-log.md` · `docs/adr/` |
 
 ## 诚实的局限
