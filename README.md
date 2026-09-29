@@ -275,6 +275,8 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 |---|---|
 | **4 个巡检 skill**（本赛核心交付物） | `skills/inspection-orchestrator/` · `safety-hazard-detection/` · `gauge-reading/` · `inspection-report/` |
 | **4 个 MES skill**（把发现落成业务动作） | `skills/mes-business-rules/` · `mes-inspection-intake/` · `mes-record-query/` · `mes-closed-loop/` |
+| **MES 助手**（5 工具清单化 · 清单外直说做不了） | `agent/`（`serve.py` 8791 + `mes_agent.py` + `mes_tools.py` + `agent_page.html`） |
+| **自建 43 视图 MES 原型**（脱敏后，可公开） | `docs/mes-demo/prototype.html` |
 | **可交互演示界面**（跑得起来的入口） | `ui/server.py` + `ui/index.html`（`python ui/server.py` → <http://127.0.0.1:8770>） |
 | **演示样片**（打码后，可公开） | `assets/samples/`（3 张，界面内置） |
 | **权重下载脚本**（不入库，跑前必做） | `scripts/fetch_ms.sh` · `scripts/fetch_yolo.sh`（备用 `scripts/fetch.sh` · `scripts/fetch_smol.sh`） |
@@ -386,6 +388,11 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 │   └── ui_runs.jsonl             # 界面自己的运行台账（只追加；不含绝对路径）
 ├── assets/
 │   └── samples/                  # 打码后的演示样片（界面内置图；公开安全）
+├── agent/                        # MES 助手（外挂在 MES 页旁，标准库，8791）
+│   ├── serve.py                  #   HTTP 外壳 + 同源反代（主题跟 MES 同步）
+│   ├── mes_agent.py              #   真循环：问一句 → 自己查 → 答回来
+│   ├── mes_tools.py              #   5 个工具：4 读 1 写（落单是唯一会写的）
+│   └── agent_page.html           #   左 MES · 右聊天的单页
 ├── docs/
 │   ├── DELIVERY.md               # 交付说明（技术栈 + 部署 + 安全设计 + 局限）
 │   ├── PRD.md                    # 产品需求与实现状态
@@ -397,7 +404,7 @@ photo3 在 Tier 0 判定无人即短路——**不是把模型跑得更快，而
 │   ├── demo-script.md            # 演示视频脚本
 │   ├── article-draft.md          # 赛事征文草稿
 │   ├── agents/                   # 决策日志、情报、团队分工（含 mes-bridge-contract.md 契约真源）
-│   ├── mes-demo/                 # MES 桥最小可复现宿主页 ↗ 见下节（示例数据，独立可跑）
+│   ├── mes-demo/                 # MES 桥宿主页 index.html + 自建 43 视图原型 prototype.html（↗ 见下节，均脱敏）
 │   └── adr/                      # Architecture Decision Records
 ├── requirements.txt              # 依赖清单（8 项，需两步安装）
 ├── CONTEXT.md                    # 项目上下文和背景
@@ -438,6 +445,8 @@ python -m http.server 8000
 本页按契约 §A.4/§A.5 提供工单与设备台账数据 ⇒ `mes-record-query` / `mes-closed-loop` **无需 `--proto`** 即可查到数据。
 `mes-data/` 下的数据是**真产出物**（由 `skills/mes-inspection-intake/scripts/commit.py` 从
 `docs/mes-demo/evals/finding-demo.json` 生成，可逐字节复现），非手写件——见该目录 README。
+同目录还随仓库分发一份**脱敏后的自建 43 视图完整原型** `docs/mes-demo/prototype.html`
+（进料检验 → 出货全流程，演示视频拍的就是它；客户名与真实数据均不出现，核验说明见该目录 README）。
 
 > **这套东西的证据链是可复核的**：测试台与依赖集的 canonical 哈希、四项门的实跑数字、
 > 以及**「怎么自己复现」的可粘贴脚本**，见
@@ -445,6 +454,33 @@ python -m http.server 8000
 > 该文档**自身可自证**——从中抽出内嵌脚本单独运行，会复算并与记录逐项比对。
 > 验证方法与当日教训（五类「绿 ≠ 看起来的意思」）见
 > [`docs/agents/verification-lessons.md`](docs/agents/verification-lessons.md)。
+
+## MES 助手 · 挂在 MES 页旁的智能体 → `agent/`
+
+识别 → 落单，还差「人问一句、它答回来」。本仓库在 MES 页旁外挂了一个助手：
+
+- **5 个工具，清单化**：查异常单 · 查工单 · 查设备台账 · 单号查重 · **落单**（唯一会写的一个）。
+- **清单外直说做不了**：改状态、删记录、编数据 —— 它答「不在我的工具清单里」。**这是设计，不是能力缺口。**
+- **只讲查得到的事实**：查不到就说「没查到」，绝不推测数据（写死在它的系统提示里）。
+- **外挂，不改 MES**：MES 页面经 iframe 显示，自身一行代码不动；助手服务反代 MES 使二者同源，
+  连界面主题都跟着 MES 走。助手本体只用标准库（`http.server`），不装任何包。
+
+跑起来（前提：上一节 MES 宿主页已在 8000；需要可用的 Claude 兼容端点
+`ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN` 环境变量，模型可用 `ANTHROPIC_MODEL` 指定）：
+
+```bash
+py -3 agent/serve.py --mes-origin http://127.0.0.1:8000 \
+  --mes-url "/mes/docs/mes-demo/index.html#view=qm-quality-exception"
+# 打开 http://127.0.0.1:8791
+```
+
+可以这样试它（数据全部来自上一节的宿主页，自造示例）：
+
+- `查一下 QA-20260813-001` —— 异常单，真调查询工具
+- `MO-20260106-002 什么状态` / `FT-01 是什么设备` —— 工单与设备台账
+- `帮我改一下这张单的状态` —— 清单外，它会拒绝
+
+每次回答都**连同走过的工具调用轨迹**一起返回：它说查过，就是真调了工具，不是背答案。
 
 ## 开发工作流
 
