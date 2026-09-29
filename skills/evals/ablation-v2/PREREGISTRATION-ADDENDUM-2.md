@@ -23,7 +23,7 @@
 | 2 | `skills/safety-hazard-detection/scripts/local_tier_pipeline.py` | 注释：删同一组数字；「它本来就看不见白色着装」→「它在当前配置下看不见」；补两条独立死因；删「**除非 Tier 1 确认**」，代之以「当前未实现」说明 |
 | 3 | `README.md` | 层次表 Tier 1 状态由「**已实现**」改为「**已调用，但不参与判定**」；Tier 0 短路行补「≠『画面无人』」；局限第 3 条删同组数字、归因改为「实现缺陷」 |
 | 4 | `docs/DELIVERY.md` | §4 小标题补上第二句（「修完仍不过线是度量结构问题」） |
-| 5 | `docs/local-tier-limitations.md` | §1 归因更正 ＋ §6/§8–§12 新增（另见 `docs/agents/delivery-audit-summary.md`） |
+| 5 | `docs/local-tier-limitations.md` | §1 归因更正 ＋ §6/§8–§12 新增 |
 | 6 | `docs/article-draft.md` | §3/§5/§7 相应更正 |
 
 **注意**：#2–#6 **不在本实验载荷内**（已验证，见 §3），只有 #1 影响载荷。

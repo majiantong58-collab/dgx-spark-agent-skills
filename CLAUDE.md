@@ -6,11 +6,11 @@
 
 ### Issue tracker
 
-Issues and specs are tracked as GitHub issues in the [majiantong58-collab/dgx-spark-agent-skills](https://github.com/majiantong58-collab/dgx-spark-agent-skills) repo. See `docs/agents/issue-tracker.md`.
+Issues and specs are tracked as GitHub issues in the [majiantong58-collab/dgx-spark-agent-skills](https://github.com/majiantong58-collab/dgx-spark-agent-skills) repo.
 
 ### Triage labels
 
-Five canonical triage roles map to label strings in `docs/agents/triage-labels.md`.
+Five canonical triage roles map to label strings on GitHub issues.
 
 ### Domain docs
 
